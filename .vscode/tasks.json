@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "build"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "run"
+            ],
+            "problemMatcher": [],
+            "dependsOn": ["Build"]
+        }
+    ]
+}
