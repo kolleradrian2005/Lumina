@@ -18,7 +18,7 @@ impl Model {
         let vao: GLuint = MeshHandler.create_mesh(vertices, indices);
         Model {
             vao,
-            vertex_count: vertices.len() as GLsizei,
+            vertex_count: indices.len() as GLsizei,
             position: Vec2::new(0.0, 0.0),
             rotation: 0.0,
             scale: 1.0,

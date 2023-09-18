@@ -3,9 +3,6 @@ use gl::types::*;
 pub struct MeshHandler;
 
 impl MeshHandler {
-    pub fn new() -> Self {
-        MeshHandler {}
-    }
     pub fn create_mesh(&self, vertices: &[f32], indices: &[u32]) -> GLuint {
         let mut vao: GLuint = 0;
         unsafe {
@@ -46,7 +43,7 @@ impl MeshHandler {
                 std::ptr::null()
             );
             // Unbind VBO
-            gl::BindBuffer(gl::ARRAY_BUFFER , 0);
+            //gl::BindBuffer(gl::ARRAY_BUFFER , 0);
         };
     }
 
@@ -67,7 +64,7 @@ impl MeshHandler {
                 gl::STATIC_DRAW
             );
             // Unbind EBO
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER , 0);
+            //gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER , 0);
         }
     }
 }

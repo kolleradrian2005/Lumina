@@ -1,11 +1,12 @@
 mod scene_renderer;
 
 use glfw::Window;
-use scene_renderer::SceneRenderer;
+use crate::scene_renderer::SceneRenderer;
 use crate::scene::Scene;
 
+
 pub struct Renderer {
-    scene_renderer: SceneRenderer
+    scene_renderer: SceneRenderer,
 }
 
 impl Renderer {
@@ -17,7 +18,7 @@ impl Renderer {
             gl::Enable(gl::DEPTH_TEST);
         };
         let scene_renderer: SceneRenderer = SceneRenderer::init();
-        Renderer { scene_renderer }
+        Renderer { scene_renderer  }
     }
 
     pub fn clean_up(&self) {
