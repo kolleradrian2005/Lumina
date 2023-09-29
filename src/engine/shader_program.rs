@@ -1,4 +1,3 @@
-use std::{fs, path::Path, ffi::{CStr, CString}};
 use gl::types::*;
 
 use crate::shader::Shader;

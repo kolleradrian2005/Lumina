@@ -3,14 +3,15 @@ use gl::types::*;
 pub struct MeshHandler;
 
 impl MeshHandler {
-    pub fn create_mesh(&self, vertices: &[f32], indices: &[u32]) -> GLuint {
+    pub fn create_mesh(&self, vertices: &[f32], indices: &[u32], uvs: &[f32]) -> GLuint {
         let mut vao: GLuint = 0;
         unsafe {
             // Generate VAO id
             gl::GenVertexArrays(1, &mut vao);
             gl::BindVertexArray(vao);
             // Store attributes
-            self.store_data(0, 2, vertices);
+            self.store_data(0, 3, vertices);
+            self.store_data(1, 2, uvs);
             self.bind_indices(indices);
             // Unbind VAO
             gl::BindVertexArray(0);
