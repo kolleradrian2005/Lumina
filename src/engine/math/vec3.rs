@@ -23,6 +23,11 @@ impl Vec3 {
         self.y = -self.y;
         self.z = -self.z;
     }
+    pub fn add(&mut self, vec: &Vec3) {
+        self.x += vec.x;
+        self.y += vec.y;
+        self.z += vec.z;
+    }
     pub fn minus(&self, other: &Vec3) -> Vec3 {
         Vec3::new(&self.x - other.x, &self.y - other.y, &self.z - other.z)
     }

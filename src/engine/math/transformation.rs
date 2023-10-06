@@ -52,7 +52,7 @@ fn multiply_matrix(result: &mut [[f32; 4]; 4], other: &[[f32; 4]; 4]) {
     *result = tmp;
 }
 
-pub fn create_ortographic_projection_matrix(width :u32, height: u32/*left: f32, right: f32, bottom: f32, top: f32*/, near: f32, far: f32) -> [[f32; 4]; 4] {
+pub fn create_ortographic_projection_matrix(width :i32, height: i32/*left: f32, right: f32, bottom: f32, top: f32*/, near: f32, far: f32) -> [[f32; 4]; 4] {
     let aspect_ratio = (width as f32) / (height as f32);
     
     let right = aspect_ratio / 2.0;

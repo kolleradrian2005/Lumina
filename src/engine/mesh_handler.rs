@@ -11,7 +11,9 @@ impl MeshHandler {
             gl::BindVertexArray(vao);
             // Store attributes
             self.store_data(0, 3, vertices);
-            self.store_data(1, 2, uvs);
+            if 0 < uvs.len() {
+                self.store_data(1, 2, uvs);
+            }
             self.bind_indices(indices);
             // Unbind VAO
             gl::BindVertexArray(0);

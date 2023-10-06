@@ -1,9 +1,9 @@
-use crate::{model::Model, vec2::Vec2, transformation, texture_handler::TextureHandler };
+use crate::{model::Model, vec2::Vec2, transformation, texture_handler::TextureHandler, vec3::Vec3 };
 
 pub struct Player {
     pub model: Model,
     position: Vec2,
-    lerp_speed: f32
+    move_speed: f32
 }
 
 impl Player {
@@ -29,7 +29,8 @@ impl Player {
 
         let mut model = Model::new(vertices, indices, uvs);
 
-        // TODO: add textures
+        model.set_color(Vec3::new(0.0, 1.0, 0.0));
+
         let texture_names: &[&str] = &[
             "player0.png",
             "player1.png",
@@ -44,12 +45,16 @@ impl Player {
         Player {
             model,
             position: initial_position,
-            lerp_speed: 0.0035
+            move_speed: 0.00035
         }
 
     }
     pub fn get_translation_matrix(&self) -> [[f32; 4]; 4] {
-        transformation::create_model_matrix(&self.position, &0.0, &1.0)
+        transformation::create_model_matrix(
+            &self.model.get_position().plus(&self.position),
+            &0.0,
+            &1.0
+        )
     }
 
     pub fn get_position(&self) -> &Vec2 {
@@ -60,7 +65,11 @@ impl Player {
         self.position = vec;
     }
 
-    pub fn get_lerp_speed(&self) -> f32 {
-        self.lerp_speed
+    pub fn change_position(&mut self, offset: &Vec2) {
+        self.position = self.position.plus(offset);
+    }
+
+    pub fn get_move_speed(&self) -> f32 {
+        self.move_speed
     }
 }

@@ -1,23 +1,31 @@
 extern crate gl;
 
+#[path = "engine/references.rs"] mod references;
 #[path = "engine/window_handler.rs"] mod window_handler;
 #[path = "engine/input_handler.rs"] mod input_handler;
 #[path = "engine/mesh_handler.rs"] mod mesh_handler;
 #[path = "engine/texture_handler.rs"] mod texture_handler;
-#[path = "engine/shader.rs"] mod shader;
-#[path = "engine/shader_program.rs"] mod shader_program;
-#[path = "engine/renderer.rs"] mod renderer;
-#[path = "engine/scene.rs"] mod scene;
-#[path = "engine/scene_renderer.rs"] mod scene_renderer;
-#[path = "engine/player_renderer.rs"] mod player_renderer;
 #[path = "engine/model.rs"] mod model;
-#[path = "engine/vec2.rs"] mod vec2;
-#[path = "engine/vec3.rs"] mod vec3;
 #[path = "engine/texture.rs"] mod texture;
-#[path = "engine/camera.rs"] mod camera;
-#[path = "engine/transformation.rs"] mod transformation;
-#[path = "engine/player.rs"] mod player;
 #[path = "engine/physics.rs"] mod physics;
+#[path = "engine/frame_buffer.rs"] mod frame_buffer;
+#[path = "engine/scene/scene.rs"] mod scene;
+#[path = "engine/scene/background.rs"] mod background;
+#[path = "engine/scene/foreground.rs"] mod foreground;
+#[path = "engine/scene/player.rs"] mod player;
+#[path = "engine/scene/camera.rs"] mod camera;
+#[path = "engine/scene/terrain.rs"] mod terrain;
+#[path = "engine/math/vec2.rs"] mod vec2;
+#[path = "engine/math/vec3.rs"] mod vec3;
+#[path = "engine/math/transformation.rs"] mod transformation;
+#[path = "engine/render/renderer.rs"] mod renderer;
+#[path = "engine/render/scene_renderer.rs"] mod scene_renderer;
+#[path = "engine/render/player_renderer.rs"] mod player_renderer;
+#[path = "engine/render/terrain_renderer.rs"] mod terrain_renderer;
+#[path = "engine/render/background_renderer.rs"] mod background_renderer;
+#[path = "engine/render/postprocess_renderer.rs"] mod postprocess_renderer;
+#[path = "engine/shader/shader.rs"] mod shader;
+#[path = "engine/shader/shader_program.rs"] mod shader_program;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -32,7 +40,7 @@ use crate::model::Model;
 fn main() {
     // Create window & renderer
     let mut window_handler: WindowHandler = WindowHandler::new();
-    let renderer: Renderer = Renderer::init(&mut window_handler.window);
+    let mut renderer: Renderer = Renderer::init(&mut window_handler.window);
     //let mesh_handler: MeshHandler = MeshHandler::new();
     let mut texture_handler = TextureHandler::new();
     // Set up scene
@@ -67,7 +75,7 @@ fn main() {
         delta_time = now - last;
         last = now;
         // Handle user input
-        window_handler.handle_events(&mut scene);
+        window_handler.handle_events(&mut scene, delta_time);
         // Do physics
         physics.update(&mut scene, delta_time);
         // Clear screen

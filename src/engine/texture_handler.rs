@@ -2,13 +2,11 @@
     use image::{GenericImageView, imageops};
     use gl::types::*;
 
-    use crate::texture::Texture;
+    use crate::{texture::Texture, references};
 
     pub struct TextureHandler {
         id_map: HashMap<String, Texture>
     }
-
-    const TEXTURES_PATH: &str = "assets/textures/";
 
     impl TextureHandler {
         pub fn new() -> Self {
@@ -22,7 +20,7 @@
         }
 
         pub fn load_texture(&mut self, texture_name: &str) -> bool {
-            let path: String = (String::new() + TEXTURES_PATH + texture_name).to_string();
+            let path: String = (String::new() + references::TEXTURES_PATH + texture_name).to_string();
             if self.id_map.contains_key(&path) {
                 return true;
             }
@@ -57,8 +55,6 @@
                 gl::GenerateMipmap(gl::TEXTURE_2D);
                 gl::BindTexture(gl::TEXTURE_2D, 0);
             };
-
-
             let texture = Texture::new(id);
             self.id_map.insert(texture_name.to_string(), texture);
             return true;

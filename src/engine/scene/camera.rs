@@ -21,6 +21,10 @@ impl Camera {
         &self.position
     }
 
+    pub fn change_position(&mut self, offset: &Vec2) {
+        self.position = self.position.plus(offset);
+    }
+
     pub fn get_move_speed(&self) -> &f32 {
         &self.move_speed
     }
@@ -33,6 +37,8 @@ impl Camera {
         let near = -1.0;
         let far = 1.0;
         // Todo: get real window sizes
-        transformation::create_ortographic_projection_matrix(window_handler::INITIAL_WINDOW_WIDTH, window_handler::INITIAL_WINDOW_HEIGHT, near, far)
+        unsafe {
+            transformation::create_ortographic_projection_matrix(window_handler::WINDOW_WIDTH, window_handler::WINDOW_HEIGHT, near, far)
+        }
     }
 }

@@ -20,6 +20,10 @@ impl Vec2 {
         self.x = -self.x;
         self.y = -self.y;
     }
+    pub fn add(&mut self, vec: &Vec2) {
+        self.x += vec.x;
+        self.y += vec.y;
+    }
     pub fn minus(&self, other: &Vec2) -> Vec2 {
         Vec2::new(&self.x - other.x, &self.y - other.y)
     }
