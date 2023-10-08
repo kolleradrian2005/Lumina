@@ -19,7 +19,6 @@ void main(void) {
     // Map uv coordinates
     vec2 position = vec2(pass_uvs.x - 0.5, pass_uvs.y - 0.5);
     position.x *= uAspectRatio;
-    vec2 uFocalOffset = uFocalOffset;
     vec4 sourceColor = texture(textureSampler, pass_uvs);
     float distanceToFocus = length(position - uFocalOffset);
     float focusFactor = uDarkeningFactor * smoothstep(uFocalRadius, uFocalRadius + uSmoothFactor, distanceToFocus);
