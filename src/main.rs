@@ -77,7 +77,7 @@ fn main() {
     ];
     let indices: &[u32] = &[0, 1, 2, 2, 3, 0];
     let uvs: &[f32] = &[0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0];
-    let mut model = Model::new(vertices, indices, uvs);
+    let mut model: Model = Model::new(vertices, indices, uvs);
     model.load_single_texture(&mut texture_handler, "texture.png");
     scene.add_model(model);
 

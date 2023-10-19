@@ -26,8 +26,13 @@ impl TerrainRenderer {
 
     pub fn render(&self, scene: &mut Scene, framebuffer: &mut Framebuffer) {
         self.shader.start();
+        // TODO: Use terrain.model OR fullscreen model
+        let start_x = -1;
+        let end_x = 1;
+        let resolution = scene.terrain.resolution;
         unsafe {
-            for model in scene.terrain.get_loaded_tiles() {
+            // Renders terrain parts each 1 x changes (Could be optimized)
+            for x in (resolution*start_x)..(end_x*resolution) {
                 //let x: f32 = raw_x as f32/ resolution as f32;
                 //let focal_offset = &scene.focal_offset;
 
@@ -35,6 +40,10 @@ impl TerrainRenderer {
                 let view_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uViewMatrix").unwrap()));
                 let projection_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uProjectionMatrix").unwrap()));
                 
+                let height = scene.terrain.get_height(x);
+                let model_position = Vec2::new(x as f32 / resolution as f32, height);
+                let model = &mut scene.terrain.tile_model;
+                model.set_position(model_position);
                 let view_matrix = scene.camera.get_view_matrix();
                 let projection_matrix = scene.camera.get_projection_matrix();
                 let model_matrix = model.get_model_matrix();

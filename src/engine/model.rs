@@ -6,6 +6,7 @@ use crate::vec3::Vec3;
 use crate::{transformation, get_time};
 use crate::vec2::Vec2;
 
+#[derive(Clone)]
 pub struct Model {
     // Rendering
     vao: GLuint,
@@ -18,7 +19,8 @@ pub struct Model {
     color: Vec3,
     texture_name: Option<String>,
     texture_names: Vec<String>,
-    animation_time: u128
+    animation_time: u128,
+    flipped: bool
 }
 
 impl Model {
@@ -33,7 +35,8 @@ impl Model {
             color: Vec3::new(0.5, 0.5, 0.5),
             texture_name: None,
             texture_names: vec![],
-            animation_time: 0
+            animation_time: 0,
+            flipped: false
         }
     }
     pub fn get_vao(&self) -> GLuint {
@@ -56,6 +59,14 @@ impl Model {
         &self.position
     }
     
+    pub fn set_rotation(&mut self, rot: f32) {
+        self.rotation = rot;
+    }
+
+    pub fn get_rotation(&self) -> &f32 {
+        &self.rotation
+    }
+
     pub fn load_single_texture(&mut self, texture_handler: &mut TextureHandler, texture_name: &str) {
         let result = texture_handler.load_texture(texture_name);
         if result {
@@ -98,5 +109,11 @@ impl Model {
 
     pub fn set_color(&mut self, color: Vec3) {
         self.color = color;
+    }
+    pub fn set_flipped(&mut self, state: bool) {
+        self.flipped = state;
+    }
+    pub fn is_flipped(&self) -> bool {
+        self.flipped
     }
 }

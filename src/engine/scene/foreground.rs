@@ -13,10 +13,10 @@ impl Foreground {
         //let mut layer1 = Model::new(vertices, indices, &[]);
         Foreground {
             tint_color: Vec3::new(0.0, 1.0, 1.0),
-            tint_intensity: 0.25,
-            focal_radius: 0.2,
+            tint_intensity: 0.15,
+            focal_radius: 0.25,
             darkening_factor: 0.3,
-            smooth_factor: 0.08
+            smooth_factor: 0.2
         }
     }
 }

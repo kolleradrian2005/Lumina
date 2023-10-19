@@ -11,9 +11,9 @@ pub struct PlayerRenderer {
 
 impl PlayerRenderer {
     pub fn init() -> Self {
-        let fragment_shader = Shader::new("player.frag", gl::FRAGMENT_SHADER);
-        let vertex_shader = Shader::new("player.vert", gl::VERTEX_SHADER);
-        let shader_program = ShaderProgram::new(&[vertex_shader, fragment_shader]);
+        let fragment_shader: Shader = Shader::new("player.frag", gl::FRAGMENT_SHADER);
+        let vertex_shader: Shader = Shader::new("player.vert", gl::VERTEX_SHADER);
+        let shader_program: ShaderProgram = ShaderProgram::new(&[vertex_shader, fragment_shader]);
         shader_program.bind_attributes(0, "position");
         shader_program.bind_attributes(1, "uv");
         PlayerRenderer {
@@ -31,11 +31,13 @@ impl PlayerRenderer {
             let projection_matrix = scene.camera.get_projection_matrix();
             let has_texture_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uHasTexture").unwrap()));
             let color_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uColor").unwrap()));
-            let model_matrix = &scene.player.get_translation_matrix();
+            let flipped_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uFlipped").unwrap()));
+            let model_matrix = scene.player.get_translation_matrix();
             let model = &mut scene.player.model;
             gl::UniformMatrix4fv(model_location, 1, gl::FALSE, model_matrix.as_ptr() as * const f32);
             gl::UniformMatrix4fv(view_location, 1, gl::FALSE, view_matrix.as_ptr() as * const f32);
             gl::UniformMatrix4fv(projection_location, 1, gl::FALSE, projection_matrix.as_ptr() as * const f32);
+            gl::Uniform1i(flipped_location, model.is_flipped() as i32);
             gl::BindVertexArray(model.get_vao());
             gl::EnableVertexAttribArray(0);
             gl::EnableVertexAttribArray(1);

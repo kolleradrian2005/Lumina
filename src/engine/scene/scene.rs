@@ -1,9 +1,11 @@
+use std::f32::consts::PI;
+
 use crate::background::Background;
 use crate::camera::Camera;
 use crate::foreground::Foreground;
 use crate::model::Model;
 use crate::player::Player;
-use crate::terrain::{self, Terrain};
+use crate::terrain::Terrain;
 use crate::texture_handler::TextureHandler;
 use crate::vec2::Vec2;
 
@@ -25,11 +27,7 @@ impl Scene {
         let background: Background = Background::construct(texture_handler);
         let foreground: Foreground = Foreground::construct();
         let focal_offset: Vec2 = Vec2::new(0.0, 0.0);
-        let terrain = Terrain::new(40, 512);
-        for i in 0..20 {
-            print!("{:?} ", terrain.get_height(i));
-        }
-        println!("");
+        let terrain = Terrain::new(696);
         Scene {
             models,
             camera,
@@ -47,6 +45,36 @@ impl Scene {
 
     pub fn update(&mut self, delta_time: u128) {
         self.update_camera(&delta_time);
+        self.update_player(&delta_time);
+    }
+
+    pub fn update_player(&mut self, delta_time: &u128) {
+        // Load terrain correctly
+        let tile_index = (self.player.get_position().x / self.terrain.tile_size).round() as i32;
+        self.terrain.update_tile_index(tile_index);
+        // Rotation animation
+        let curr_rotation = self.player.model.get_rotation();
+        let mut dest_rotation = self.player.get_dest_rotation();
+        if dest_rotation < 0.0 {
+            dest_rotation += 2.0 * PI;
+        }
+        dest_rotation %= 2.0 * PI;
+        let mut difference = dest_rotation - curr_rotation;
+        if PI < difference {
+            difference =  difference - 2.0 * PI;
+        } else if PI < -difference {
+            difference =  difference + 2.0 * PI;
+        }
+        //println!("{:?}", difference);
+        let mut rotation = curr_rotation.clone();
+        let rot_speed = 0.005;
+        rotation += rot_speed * difference * *delta_time as f32;
+        rotation %= 2.0 * PI;
+        if rotation < 0.0 {
+            rotation += 2.0 * PI;
+        }
+        self.player.model.set_flipped(!(0.0 < rotation && rotation < PI));
+        self.player.model.set_rotation(rotation);
     }
 
     pub fn update_camera(&mut self, delta_time: &u128) {

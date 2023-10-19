@@ -22,9 +22,9 @@ pub fn create_model_matrix(position: &Vec2, rotation: &f32, scale: &f32) -> [[f3
         [0.0, 0.0, 0.0, 1.0]
     ];
 
-    let mut model_matrix = translation_matrix;
+    let mut model_matrix = scale_matrix;
     multiply_matrix(&mut model_matrix, &rotation_matrix);
-    multiply_matrix(&mut model_matrix, &scale_matrix);
+    multiply_matrix(&mut model_matrix, &translation_matrix);
 
     model_matrix
 }
