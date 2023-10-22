@@ -53,28 +53,46 @@ impl Scene {
         let tile_index = (self.player.get_position().x / self.terrain.tile_size).round() as i32;
         self.terrain.update_tile_index(tile_index);
         // Rotation animation
-        let curr_rotation = self.player.model.get_rotation();
+        let mut rotation = self.player.model_group.get_rotation().clone();
         let mut dest_rotation = self.player.get_dest_rotation();
         if dest_rotation < 0.0 {
             dest_rotation += 2.0 * PI;
         }
         dest_rotation %= 2.0 * PI;
-        let mut difference = dest_rotation - curr_rotation;
+        let mut difference = dest_rotation - rotation;
         if PI < difference {
             difference =  difference - 2.0 * PI;
         } else if PI < -difference {
             difference =  difference + 2.0 * PI;
         }
-        //println!("{:?}", difference);
-        let mut rotation = curr_rotation.clone();
         let rot_speed = 0.005;
         rotation += rot_speed * difference * *delta_time as f32;
         rotation %= 2.0 * PI;
         if rotation < 0.0 {
             rotation += 2.0 * PI;
         }
-        self.player.model.set_flipped(!(0.0 < rotation && rotation < PI));
-        self.player.model.set_rotation(rotation);
+        let head_index = 5;
+        let is_flipped = !(0.0 <= rotation && rotation <= PI);
+        let is_moving = self.player.is_moving();
+        let initial_head_position = self.player.initial_positions[head_index];
+        let model_group = &mut self.player.model_group;
+        model_group.set_flipped(is_flipped);
+        // Move state
+        let head = model_group.get_model(head_index);
+        let mul = ((is_flipped as i32) * 2 - 1) as f32;
+        if is_moving {
+            let mut head_position = head.get_position().clone();
+            if !is_flipped {
+                head_position.x = initial_head_position.x - 0.01;
+            }
+            head_position.y = initial_head_position.y - 0.01;
+            head.set_position(head_position);
+            head.set_rotation(mul * PI / 2.0);
+        } else {
+            head.set_position(initial_head_position);
+            head.set_rotation(0.0);
+        }
+        model_group.set_rotation(rotation);
     }
 
     pub fn update_camera(&mut self, delta_time: &u128) {

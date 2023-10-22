@@ -16,6 +16,8 @@ mod input_handler;
 mod mesh_handler;
 #[path = "engine/model.rs"]
 mod model;
+#[path = "engine/model_group.rs"]
+mod model_group;
 #[path = "engine/physics.rs"]
 mod physics;
 #[path = "engine/scene/player.rs"]
@@ -67,7 +69,6 @@ fn main() {
     // Create window & renderer
     let mut window_handler: WindowHandler = WindowHandler::new();
     let mut renderer: Renderer = Renderer::init(&mut window_handler.window);
-    //let mesh_handler: MeshHandler = MeshHandler::new();
     let mut texture_handler = TextureHandler::new();
     // Set up scene
     let mut scene = Scene::new(&mut texture_handler);

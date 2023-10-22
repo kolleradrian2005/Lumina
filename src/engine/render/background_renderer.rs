@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::ffi::CString;
 
 use crate::shader::Shader;
@@ -27,7 +26,7 @@ impl BackgroundRenderer {
         let layers = &mut scene.background.layers;
         unsafe {
             for i in 0..layers.len() {
-                let mut model = layers.get_mut(i).unwrap();
+                let model = layers.get_mut(i).unwrap();
                 let color_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uColor").unwrap()));
                 //let layer_index_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uLayerIndex").unwrap()));
                 let has_texture_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uHasTexture").unwrap()));

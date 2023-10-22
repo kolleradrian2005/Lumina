@@ -1,32 +1,42 @@
 use crate::vec2::Vec2;
 
-pub fn create_model_matrix(position: &Vec2, rotation: &f32, scale: &f32) -> [[f32; 4]; 4] {
-    let translation_matrix = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [position.x, position.y, 0.0, 1.0]
-    ];
-    
-    let rotation_matrix = [
-        [rotation.cos(), -rotation.sin(), 0.0, 0.0],
-        [rotation.sin(), rotation.cos(), 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0]
-    ];
-
-    let scale_matrix = [
-        [*scale, 0.0, 0.0, 0.0],
-        [0.0, *scale, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0]
-    ];
+pub fn create_model_matrix(position: Vec2, rotation: f32, scale: f32) -> [[f32; 4]; 4] {
+    let translation_matrix = create_translation_matrix(position);
+    let rotation_matrix = create_rotation_matrix(rotation);
+    let scale_matrix = create_scale_matrix(scale);
 
     let mut model_matrix = scale_matrix;
     multiply_matrix(&mut model_matrix, &rotation_matrix);
     multiply_matrix(&mut model_matrix, &translation_matrix);
 
     model_matrix
+}
+
+fn create_translation_matrix(position: Vec2) -> [[f32; 4]; 4] {
+    [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [position.x, position.y, 0.0, 1.0]
+    ]
+}
+
+fn create_rotation_matrix(rotation: f32) -> [[f32; 4]; 4] {
+    [
+        [rotation.cos(), -rotation.sin(), 0.0, 0.0],
+        [rotation.sin(), rotation.cos(), 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ]
+}
+
+fn create_scale_matrix(scale: f32) -> [[f32; 4]; 4] {
+    [
+        [scale, 0.0, 0.0, 0.0],
+        [0.0, scale, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ]
 }
 
 pub fn create_view_matrix(position: &Vec2) -> [[f32; 4]; 4] {

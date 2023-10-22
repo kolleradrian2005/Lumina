@@ -1,6 +1,6 @@
 use glfw::Window;
 use crate::background_renderer::BackgroundRenderer;
-use crate::frame_buffer::{Framebuffer, self};
+use crate::frame_buffer::Framebuffer;
 use crate::player_renderer::PlayerRenderer;
 use crate::postprocess_renderer::PostprocessRenderer;
 use crate::scene_renderer::SceneRenderer;
@@ -51,7 +51,7 @@ impl Renderer {
     pub fn render(&mut self, scene: &mut Scene, texture_handler: &mut TextureHandler) {
         self.frame_buffer.bind();
         self.background_renderer.render(scene, texture_handler);
-        self.terrain_renderer.render(scene,  &mut self.frame_buffer);
+        self.terrain_renderer.render(scene);
         self.scene_renderer.render(scene, texture_handler);
         self.player_renderer.render(scene, texture_handler);
         self.frame_buffer.unbind();

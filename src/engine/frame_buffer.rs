@@ -61,10 +61,6 @@ impl Framebuffer {
             Framebuffer { fbo, model, texture }
         }
 
-        pub fn get_id(&self) -> GLuint {
-            self.fbo
-        }
-
         pub fn bind(&self) {
             unsafe { gl::BindFramebuffer(gl::FRAMEBUFFER, self.fbo) };
         }

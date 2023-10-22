@@ -33,11 +33,16 @@ impl Vec2 {
     pub fn times(&self, scalar: f32) -> Vec2 {
         Vec2::new(&self.x * scalar, &self.y * scalar)
     }
-
     pub fn length(&self) -> f32 {
         f32::sqrt(self.x * self.x + self.y * self.y)
     }
-
+    pub fn rotated(&self, angle: f32) -> Vec2 {
+        let cos_angle = angle.cos();
+        let sin_angle = angle.sin();
+        let new_x = self.x * cos_angle - self.y * sin_angle;
+        let new_y = self.x * sin_angle + self.y * cos_angle;
+        Vec2::new(new_x, new_y)
+    }
     pub fn normalized(&self) -> Vec2 {
         let length = self.length();
         if length == 0.0 {

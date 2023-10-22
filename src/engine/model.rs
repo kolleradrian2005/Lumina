@@ -48,7 +48,7 @@ impl Model {
     }
 
     pub fn get_model_matrix(&self) -> [[f32; 4]; 4] {
-        transformation::create_model_matrix(&self.position, &self.rotation, &self.scale)
+        transformation::create_model_matrix(self.position, self.rotation, self.scale)
     }
 
     pub fn set_position(&mut self, pos: Vec2) {
@@ -65,6 +65,14 @@ impl Model {
 
     pub fn get_rotation(&self) -> &f32 {
         &self.rotation
+    }
+
+    pub fn set_scale(&mut self, scale: f32) {
+        self.scale = scale;
+    }
+
+    pub fn get_scale(&self) -> &f32 {
+        &self.scale
     }
 
     pub fn load_single_texture(&mut self, texture_handler: &mut TextureHandler, texture_name: &str) {

@@ -1,11 +1,9 @@
-use std::borrow::BorrowMut;
 use std::ffi::CString;
 
-use crate::frame_buffer::{self, Framebuffer};
+use crate::frame_buffer::Framebuffer;
 use crate::scene::Scene;
 use crate::shader::Shader;
 use crate::shader_program::ShaderProgram;
-use crate::texture_handler::TextureHandler;
 use crate::window_handler;
 
 pub struct PostprocessRenderer {

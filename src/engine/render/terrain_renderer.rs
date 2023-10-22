@@ -1,12 +1,8 @@
 use std::ffi::CString;
 
-use crate::frame_buffer::Framebuffer;
 use crate::shader::Shader;
 use crate::shader_program::ShaderProgram;
-use crate::texture_handler::TextureHandler;
-use crate::vec2::Vec2;
-use crate::{model::Model, scene::Scene};
-use crate::{terrain, window_handler};
+use crate::scene::Scene;
 
 pub struct TerrainRenderer {
     shader: ShaderProgram,
@@ -24,7 +20,7 @@ impl TerrainRenderer {
         }
     }
 
-    pub fn render(&self, scene: &mut Scene, framebuffer: &mut Framebuffer) {
+    pub fn render(&self, scene: &mut Scene) {
         self.shader.start();
         unsafe {
             for model in scene.terrain.get_loaded_tiles() {
