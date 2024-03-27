@@ -1,68 +1,145 @@
-use std::ffi::CString;
+use std::cell::RefCell;
 
-use crate::shader::Shader;
-use crate::shader_program::ShaderProgram;
-use crate::texture_handler::TextureHandler;
-use crate::{scene::Scene, model::Model};
+use crate::engine::model::model::Model;
+use crate::engine::model::model_group::ModelGroup;
+use crate::engine::scene::tile::Tile;
+use crate::engine::shader::model_shader::ModelShader;
+use crate::engine::shader::shader_program::ShaderProgram;
+use crate::engine::math::transformation;
+use crate::engine::texture::texture::Texture;
+use crate::engine::transformable::Transformable;
+use crate::engine::scene::scene::Scene;
+
+pub enum ObjectType {
+    Default,
+    Terrain,
+    SeaGrass
+}
 
 pub struct SceneRenderer {
-   shader: ShaderProgram
+    shader_without_tesselation: ModelShader,
+    shader_with_tesselation: ModelShader,
 }
 
 impl SceneRenderer {
     pub fn init() -> Self {
-        let fragment_shader = Shader::new("model.frag", gl::FRAGMENT_SHADER);
-        let vertex_shader = Shader::new("model.vert", gl::VERTEX_SHADER);
-        let shader_program = ShaderProgram::new(&[vertex_shader, fragment_shader]);
-        shader_program.bind_attributes(0, "position");
-        shader_program.bind_attributes(1, "uv");
-        SceneRenderer {
-            shader: shader_program
+        unsafe {
+            SceneRenderer {
+                shader_without_tesselation: ModelShader::new(false),
+                shader_with_tesselation: ModelShader::new(true),
+            }
         }
     }
 
-    pub fn render(&self, scene: &mut Scene, texture_handler: &mut TextureHandler) {
-        self.shader.start();
-        let models: &mut Vec<Model> = &mut scene.models;
-        unsafe {
-            let model_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uModelMatrix").unwrap()));
-            let view_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uViewMatrix").unwrap()));
-            let projection_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uProjectionMatrix").unwrap()));
-            let has_texture_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uHasTexture").unwrap()));
-            let color_location = gl::GetUniformLocation(self.shader.id, std::ffi::CStr::as_ptr(&CString::new("uColor").unwrap()));
-            let view_matrix = scene.camera.get_view_matrix();
-            let projection_matrix = scene.camera.get_projection_matrix();
-            for model in models.iter_mut() {
-                let model_matrix = model.get_model_matrix();
-                gl::UniformMatrix4fv(model_location, 1, gl::FALSE, model_matrix.as_ptr() as * const f32);
-                gl::UniformMatrix4fv(view_location, 1, gl::FALSE, view_matrix.as_ptr() as * const f32);
-                gl::UniformMatrix4fv(projection_location, 1, gl::FALSE, projection_matrix.as_ptr() as * const f32);
-                gl::BindVertexArray(model.get_vao());
-                gl::EnableVertexAttribArray(0);
-                gl::EnableVertexAttribArray(1);
-                let texture_name = model.get_current_texture();
-                let use_texture = !texture_name.is_none(); 
-                if use_texture {
-                    let texture = texture_handler.get_texture(texture_name.unwrap());
-                    gl::Uniform1f(has_texture_location, 1.0);
-                    gl::ActiveTexture(gl::TEXTURE0);
-                    gl::BindTexture(gl::TEXTURE_2D, texture.get_id());
-                } else {
-                    gl::Uniform1f(has_texture_location, 0.0);
-                    let color = model.get_color();
-                    gl::Uniform3f(color_location, color.x, color.y, color.z);
+    unsafe fn render_tile(&self, shader: &ModelShader, tile: &Tile) {
+        shader.set_isuphill(tile.is_uphill());
+        shader.set_height(tile.get_height());
+        self.render_model(shader, tile.get_model(), None);
+    } 
+
+    unsafe fn render_model_group(&self, shader: &ModelShader, model_group: &ModelGroup) {
+        for model in model_group.get_models() {
+            let model_matrix = transformation::create_model_matrix(model, Some(model_group));
+            self.render_model(shader, model, Some(model_matrix));
+        }
+    }
+
+    unsafe fn render_model(&self, shader: &ModelShader, model: &Model, model_matrix_opt: Option<[[f32; 4]; 4]>) {
+        let model_matrix = model_matrix_opt.unwrap_or(transformation::create_model_matrix(model, None));
+        shader.set_model_matrix(model_matrix);
+        shader.set_flipped(model.is_flipped());
+        gl::BindVertexArray(model.get_vao());
+        gl::EnableVertexAttribArray(0);
+        gl::EnableVertexAttribArray(1);
+        let texture = model.get_texture();
+        match texture {
+            Texture::StaticColor(static_color) => {
+                shader.set_color(static_color.color);
+            },
+            Texture::StaticTexture(static_texture) => {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, static_texture.get_id());
+            },
+            Texture::AnimatedTexture(animated_texture) => {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, animated_texture.current_texture().get_id());
+            },
+            Texture::GradientTexture(_) => {} // Not implemented
+        }
+        shader.set_texture_type(&texture);
+        gl::DrawElements(
+            match shader.has_tesselation() {
+                true => gl::PATCHES,
+                false => gl::TRIANGLES
+            },
+            model.get_vertex_count(),
+            gl::UNSIGNED_INT,
+            0 as * const _
+        );
+        gl::DisableVertexAttribArray(0);
+        gl::DisableVertexAttribArray(1);
+    }
+
+    pub unsafe fn render(&self, scene: &Scene) {
+        /* TESSELATION ENABLED */
+
+        let mut current_shader = &self.shader_with_tesselation;
+        current_shader.start();
+
+        // Render seagrass
+        current_shader.set_object_type(ObjectType::SeaGrass);
+        
+        for tile in scene.get_world().get_terrain().get_tiles() {
+            for object in tile.get_objects() {
+                let object_position = object.get_position();
+                let mut current = scene.get_world().get_water().get_current(&object_position.xy());
+
+                let player_position = scene.player.model_group.get_position();
+                let player_distance = (object_position - player_position).length();
+                if player_distance != 0.0 {
+                    let mut influence = 1.0 / (player_distance.powf(1.5) * 10.0);
+                    let influence_treshold = 5.5;
+                    influence = f32::min(influence_treshold, influence);
+                    current += influence * scene.player.get_velocity().x;
                 }
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    model.get_vertex_count(),
-                    gl::UNSIGNED_INT,
-                    0 as * const _
-                );
-                gl::DisableVertexAttribArray(0);
-                gl::DisableVertexAttribArray(1);
+
+                current_shader.set_current(current);
+                self.render_model(current_shader, object, None);
             }
-            gl::BindVertexArray(0);
-        };
-        self.shader.stop();
+        }
+        current_shader.stop();
+
+        /* TESSELATION DISABLED */
+        current_shader = &self.shader_without_tesselation;
+        current_shader.start();
+
+        current_shader.set_object_type(ObjectType::Terrain);
+
+        for tile in scene.get_world().get_terrain().get_tiles() {
+            self.render_tile(current_shader, tile);
+        }
+
+        current_shader.set_object_type(ObjectType::Default);
+
+        // Render each model of the scene
+        for model in scene.models.iter() {
+            self.render_model(current_shader, model, None)
+        }
+
+        current_shader.set_object_type(ObjectType::Default);
+
+        // Render player
+        self.render_model_group(current_shader, &scene.player.model_group);
+        // Render particles
+        for particle_ptr in scene.get_particles().iter() {
+            let particle_system = RefCell::borrow(particle_ptr);
+            for particle in particle_system.particles.iter() {
+                self.render_model(current_shader, particle.get_model(), None);
+            }
+        }
+
+        gl::BindVertexArray(0);
+
+        current_shader.stop();
     }
 }

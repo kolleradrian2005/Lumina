@@ -2,7 +2,7 @@ use std::{fs, ffi::CString};
 
 use gl::types::*;
 
-use crate::references;
+use crate::engine::references;
 
 pub struct Shader {
     pub id: GLuint
@@ -34,7 +34,7 @@ impl Shader {
                 gl::GetShaderInfoLog(shader.id, error_log_size, std::ptr::null_mut(), error_log.as_mut_ptr() as *mut GLchar);
                 error_log.set_len(error_log_size as usize);
                 let log = String::from_utf8_lossy(&error_log);
-                println!("Could not compile: {}", path);
+                println!("Could not compile: {} Log: {:?}", path, log);
                 panic!("{:?}", log);
             }
             shader

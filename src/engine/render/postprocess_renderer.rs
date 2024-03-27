@@ -1,94 +1,67 @@
-use std::ffi::CString;
+use crate::engine::scene::scene::Scene;
+use crate::engine::shader::postprocess_shader::PostprocessShader;
+use crate::engine::shader::shader_program::ShaderProgram;
+use crate::engine::texture::frame_buffer::Framebuffer;
+use crate::engine::window_handler::WindowHandler;
 
-use crate::frame_buffer::Framebuffer;
-use crate::scene::Scene;
-use crate::shader::Shader;
-use crate::shader_program::ShaderProgram;
-use crate::window_handler;
+use super::uniformbuffer::{PostProcessUniformBuffer, UniformBuffer};
 
 pub struct PostprocessRenderer {
-    shader: ShaderProgram,
+    shader: PostprocessShader,
+    uniform_buffer: UniformBuffer<PostProcessUniformBuffer>,
+
 }
 
 impl PostprocessRenderer {
     pub fn init() -> Self {
-        let fragment_shader = Shader::new("postprocess.frag", gl::FRAGMENT_SHADER);
-        let vertex_shader = Shader::new("postprocess.vert", gl::VERTEX_SHADER);
-        let shader_program = ShaderProgram::new(&[vertex_shader, fragment_shader]);
-        shader_program.bind_attributes(0, "position");
-        shader_program.bind_attributes(1, "uv");
-        PostprocessRenderer {
-            shader: shader_program,
+        unsafe {
+            PostprocessRenderer {
+                shader: PostprocessShader::new(),
+                uniform_buffer: UniformBuffer::create(1),
+            }
         }
     }
 
-    pub fn render(&self, scene: &mut Scene, framebuffer: &mut Framebuffer) {
+    pub unsafe fn render(&mut self, scene: &Scene, framebuffer: &Framebuffer, window_handler: &WindowHandler) {
         self.shader.start();
-        let model = &mut framebuffer.model;
-        let foreground = &mut scene.foreground;
-        unsafe {
-            let focal_offset = &scene.focal_offset;
-            let tint_color_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uTintColor").unwrap()),
-            );
-            let tint_intensity_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uTintIntensity").unwrap()),
-            );
-            let focal_radius_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uFocalRadius").unwrap()),
-            );
-            let darkening_factor_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uDarkeningFactor").unwrap()),
-            );
-            let aspect_ratio_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uAspectRatio").unwrap()),
-            );
-            let smooth_factor_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uSmoothFactor").unwrap()),
-            );
-            let focal_offset_location = gl::GetUniformLocation(
-                self.shader.id,
-                std::ffi::CStr::as_ptr(&CString::new("uFocalOffset").unwrap()),
-            );
+        self.uniform_buffer.bind_base();
+        
+        let model = framebuffer.get_model();
+        let foreground = &scene.foreground;
+        self.shader.set_focal_offset(scene.camera.get_focal_offset());
+        self.shader.set_aspect_ratio(window_handler.get_aspect_ratio());
 
-            gl::Uniform3f(
-                tint_color_location,
-                foreground.tint_color.x,
-                foreground.tint_color.y,
-                foreground.tint_color.z,
-            );
-            gl::Uniform1f(tint_intensity_location, foreground.tint_intensity);
-            gl::Uniform1f(focal_radius_location, foreground.focal_radius);
-            gl::Uniform1f(darkening_factor_location, foreground.darkening_factor);
-            gl::Uniform1f(
-                aspect_ratio_location,
-                window_handler::WINDOW_WIDTH as f32 / window_handler::WINDOW_HEIGHT as f32,
-            );
-            gl::Uniform1f(smooth_factor_location, foreground.smooth_factor);
-            gl::Uniform2f(focal_offset_location, focal_offset.x, focal_offset.y);
+        let light_positions: Vec<f32> = foreground.get_light_positions();
+        let num_lights = light_positions.len() as i32 / 2;
+        self.shader.set_num_lights(num_lights);
+        self.shader.set_light_positions(num_lights, &light_positions);
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, framebuffer.get_texture());
+        // Draw model
+        gl::BindVertexArray(model.get_vao());
+        gl::EnableVertexAttribArray(0);
+        gl::EnableVertexAttribArray(1);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            model.get_vertex_count(),
+            gl::UNSIGNED_INT,
+            0 as *const _,
+        );
+        gl::DisableVertexAttribArray(0);
+        gl::DisableVertexAttribArray(1);
+        gl::BindVertexArray(0);
 
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, framebuffer.texture);
-            // Draw model
-            gl::BindVertexArray(model.get_vao());
-            gl::EnableVertexAttribArray(0);
-            gl::EnableVertexAttribArray(1);
-            gl::DrawElements(
-                gl::TRIANGLES,
-                model.get_vertex_count(),
-                gl::UNSIGNED_INT,
-                0 as *const _,
-            );
-            gl::DisableVertexAttribArray(0);
-            gl::DisableVertexAttribArray(1);
-            gl::BindVertexArray(0);
-        };
+        self.uniform_buffer.unbind_base();
         self.shader.stop();
+    }
+    pub fn update_focal_radius(&mut self, scene: &mut Scene) {
+        unsafe {
+            self.uniform_buffer.set_focal_radius(scene.foreground.get_focal_radius())
+        };
+    }
+    pub fn load_scene(&mut self, scene: &Scene) {
+        unsafe {
+            self.uniform_buffer.set_data(scene.foreground.get_default_uniform_buffer())
+        };
     }
 }

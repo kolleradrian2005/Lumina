@@ -1,99 +1,157 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, f32::consts::PI};
 
 use noise::{NoiseFn, Perlin};
 
-use crate::{model::Model, vec2::Vec2};
+use crate::engine::{
+    math::vec3::Vec3,
+    texture::{
+        resource_manager::ResourceManager,
+        texture::{StaticColor, Texture},
+    },
+};
 
-extern crate noise;
-
+use super::tile::Tile;
 pub struct Terrain {
     noise: Perlin,
     pub tile_size: f32,
-    loaded_tiles: VecDeque<Model>,
+    tiles: VecDeque<Tile>,
     loaded_tile_index: i32,
-    default_tile_count: i32
+    default_tile_count: i32,
+    tile_texture: Texture,
 }
 
 impl Terrain {
-    pub fn new(seed: u32) -> Self {
-        let noise = Perlin::new(seed);
-        let tile_size = 0.1;
-        let loaded_tiles = VecDeque::new();
-        let loaded_tile_index: i32 = 0;
-        let mut default_tile_count = (2.0 / tile_size as f32) as i32 + 2;
+    pub fn generate(seed: u32, resoure_manager: &mut ResourceManager) -> Self {
+        let tile_size = 0.5;
+        let extra_tiles = 4;
+        let mut default_tile_count = (2.0 / tile_size as f32) as i32 + extra_tiles;
         default_tile_count -= default_tile_count % 2;
-        let mut terrain = Terrain { noise, tile_size, loaded_tiles, loaded_tile_index, default_tile_count };
-        terrain.loaded_tiles.push_back(terrain.generate_tile(loaded_tile_index));
+        let loaded_tile_index = 0;
+        let mut terrain = Terrain {
+            noise: Perlin::new(seed),
+            tiles: VecDeque::new(),
+            tile_size,
+            loaded_tile_index,
+            default_tile_count, // Even
+            tile_texture: StaticColor::new((0.8235, 0.7059, 0.5490).into()).into(),
+        };
+        terrain
+            .tiles
+            .push_back(terrain.generate_tile(loaded_tile_index, resoure_manager));
         for i in 1..default_tile_count / 2 + 1 as i32 {
-            terrain.loaded_tiles.push_back(terrain.generate_tile(loaded_tile_index + i));
-            terrain.loaded_tiles.push_front(terrain.generate_tile(loaded_tile_index - i));
+            terrain
+                .tiles
+                .push_back(terrain.generate_tile(loaded_tile_index + i, resoure_manager));
+            terrain
+                .tiles
+                .push_front(terrain.generate_tile(loaded_tile_index - i, resoure_manager));
         }
         terrain
     }
-    fn generate_tile(&self, x: i32) -> Model {
-        let previous_y: f32 = self.get_height(x - 1);
-        let current_y: f32 = self.get_height(x);
-        let next_y: f32 = self.get_height(x + 1);
-        let left_y_offset = (previous_y - current_y) / 2.0;
-        let right_y_offset = (current_y - next_y) / 2.0;
-        let vertices: &[f32] = &[
-            // Bottom left
-            -self.tile_size / 2.0, -1.0 + left_y_offset, 1.0,
-            // Bottom right
-            self.tile_size / 2.0, -1.0 - right_y_offset, 1.0,
-            // Top right
-            self.tile_size / 2.0, self.tile_size / 2.0 - right_y_offset, 1.0,
-            // Top left
-            -self.tile_size / 2.0, self.tile_size / 2.0 + left_y_offset, 1.0,
-        ];
 
-        let indices: &[u32] = &[
-            0, 1, 2,
-            2, 3, 0
-        ];
-
-        let uvs: &[f32] = &[
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-        ];
-        let mut tile: Model = Model::new(vertices, indices, uvs);
-        tile.set_position(Vec2::new(x as f32 * self.tile_size, current_y));
-        tile
-    }
-    pub fn get_height(&self, x: i32) -> f32 {
-        let amplitude = 0.1;
-        let frequency = 0.2;
-        let noise_value = self.noise.get([frequency * x as f64, 0.0]) * amplitude;
-        // TODO: add more noise to create hills
-        noise_value as f32
+    pub fn is_loaded(&self, pos: Vec3) -> bool {
+        return ((pos.x / self.tile_size).round() as i32 - self.loaded_tile_index).abs()
+            <= self.default_tile_count / 2;
     }
 
-    pub fn get_loaded_tiles(&self) -> &VecDeque<Model> {
-        &self.loaded_tiles
+    pub fn get_tiles(&self) -> &VecDeque<Tile> {
+        &self.tiles
     }
 
-    pub fn update_tile_index(&mut self, tile_index: i32) {
-        let difference = self.loaded_tile_index - tile_index; 
+    pub fn update_tile_index(&mut self, tile_index: i32, resoure_manager: &mut ResourceManager) {
+        let difference = self.loaded_tile_index - tile_index;
         if difference != 0 {
             self.loaded_tile_index = tile_index;
             if difference > 0 {
-                self.sweep_left();
+                self.sweep_left(resoure_manager);
             } else {
-                self.sweep_right();
+                self.sweep_right(resoure_manager);
             }
         }
     }
 
-    fn sweep_left(&mut self) {
-        let new_tile = self.generate_tile((self.loaded_tile_index - self.default_tile_count / 2) as i32);
-        self.loaded_tiles.push_front(new_tile);
-        self.loaded_tiles.pop_back();
+    pub fn get_height(&self, x_f: f32) -> f32 {
+        let x = (x_f / self.tile_size + 0.5).floor() as i32;
+        let mut x_fract = (x_f / self.tile_size + 0.5).fract();
+        if x_fract < 0.0 {
+            x_fract = 1.0 - x_fract;
+        }
+
+        let previous_y: f32 = Terrain::get_height_noise(x - 1, &self.noise);
+        let current_y: f32 = Terrain::get_height_noise(x, &self.noise);
+        let next_y: f32 = Terrain::get_height_noise(x + 1, &self.noise);
+
+        let left_y_offset = (previous_y - current_y) / 2.0;
+        let right_y_offset = (current_y - next_y) / 2.0;
+        let a = self.tile_size / 2.0 + left_y_offset;
+        let b = self.tile_size / 2.0 - right_y_offset;
+        let uphill = a < b;
+
+        let top = f32::max(previous_y, next_y);
+        let bot = f32::min(previous_y, next_y);
+
+        let height = top - bot;
+
+        current_y + bot + height * Self::interpolate(f32::from(!uphill), f32::from(uphill), x_fract)
     }
-    fn sweep_right(&mut self) {
-        let new_tile = self.generate_tile((self.loaded_tile_index + self.default_tile_count / 2) as i32);
-        self.loaded_tiles.push_back(new_tile);
-        self.loaded_tiles.pop_front();
+
+    pub fn interpolate(a: f32, b: f32, blend: f32) -> f32 {
+        let tetha = blend * PI;
+        let f = (1.0 - f32::cos(tetha)) * 0.5;
+        a * (1.0 - f) + b * f
+    }
+
+    pub fn get_fish_noise(x: i32, noise: &Perlin) -> f32 {
+        let amplitude = 1.5;
+        let frequency = 0.15;
+        let offset = 8.0;
+        let mut noise_value = noise.get([frequency * x as f64, offset]) * amplitude;
+        noise_value += noise.get([frequency / 2.0 * x as f64, offset]) * amplitude * 1.5;
+        noise_value as f32
+    }
+
+    pub fn get_seaweed_noise(x: i32, noise: &Perlin) -> f32 {
+        let amplitude = 1.5;
+        let frequency = 0.15;
+        let offset = 4.0;
+        let mut noise_value = noise.get([frequency * x as f64, offset]) * amplitude;
+        noise_value += noise.get([frequency / 2.0 * x as f64, offset]) * amplitude * 1.5;
+        noise_value as f32
+    }
+
+    pub fn get_height_noise(x: i32, noise: &Perlin) -> f32 {
+        let amplitude = 0.15;
+        let frequency = 0.2;
+        let mut noise_value = noise.get([frequency * x as f64, 0.0]) * amplitude;
+        noise_value += noise.get([frequency / 4.0 * x as f64, 0.0]) * amplitude * 2.0;
+        noise_value as f32
+    }
+
+    fn generate_tile(&self, x: i32, resoure_manager: &mut ResourceManager) -> Tile {
+        Tile::generate(
+            self.tile_size,
+            x,
+            &self.noise,
+            &self.tile_texture,
+            resoure_manager,
+        )
+    }
+
+    fn sweep_left(&mut self, resoure_manager: &mut ResourceManager) {
+        let new_tile = self.generate_tile(
+            (self.loaded_tile_index - self.default_tile_count / 2) as i32,
+            resoure_manager,
+        );
+        self.tiles.push_front(new_tile);
+        self.tiles.pop_back();
+    }
+
+    fn sweep_right(&mut self, resoure_manager: &mut ResourceManager) {
+        let new_tile = self.generate_tile(
+            (self.loaded_tile_index + self.default_tile_count / 2) as i32,
+            resoure_manager,
+        );
+        self.tiles.push_back(new_tile);
+        self.tiles.pop_front();
     }
 }

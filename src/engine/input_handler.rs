@@ -1,47 +1,64 @@
 use std::collections::HashMap;
 
-use glfw::Key;
-use crate::{scene::Scene, vec2::Vec2};
+use glfw::{Action, Key};
+
+use super::math::vec2::Vec2;
 
 pub struct InputHandler {
     key_states: HashMap<Key, bool>,
-    pub exit_requested: bool
+    l_mouse: Option<Action>,
+    r_mouse: Option<Action>,
+    mouse_position: Vec2,
 }
 
 impl InputHandler {
 
     pub fn init() -> Self {
-        InputHandler { key_states: HashMap::new(), exit_requested: false }
+        InputHandler {
+            key_states: HashMap::new(),
+            l_mouse: None,
+            r_mouse: None,
+            mouse_position: Vec2::zero(),
+        }
     }
 
     pub fn update_key_state(&mut self, key_code: Key, state: bool) {
-        let entry: &mut bool = self.key_states.entry(key_code).or_insert(state);
-        *entry = state;
+        *self.key_states.entry(key_code).or_insert(state) = state;
     }
 
-    pub fn handle_keys(&mut self, scene: &mut Scene, delta_time: u128) {
-        let mut direction: Vec2 = Vec2::new(0.0, 0.0);
-        let move_speed: &f32 = &scene.player.get_move_speed();
-        // W pressed
-        if *self.key_states.get(&Key::W).unwrap_or(&false) {
-            direction.y += 1.0;
-        }
-        // A pressed
-        if *self.key_states.get(&Key::A).unwrap_or(&false) {
-            direction.x -= 1.0;
-        }
-        // S pressed
-        if *self.key_states.get(&Key::S).unwrap_or(&false) {
-            direction.y -= 1.0;
-        }
-        // D pressed
-        if *self.key_states.get(&Key::D).unwrap_or(&false) {
-            direction.x += 1.0;
-        }
-        // ESC pressed
-        if *self.key_states.get(&Key::Escape).unwrap_or(&false) {
-            self.exit_requested = true;
-        }
-        scene.player.change_position(&direction.normalized().times(move_speed * delta_time as f32));
+    pub fn is_pressed(&self, key_code: Key) -> bool {
+        *self.key_states.get(&key_code).unwrap_or(&false)
+    }
+
+    pub fn handle_l_mouse(&mut self) -> Option<Action> {
+        let state = self.l_mouse;
+        self.l_mouse = None;
+        state
+    }
+
+    pub fn handle_r_mouse(&mut self) -> Option<Action> {
+        let state = self.r_mouse;
+        self.r_mouse = None;
+        state
+    }
+
+    pub fn set_l_mouse(&mut self, action: Action) {
+        self.l_mouse = Some(action);
+    }
+
+    pub fn set_r_mouse(&mut self, action: Action) {
+        self.r_mouse = Some(action);
+    }
+
+    pub fn set_mouse_position(&mut self, mouse_position: Vec2) {
+        self.mouse_position = mouse_position;
+    }
+
+    pub fn get_mouse_position(&self) -> Vec2 {
+        self.mouse_position
+    }
+
+    pub fn get_normalized_mouse_position(&self, (width, height): (i32, i32)) -> Vec2 {
+        (self.mouse_position.x / width as f32 * 2.0, self.mouse_position.y / height as f32 * 2.0).into()
     }
 }

@@ -46,7 +46,7 @@ impl MeshHandler {
                 std::ptr::null()
             );
             // Unbind VBO
-            //gl::BindBuffer(gl::ARRAY_BUFFER , 0);
+            gl::BindBuffer(gl::ARRAY_BUFFER , 0);
         };
     }
 

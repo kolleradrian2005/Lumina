@@ -1,13 +1,25 @@
-use std::f32::consts::PI;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::{Duration, Instant};
 
-use crate::background::Background;
-use crate::camera::Camera;
-use crate::foreground::Foreground;
-use crate::model::Model;
-use crate::player::Player;
-use crate::terrain::Terrain;
-use crate::texture_handler::TextureHandler;
-use crate::vec2::Vec2;
+use rand::rngs::ThreadRng;
+use rand::Rng;
+
+use crate::engine::input_handler::InputHandler;
+
+use crate::engine::math::vec3::Vec3;
+use crate::engine::model::model::Model;
+use crate::engine::render::updatable::Updatable;
+use crate::engine::scene::particle::particle::ParticleType;
+use crate::engine::texture::resource_manager::ResourceManager;
+use crate::engine::transformable::Transformable;
+
+use super::background::Background;
+use super::camera::Camera;
+use super::foreground::Foreground;
+use super::particle::particle_system::ParticleSystem;
+use super::player::Player;
+use super::world::World;
 
 pub struct Scene {
     pub models: Vec<Model>,
@@ -15,27 +27,24 @@ pub struct Scene {
     pub player: Player,
     pub background: Background,
     pub foreground: Foreground,
-    pub terrain: Terrain,
-    pub focal_offset: Vec2,
+    world: World,
+    particles: Vec<Rc<RefCell<ParticleSystem>>>,
+    last_fish_spawn: Instant,
 }
 
+const WORLD_SEED: u32 = 696969;
+
 impl Scene {
-    pub fn new(texture_handler: &mut TextureHandler) -> Self {
-        let models: Vec<Model> = Vec::new();
-        let camera: Camera = Camera::new();
-        let player: Player = Player::new(texture_handler);
-        let background: Background = Background::construct(texture_handler);
-        let foreground: Foreground = Foreground::construct();
-        let focal_offset: Vec2 = Vec2::new(0.0, 0.0);
-        let terrain = Terrain::new(696);
+    pub fn new(resource_manager: &mut ResourceManager) -> Self {
         Scene {
-            models,
-            camera,
-            player,
-            background,
-            foreground,
-            focal_offset,
-            terrain,
+            models: Vec::new(),
+            camera: Camera::new(),
+            player: Player::new(resource_manager),
+            background: Background::construct(resource_manager),
+            foreground: Foreground::construct(),
+            world: World::load(WORLD_SEED, resource_manager),
+            particles: Vec::new(),
+            last_fish_spawn: Instant::now(),
         }
     }
 
@@ -43,90 +52,79 @@ impl Scene {
         self.models.push(model);
     }
 
-    pub fn update(&mut self, delta_time: u128) {
-        self.update_camera(&delta_time);
-        self.update_player(&delta_time);
-    }
+    pub fn update(
+        &mut self,
+        delta_time: f32,
+        input_handler: &InputHandler,
+        resource_manager: &mut ResourceManager,
+        rng: &mut ThreadRng,
+        updatables: &mut Vec<Updatable>,
+    ) {
+        // Update player
+        self.player.update(
+            delta_time,
+            &input_handler,
+            resource_manager,
+            self.world.get_water().get_resistance(),
+            &self.world,
+            &mut self.particles,
+        );
 
-    pub fn update_player(&mut self, delta_time: &u128) {
         // Load terrain correctly
-        let tile_index = (self.player.get_position().x / self.terrain.tile_size).round() as i32;
-        self.terrain.update_tile_index(tile_index);
-        // Rotation animation
-        let mut rotation = self.player.model_group.get_rotation().clone();
-        let mut dest_rotation = self.player.get_dest_rotation();
-        if dest_rotation < 0.0 {
-            dest_rotation += 2.0 * PI;
+        let tile_index = (self.player.model_group.get_position().x
+            / self.world.get_terrain().tile_size)
+            .round() as i32;
+        self.world
+            .get_terrain_mut()
+            .update_tile_index(tile_index, resource_manager);
+        // Load godrays correctly
+        self.foreground
+            .update_god_rays(self.player.model_group.get_position().xy());
+
+        // Update camera
+        self.camera.update(delta_time, &mut self.player, updatables);
+
+        // Update foreground
+        self.foreground.update(delta_time, &self.player, updatables);
+
+        // Update particles
+        self.particles.retain_mut(|particle_ptr| {
+            let mut particle_system = RefCell::borrow_mut(particle_ptr);
+            particle_system.update(delta_time, rng, self.world.get_terrain());
+            particle_system.is_alive()
+        });
+
+        // Spawn fish
+        const FISH_Z: f32 = -0.5;
+        let now = Instant::now(); // TODO: dont use now and not: TODO: pass now down the stack anywhere needed
+
+        // TODO: check if fish already spawned
+        if 2.0 < now.duration_since(self.last_fish_spawn).as_secs_f32() {
+            const POPULATION_TIME: f32 = 6.0;
+            let sig = rng.gen_range(0..=1) as f32 * 2.0 - 1.0;
+            let y_offset = rng.gen_range(0.0..=1.0) as f32 * 2.0 - 1.0;
+            let player_position = self.player.model_group.get_position();
+            let x = player_position.x + sig; // TODO: player.getPosition()
+            let y = player_position.y + y_offset;
+            let particle_position = Vec3::new(x, y, FISH_Z);
+            let mut fish_particle =
+                ParticleSystem::spawn(ParticleType::Fish, particle_position, resource_manager);
+            fish_particle.set_lifespan(Duration::from_secs_f32(POPULATION_TIME).into());
+            //fish_particle.set_particle_lifespan(Duration::from_secs_f32(14.0).into());
+            fish_particle.set_particle_lifespan(None);
+            fish_particle.set_particle_velocity(1.5);
+            fish_particle.update(POPULATION_TIME, rng, self.world.get_terrain());
+            let particle_ptr = Rc::new(RefCell::new(fish_particle));
+            self.particles.push(particle_ptr);
+            self.last_fish_spawn = now;
         }
-        dest_rotation %= 2.0 * PI;
-        let mut difference = dest_rotation - rotation;
-        if PI < difference {
-            difference =  difference - 2.0 * PI;
-        } else if PI < -difference {
-            difference =  difference + 2.0 * PI;
-        }
-        let rot_speed = 0.005;
-        rotation += rot_speed * difference * *delta_time as f32;
-        rotation %= 2.0 * PI;
-        if rotation < 0.0 {
-            rotation += 2.0 * PI;
-        }
-        let head_index = 5;
-        let is_flipped = !(0.0 <= rotation && rotation <= PI);
-        let is_moving = self.player.is_moving();
-        let initial_head_position = self.player.initial_positions[head_index];
-        let model_group = &mut self.player.model_group;
-        model_group.set_flipped(is_flipped);
-        // Move state
-        let head = model_group.get_model(head_index);
-        let mul = ((is_flipped as i32) * 2 - 1) as f32;
-        if is_moving {
-            let mut head_position = head.get_position().clone();
-            if !is_flipped {
-                head_position.x = initial_head_position.x - 0.01;
-            }
-            head_position.y = initial_head_position.y - 0.01;
-            head.set_position(head_position);
-            head.set_rotation(mul * PI / 2.0);
-        } else {
-            head.set_position(initial_head_position);
-            head.set_rotation(0.0);
-        }
-        model_group.set_rotation(rotation);
     }
 
-    pub fn update_camera(&mut self, delta_time: &u128) {
-        let player_position = self.player.get_position();
-        let mut camera_position = self.camera.get_position().clone();
+    pub fn get_particles(&self) -> &Vec<Rc<RefCell<ParticleSystem>>> {
+        &self.particles
+    }
 
-        let x_max_dist = 0.25;
-        let y_max_dist = 0.25;
-
-        if x_max_dist <= player_position.x - camera_position.x {
-            camera_position.x = player_position.x - x_max_dist
-        } else if x_max_dist <= camera_position.x - player_position.x {
-            camera_position.x = player_position.x + x_max_dist
-        }
-
-        if y_max_dist <= player_position.y - camera_position.y {
-            camera_position.y = player_position.y - y_max_dist
-        } else if y_max_dist <= camera_position.y - player_position.y {
-            camera_position.y = player_position.y + y_max_dist
-        }
-
-        let difference = player_position.minus(&camera_position);
-        let direction = difference.normalized();
-        let length = difference.length();
-
-        let mut move_speed = self.camera.get_move_speed().clone();
-
-        if length < move_speed {
-            move_speed = length;
-        }
-
-        camera_position
-            .add(&direction.times(move_speed * f32::sqrt(length) * *delta_time as f32 / 10.0));
-        self.focal_offset = player_position.minus(&camera_position);
-        self.camera.set_position(camera_position);
+    pub fn get_world(&self) -> &World {
+        &self.world
     }
 }

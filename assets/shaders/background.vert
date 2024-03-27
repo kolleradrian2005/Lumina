@@ -5,7 +5,18 @@ in vec2 uv;
 
 out vec2 pass_uvs;
 
+layout (std140, binding = 0) uniform MatrixUniformBuffer {
+    mat4 uProjectionMatrix;
+    mat4 uViewMatrix;
+};
+
+uniform mat4 uModelMatrix;
+uniform bool uFlipped;
+
 void main(void) {
-    gl_Position = vec4(position, 1.0);
-    pass_uvs = uv;
+    vec4 modelPos = uModelMatrix * vec4(position, 1.0);
+    pass_uvs = (inverse(uViewMatrix) * vec4(uv * -modelPos.z, 1.0, 1.0)).xy;
+    gl_Position = modelPos;
+    gl_Position.z = 1.0 * gl_Position.w; // Don't shrink despite depth
+    pass_uvs = (uFlipped ? vec2(1.0 - pass_uvs.x, pass_uvs.y) : pass_uvs) / -modelPos.z;
 }
