@@ -1,6 +1,6 @@
 use super::math::vec2::Vec2;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Collider {
     pub points: [Vec2; 4],
     pub transformed_points: [Vec2; 4],

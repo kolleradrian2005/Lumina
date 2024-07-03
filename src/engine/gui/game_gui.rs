@@ -1,8 +1,6 @@
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, RwLock};
 
-use crate::engine::{
-    model::model::Model, texture::resource_manager::ResourceManager, window_handler::WindowHandler,
-};
+use crate::engine::{model::model::Model, texture::resource_manager::ResourceManager};
 
 use super::{
     elements::{align::Align, container::Container, gesture_detector::GestureDetector, text::Text},
@@ -15,7 +13,7 @@ pub struct GameGui {
     //state: Box<UiElement>,
     elements: Vec<Model>,
     listeners: Vec<Listener>,
-    counter: Rc<RefCell<i32>>,
+    counter: Arc<RwLock<i32>>,
 }
 
 impl GameGui {
@@ -23,19 +21,19 @@ impl GameGui {
         GameGui {
             elements: Vec::new(),
             listeners: Vec::new(),
-            counter: Rc::new(RefCell::new(0)),
+            counter: Arc::new(RwLock::new(0)),
         }
     }
 }
 
 impl Gui for GameGui {
-    fn build(&mut self, resource_manager: &ResourceManager, window_handler: &WindowHandler) {
+    fn build(&mut self, resource_manager: &ResourceManager, aspect_ratio: f32) {
         let counter = self.counter.clone();
         let state: Box<UiElement> = Align {
             alignment: Alignment::Top,
             child: GestureDetector {
-                on_click: Rc::new(RefCell::new(Box::new(move || {
-                    let mut counter = counter.borrow_mut();
+                on_click: Arc::new(RwLock::new(Box::new(move || {
+                    let mut counter = counter.write().unwrap();
                     *counter += 1;
                     true
                 }))),
@@ -46,7 +44,10 @@ impl Gui for GameGui {
                         Align {
                             alignment: Alignment::Center,
                             child: Text {
-                                text: self.counter.borrow().to_string(), //"Lumina".into(), //num.to_string(),
+                                text: format!(
+                                    "Counter: {}",
+                                    self.counter.read().unwrap().to_string()
+                                ), //"Lumina".into(), //num.to_string(),
                                 font: resource_manager.get_font("default"),
                                 font_size: 0.001,
                             }
@@ -62,7 +63,7 @@ impl Gui for GameGui {
             .into(),
         }
         .into();
-        (self.elements, self.listeners) = gui::build(&state, window_handler);
+        (self.elements, self.listeners) = gui::build(&state, aspect_ratio);
     }
 
     fn get_listeners(&mut self) -> &Vec<Listener> {

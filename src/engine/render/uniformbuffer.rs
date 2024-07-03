@@ -1,4 +1,4 @@
-use gl::types::{GLuint, GLsizeiptr, GLvoid, GLintptr};
+use gl::types::{GLintptr, GLsizeiptr, GLuint, GLvoid};
 
 pub struct MatrixUniformBuffer {
     pub projection_matrix: [[f32; 4]; 4],
@@ -19,7 +19,7 @@ pub struct UniformBuffer<T> {
     ubo: GLuint,
     binding_index: GLuint,
     allocated: GLsizeiptr,
-    content: Option<T>
+    content: Option<T>,
 }
 
 impl<T> UniformBuffer<T> {
@@ -30,7 +30,7 @@ impl<T> UniformBuffer<T> {
             ubo,
             binding_index,
             allocated: 0,
-            content: None
+            content: None,
         }
     }
 
@@ -41,13 +41,13 @@ impl<T> UniformBuffer<T> {
             gl::UNIFORM_BUFFER,
             byte_size,
             &obj as *const _ as *const GLvoid,
-            gl::DYNAMIC_DRAW
+            gl::DYNAMIC_DRAW,
         );
         self.allocated = byte_size;
         self.content = Some(obj);
         self.unbind();
     }
-    
+
     pub unsafe fn set_sub_data<SubDataType>(&self, offset: GLintptr, obj: &SubDataType) {
         self.bind();
         let byte_size = std::mem::size_of::<SubDataType>() as GLsizeiptr;
@@ -104,4 +104,3 @@ impl UniformBuffer<PostProcessUniformBuffer> {
         }
     }
 }
-

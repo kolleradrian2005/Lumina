@@ -27,8 +27,8 @@ impl From<Padding> for Box<UiElement> {
 }
 
 impl From<Align> for Box<UiElement> {
-    fn from(aling: Align) -> Box<UiElement> {
-        Box::new(UiElement::Align(aling))
+    fn from(align: Align) -> Box<UiElement> {
+        Box::new(UiElement::Align(align))
     }
 }
 

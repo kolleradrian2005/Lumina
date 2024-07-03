@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::StdRng, Rng};
 
 use crate::engine::{math::vec3::Vec3, model::model::Model, transformable::Transformable};
 
@@ -24,7 +24,7 @@ pub struct Bubble {
 const DEFAULT_VELOCITY: Vec3 = Vec3::new(0.0, 0.03, 0.0);
 
 impl Bubble {
-    pub fn spawn(mut model: Model, mut spawn_position: Vec3, rng: &mut ThreadRng) -> Bubble {
+    pub fn spawn(mut model: Model, mut spawn_position: Vec3, rng: &mut StdRng) -> Bubble {
         let sig = rng.gen_range(0..=1) as f32 * 2.0 - 1.0;
         spawn_position.z += sig * 0.01;
         model.set_position(spawn_position);

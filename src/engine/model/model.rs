@@ -2,13 +2,13 @@ use gl::types::*;
 
 use crate::engine::collider::Collider;
 use crate::engine::math::vec2::Vec2;
-use crate::engine::texture::texture::{StaticColor, Texture};
-use crate::transformable::Transformable;
 use crate::engine::math::vec3::Vec3;
+use crate::engine::texture::texture::{StaticColor, Texture};
+use crate::engine::transformable::Transformable;
 
 use super::mesh_handler::MeshHandler;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Model {
     // Rendering
     vao: GLuint,
@@ -20,7 +20,7 @@ pub struct Model {
     scale: Vec2,
     // Texturing
     texture: Texture,
-    collider: Option<Collider>
+    collider: Option<Collider>,
 }
 
 impl Model {
@@ -34,7 +34,7 @@ impl Model {
             scale: Vec2::uniform(1.0),
             texture: StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into(),
             flipped: false,
-            collider: None
+            collider: None,
         }
     }
 
@@ -62,22 +62,21 @@ impl Model {
     pub fn is_flipped(&self) -> bool {
         self.flipped
     }
-    
+
     pub fn set_texture(&mut self, texture: Texture) {
         self.texture = texture;
     }
-    
+
     pub fn get_texture(&self) -> &Texture {
         &self.texture
     }
-    
+
     pub fn get_texture_mut(&mut self) -> &mut Texture {
         &mut self.texture
     }
 }
 
 impl Transformable for Model {
-
     fn get_position(&self) -> Vec3 {
         self.position
     }

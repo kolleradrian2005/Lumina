@@ -1,4 +1,6 @@
-#version 450 core
+#ifdef ES
+precision mediump float;
+#endif
 
 in vec3 position;
 in vec2 uv;

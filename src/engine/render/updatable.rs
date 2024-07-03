@@ -1,5 +1,5 @@
 pub enum Updatable {
-    Projection,
+    Projection { width: i32, height: i32 },
     View,
-    FocalRadius
+    FocalRadius,
 }

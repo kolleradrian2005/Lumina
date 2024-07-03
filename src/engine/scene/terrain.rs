@@ -58,6 +58,10 @@ impl Terrain {
         &self.tiles
     }
 
+    pub fn get_tiles_mut(&mut self) -> &mut VecDeque<Tile> {
+        &mut self.tiles
+    }
+
     pub fn update_tile_index(&mut self, tile_index: i32, resoure_manager: &mut ResourceManager) {
         let difference = self.loaded_tile_index - tile_index;
         if difference != 0 {
@@ -143,7 +147,7 @@ impl Terrain {
             resoure_manager,
         );
         self.tiles.push_front(new_tile);
-        self.tiles.pop_back();
+        self.tiles.pop_back(); // TODO: remove from GPU
     }
 
     fn sweep_right(&mut self, resoure_manager: &mut ResourceManager) {
@@ -152,6 +156,6 @@ impl Terrain {
             resoure_manager,
         );
         self.tiles.push_back(new_tile);
-        self.tiles.pop_front();
+        self.tiles.pop_front(); // TODO: remove from GPU
     }
 }

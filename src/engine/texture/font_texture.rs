@@ -17,7 +17,7 @@ pub struct FontTexture {
 impl FontTexture {
     pub fn new() -> FontTexture {
         Self {
-            texture_ids: HashMap::new()
+            texture_ids: HashMap::new(),
         }
     }
 
@@ -30,7 +30,7 @@ impl FontTexture {
             return texture.clone();
         }
         OffsetTexture {
-            texture: None,//StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into(),
+            texture: None, //StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into(),
             v_offset: 0.0,
             h_offset: 0.0,
         }

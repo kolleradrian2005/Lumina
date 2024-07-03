@@ -1,4 +1,7 @@
-#version 450 core
+#ifdef ES
+precision highp int;
+precision mediump float;
+#endif
 
 in vec3 position;
 in vec2 uv;
@@ -9,7 +12,12 @@ out vec2 pass_uvs;
 #define TERRAIN 1
 #define SEAGRASS 2
 
-layout (std140, binding = 0) uniform MatrixUniformBuffer {
+layout(
+std140
+#ifndef ES
+, binding = 0
+#endif
+) uniform MatrixUniformBuffer {
     mat4 uProjectionMatrix;
     mat4 uViewMatrix;
 };
@@ -25,7 +33,7 @@ uniform float uTime;
 
 void main(void) {
     gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(position, 1.0);
-    
+
     if (uObjectType == TERRAIN) {
         if (gl_VertexID == 0 || gl_VertexID == 1) {
             // Fixate vertex to bottom of the screen

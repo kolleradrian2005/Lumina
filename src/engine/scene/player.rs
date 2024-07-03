@@ -1,12 +1,10 @@
 use std::{
-    cell::RefCell,
     f32::consts::PI,
-    rc::Rc,
+    sync::{Arc, RwLock},
     time::{Duration, Instant},
-    u128,
 };
 
-use glfw::Key;
+use winit::keyboard::{Key, NamedKey};
 
 use crate::engine::{
     collider::Collider,
@@ -76,7 +74,7 @@ pub struct Player {
     pub initial_positions: Vec<Vec3>,
     pub initial_scales: Vec<f32>,
     last_exhale_time: Instant,
-    particle: Option<Rc<RefCell<ParticleSystem>>>,
+    particle: Option<Arc<RwLock<ParticleSystem>>>,
 }
 
 /*
@@ -112,25 +110,23 @@ impl Player {
         let mut tank_model = pattern_model.clone();
         let mut moving_legs_model = pattern_model.clone();
 
-        let mut head_textures: Vec<&str> = vec!["./player/head2.png", "./player/head3.png"];
+        let mut head_textures: Vec<&str> = vec!["player/head2.png", "player/head3.png"];
 
         let count = 22;
         for _ in 0..count {
-            head_textures.push("./player/head0.png");
-            head_textures.push("./player/head1.png");
+            head_textures.push("player/head0.png");
+            head_textures.push("player/head1.png");
         }
 
-        let moving_legs_textures: &[&str] = &["./player/legs0.png", "./player/legs1.png"];
+        let moving_legs_textures: &[&str] = &["player/legs0.png", "player/legs1.png"];
 
-        let texture_handler = resource_manager.get_texture_handler_mut();
-
-        let left_hand_texture = texture_handler.load_static_texture("./player/left_hand.png");
-        let legs_texture = texture_handler.load_static_texture("./player/legs0.png");
-        let torso_texture = texture_handler.load_static_texture("./player/torso.png");
-        let right_hand_texture = texture_handler.load_static_texture("./player/right_hand.png");
-        let tank_texture = texture_handler.load_static_texture("./player/tank.png");
-        let head_texture = texture_handler.load_animated_texture(head_textures.as_slice(), 6000);
-        let moving_legs_texture = texture_handler.load_animated_texture(
+        let left_hand_texture = resource_manager.load_static_texture("player/left_hand.png");
+        let legs_texture = resource_manager.load_static_texture("player/legs0.png");
+        let torso_texture = resource_manager.load_static_texture("player/torso.png");
+        let right_hand_texture = resource_manager.load_static_texture("player/right_hand.png");
+        let tank_texture = resource_manager.load_static_texture("player/tank.png");
+        let head_texture = resource_manager.load_animated_texture(head_textures.as_slice(), 6000);
+        let moving_legs_texture = resource_manager.load_animated_texture(
             moving_legs_textures,
             PlayerState::legs_animation_time(&PlayerState::Swimming),
         );
@@ -222,30 +218,30 @@ impl Player {
         resource_manager: &mut ResourceManager,
         water_resistance: f32,
         world: &World,
-        particles: &mut Vec<Rc<RefCell<ParticleSystem>>>,
+        particles: &mut Vec<Arc<RwLock<ParticleSystem>>>,
     ) {
         // Change position based on input
         let mut direction = Vec3::new(0.0, 0.0, 0.0);
         // W pressed
-        if input_handler.is_pressed(Key::W) {
+        if input_handler.is_pressed(Key::Character("w".into())) {
             direction.y += 1.0;
         }
         // A pressed
-        if input_handler.is_pressed(Key::A) {
+        if input_handler.is_pressed(Key::Character("a".into())) {
             direction.x -= 1.0;
         }
         // S pressed
-        if input_handler.is_pressed(Key::S) {
+        if input_handler.is_pressed(Key::Character("s".into())) {
             direction.y -= 1.0;
         }
         // D pressed
-        if input_handler.is_pressed(Key::D) {
+        if input_handler.is_pressed(Key::Character("d".into())) {
             direction.x += 1.0;
         }
         let direction_normal = direction.normalized();
         let mut new_state = PlayerState::Idle;
         if 0.0 < direction.length() {
-            if input_handler.is_pressed(Key::LeftShift) {
+            if input_handler.is_pressed(Key::Named(NamedKey::Shift)) {
                 new_state = PlayerState::FastSwimming;
             } else {
                 new_state = PlayerState::Swimming;
@@ -284,8 +280,7 @@ impl Player {
         self.acceleration = direction_normal * self.state.acceleration();
         // Calculate velocity
         self.velocity += self.acceleration * delta_time;
-        self.velocity *= 1.0 - water_resistance;
-        //println!("{:?}", self.velocity);
+        self.velocity *= f32::powf(1.0 - water_resistance, delta_time);
         // Calculate offset
         let offset = self.velocity * delta_time;
         let new_position = self.model_group.get_position() + offset;
@@ -344,7 +339,7 @@ impl Player {
             let head_position = head.get_position();
             let now = Instant::now();
             if let Some(particle_ptr) = &mut self.particle {
-                if let Ok(mut particle) = RefCell::try_borrow_mut(&particle_ptr) {
+                if let Ok(particle) = particle_ptr.write().as_mut() {
                     let particle_position: Vec3 = Self::calculate_particle_position(
                         new_position,
                         rotation,
@@ -370,7 +365,7 @@ impl Player {
                 );
                 bubble_particle.set_lifespan(Some(Duration::from_secs_f32(3.0)));
                 bubble_particle.set_particle_lifespan(Some(Duration::from_secs_f32(4.0)));
-                let particle_ptr = Rc::new(RefCell::new(bubble_particle));
+                let particle_ptr = Arc::new(RwLock::new(bubble_particle));
                 self.particle = Some(particle_ptr.clone());
                 particles.push(particle_ptr);
                 self.last_exhale_time = now;

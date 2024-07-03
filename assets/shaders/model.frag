@@ -1,4 +1,7 @@
-#version 450 core
+#ifdef ES
+precision highp int;
+precision mediump float;
+#endif
 
 in vec2 pass_uvs;
 

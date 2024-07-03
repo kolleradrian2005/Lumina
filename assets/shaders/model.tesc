@@ -1,5 +1,3 @@
-#version 450 core
-
 #define DEFAULT 0
 #define TERRAIN 1
 #define SEAGRASS 2
@@ -14,7 +12,7 @@ uniform int uObjectType;
 void main() {
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
     uvsCoord[gl_InvocationID] = pass_uvs[gl_InvocationID];
-    
+
     float level = 1.0;
     if (uObjectType == SEAGRASS)
         level = 4.0;

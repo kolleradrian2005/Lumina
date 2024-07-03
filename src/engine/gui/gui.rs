@@ -1,6 +1,4 @@
-use crate::engine::{
-    model::model::Model, texture::resource_manager::ResourceManager, window_handler::WindowHandler,
-};
+use crate::engine::{model::model::Model, texture::resource_manager::ResourceManager};
 
 use super::{
     gui_element::{GuiElement, UiElement},
@@ -9,18 +7,14 @@ use super::{
 };
 
 pub trait Gui {
-    fn build(&mut self, resource_manager: &ResourceManager, window_handler: &WindowHandler);
+    fn build(&mut self, resource_manager: &ResourceManager, aspect_ratio: f32);
     fn get_listeners(&mut self) -> &Vec<Listener>;
     fn get_listeners_mut(&mut self) -> &mut Vec<Listener>;
     fn get_elements(&self) -> &Vec<Model>;
     fn get_elements_mut(&mut self) -> &mut Vec<Model>;
 }
 
-pub fn build(
-    state: &Box<UiElement>,
-    window_handler: &WindowHandler,
-) -> (Vec<Model>, Vec<Listener>) {
-    let aspect_ratio = window_handler.get_aspect_ratio();
+pub fn build(state: &Box<UiElement>, aspect_ratio: f32) -> (Vec<Model>, Vec<Listener>) {
     let model_group = state.collect_models((2.0, 2.0 / aspect_ratio));
     (
         model_group

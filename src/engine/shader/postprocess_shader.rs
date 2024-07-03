@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use gl::types::GLuint;
+use include_assets::NamedArchive;
 
 use crate::engine::math::vec2::Vec2;
 
@@ -15,16 +16,28 @@ pub struct PostprocessShader {
 }
 
 impl PostprocessShader {
-    pub unsafe fn new() -> Self {
-        let fragment_shader = Shader::new("postprocess.frag", gl::FRAGMENT_SHADER);
-        let vertex_shader = Shader::new("postprocess.vert", gl::VERTEX_SHADER);
+    pub unsafe fn new(archive: &NamedArchive) -> Self {
+        let fragment_shader = Shader::new(archive, "postprocess.frag", gl::FRAGMENT_SHADER);
+        let vertex_shader = Shader::new(archive, "postprocess.vert", gl::VERTEX_SHADER);
         let id = shader_handler::load_program(&[vertex_shader, fragment_shader]);
         let shader_program = Self {
             id,
-            focal_offset_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uFocalOffset").unwrap())),
-            aspect_ratio_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uAspectRatio").unwrap())),
-            num_lights_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uNumLights").unwrap())),
-            light_positions_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uLightPositions").unwrap())),
+            focal_offset_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uFocalOffset").unwrap()),
+            ),
+            aspect_ratio_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uAspectRatio").unwrap()),
+            ),
+            num_lights_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uNumLights").unwrap()),
+            ),
+            light_positions_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uLightPositions").unwrap()),
+            ),
         };
         shader_handler::bind_attributes_to_program(&shader_program, 0, "position");
         shader_handler::bind_attributes_to_program(&shader_program, 1, "uv");
@@ -36,10 +49,7 @@ impl PostprocessShader {
     }
 
     pub unsafe fn set_aspect_ratio(&self, aspect_ratio: f32) {
-        gl::Uniform1f(
-            self.aspect_ratio_location,
-            aspect_ratio,
-        );
+        gl::Uniform1f(self.aspect_ratio_location, aspect_ratio);
     }
 
     pub unsafe fn set_num_lights(&self, num_lights: i32) {
@@ -47,8 +57,11 @@ impl PostprocessShader {
     }
 
     pub unsafe fn set_light_positions(&self, num_lights: i32, light_positions: &Vec<f32>) {
-        gl::Uniform2fv(self.light_positions_location, num_lights, light_positions.as_ptr());
-
+        gl::Uniform2fv(
+            self.light_positions_location,
+            num_lights,
+            light_positions.as_ptr(),
+        );
     }
 }
 

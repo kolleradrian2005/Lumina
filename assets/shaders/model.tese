@@ -1,5 +1,3 @@
-#version 450 core
-
 #define M_PI 3.1415926535897932384626433832795
 
 #define DEFAULT 0
@@ -20,7 +18,7 @@ void main() {
     float u = gl_TessCoord.x;
     float v = gl_TessCoord.y;
     float w = gl_TessCoord.z;
-    
+
     vec2 texCoord = u * uvsCoord[0] + v * uvsCoord[1] + w * uvsCoord[2];
 
     vec4 pos0 = gl_in[0].gl_Position;

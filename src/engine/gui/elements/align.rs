@@ -1,4 +1,7 @@
-use crate::engine::gui::{gui_element::{Alignment, GuiElement, UiElement}, ui_model_group::UiModelGroup};
+use crate::engine::gui::{
+    gui_element::{Alignment, GuiElement, UiElement},
+    ui_model_group::UiModelGroup,
+};
 
 pub struct Align {
     pub child: Box<UiElement>,

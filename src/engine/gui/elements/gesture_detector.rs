@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, RwLock};
 
 use crate::engine::{
     gui::{
@@ -12,7 +12,7 @@ use crate::engine::{
 
 pub struct GestureDetector {
     pub child: Box<UiElement>,
-    pub on_click: Rc<RefCell<Box<dyn FnMut() -> bool>>>,
+    pub on_click: Arc<RwLock<Box<dyn FnMut() -> bool + Send + Sync>>>,
 }
 
 impl GuiElement for GestureDetector {
@@ -24,7 +24,7 @@ impl GuiElement for GestureDetector {
                 size: (model_group.dimensions.0, model_group.dimensions.1),
                 margin: (0.0, 0.0),
             },
-            fun: Rc::clone(&self.on_click),
+            fun: Arc::clone(&self.on_click),
         });
         model_group
     }

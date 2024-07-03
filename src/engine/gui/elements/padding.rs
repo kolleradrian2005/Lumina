@@ -1,12 +1,23 @@
-use crate::engine::gui::{gui_element::{EdgeInsets, GuiElement, UiElement}, ui_model_group::UiModelGroup};
+use crate::engine::gui::{
+    gui_element::{EdgeInsets, GuiElement, UiElement},
+    ui_model_group::UiModelGroup,
+};
 
 impl EdgeInsets {
     pub fn get_attributes(&self) -> (f32, f32, f32, f32) {
         match self {
             EdgeInsets::Zero => (0.0, 0.0, 0.0, 0.0),
-            EdgeInsets::Each { left, top, right, bottom } => (left + right, top + bottom, *left, *top),
+            EdgeInsets::Each {
+                left,
+                top,
+                right,
+                bottom,
+            } => (left + right, top + bottom, *left, *top),
             EdgeInsets::All(p) => (2.0 * p, 2.0 * p, *p, *p),
-            EdgeInsets::Symmetric { vertical, horizontal } => (2.0 * horizontal, 2.0 * vertical, *horizontal, *vertical),
+            EdgeInsets::Symmetric {
+                vertical,
+                horizontal,
+            } => (2.0 * horizontal, 2.0 * vertical, *horizontal, *vertical),
         }
     }
 }

@@ -1,32 +1,8 @@
-use noise::Perlin;
-
-use crate::engine::{
-    math::vec3::Vec3,
-    model::{model::Model, sprite},
-    texture::{resource_manager::ResourceManager, texture::Texture},
-    transformable::Transformable,
-};
-
-use super::terrain::Terrain;
-
-#[derive(Clone)]
-enum TileModel {
-    Model(Model),
-    RawModel {
-        vertices: [f32; 12],
-        texture: Texture,
-        position: Vec3,
-    },
+pub struct RawTile {
+    vertices: [f32],
 }
 
-pub struct Tile {
-    model: TileModel,
-    uphill: bool,
-    height: f32, // Height difference to be exact
-    objects: Vec<Model>,
-}
-
-impl Tile {
+impl RawTile {
     pub fn generate(
         size: f32,
         x: i32,
@@ -34,7 +10,7 @@ impl Tile {
         texture: &Texture,
         resource_manager: &mut ResourceManager,
     ) -> Tile {
-        // Generate raw model
+        // Generate model
 
         let z_index = 0.0;
         let previous_y: f32 = Terrain::get_height_noise(x - 1, noise);
@@ -51,7 +27,7 @@ impl Tile {
 
         let height = top - bot;
 
-        let vertices: [f32; 12] = [
+        let vertices: [f32] = [
             // Bottom left
             -size / 2.0,
             bot,
@@ -69,7 +45,10 @@ impl Tile {
             top,
             sprite::Z_DEFAULT,
         ];
+        //let mut tile_model = Model::new(vertices, &sprite::INDICES, &sprite::UVS);
+        tile_model.set_texture(texture.clone());
         let tile_position = Vec3::new(x as f32 * size, current_y, z_index);
+        tile_model.set_position(tile_position);
 
         // Generate objects
         let mut objects = Vec::new();
@@ -101,47 +80,10 @@ impl Tile {
             }
         }
         Tile {
-            model: TileModel::RawModel {
-                vertices,
-                texture: texture.clone(),
-                position: tile_position,
-            },
+            model: tile_model,
             uphill,
             height: top - bot,
             objects,
         }
-    }
-
-    pub fn prepare_model(&mut self) {
-        if let TileModel::RawModel {
-            vertices,
-            texture,
-            position,
-        } = self.model.clone()
-        {
-            let mut model = Model::new(&vertices, &sprite::INDICES, &sprite::UVS);
-            model.set_texture(texture);
-            model.set_position(position);
-            self.model = TileModel::Model(model);
-        }
-    }
-
-    pub fn get_model(&self) -> &Model {
-        match &self.model {
-            TileModel::Model(model) => model,
-            _ => panic!("Used tile model before preparation"),
-        }
-    }
-
-    pub fn is_uphill(&self) -> bool {
-        self.uphill
-    }
-
-    pub fn get_height(&self) -> f32 {
-        self.height
-    }
-
-    pub fn get_objects(&self) -> &Vec<Model> {
-        &self.objects
     }
 }

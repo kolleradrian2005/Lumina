@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use gl::types::GLuint;
+use include_assets::NamedArchive;
 
 use crate::engine::math::vec3::Vec3;
 
@@ -17,18 +18,36 @@ pub struct BackgroundShader {
 }
 
 impl BackgroundShader {
-    pub unsafe fn new() -> Self {
-        let fragment_shader = Shader::new("background.frag", gl::FRAGMENT_SHADER);
-        let vertex_shader = Shader::new("background.vert", gl::VERTEX_SHADER);
+    pub unsafe fn new(archive: &NamedArchive) -> Self {
+        let fragment_shader = Shader::new(archive, "background.frag", gl::FRAGMENT_SHADER);
+        let vertex_shader = Shader::new(archive, "background.vert", gl::VERTEX_SHADER);
         let id = shader_handler::load_program(&[vertex_shader, fragment_shader]);
         let shader_program = Self {
             id,
-            model_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uModelMatrix").unwrap())),
-            color_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uColor").unwrap())),
-            color1_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uColor1").unwrap())),
-            color2_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uColor2").unwrap())),
-            has_texture_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uHasTexture").unwrap())),
-            flipped_location: gl::GetUniformLocation(id, std::ffi::CStr::as_ptr(&CString::new("uFlipped").unwrap())),
+            model_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uModelMatrix").unwrap()),
+            ),
+            color_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uColor").unwrap()),
+            ),
+            color1_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uColor1").unwrap()),
+            ),
+            color2_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uColor2").unwrap()),
+            ),
+            has_texture_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uHasTexture").unwrap()),
+            ),
+            flipped_location: gl::GetUniformLocation(
+                id,
+                std::ffi::CStr::as_ptr(&CString::new("uFlipped").unwrap()),
+            ),
         };
         shader_handler::bind_attributes_to_program(&shader_program, 0, "position");
         shader_handler::bind_attributes_to_program(&shader_program, 1, "uv");
@@ -36,13 +55,18 @@ impl BackgroundShader {
     }
 
     pub unsafe fn set_model_matrix(&self, matrix: &[[f32; 4]]) {
-        gl::UniformMatrix4fv(self.model_location, 1, gl::FALSE, matrix.as_ptr() as * const f32);
+        gl::UniformMatrix4fv(
+            self.model_location,
+            1,
+            gl::FALSE,
+            matrix.as_ptr() as *const f32,
+        );
     }
 
     pub unsafe fn set_flipped(&self, value: bool) {
         gl::Uniform1i(self.flipped_location, value as i32);
     }
-    
+
     pub unsafe fn set_color(&self, color: Vec3) {
         gl::Uniform3f(self.color_location, color.x, color.y, color.z);
     }
@@ -54,7 +78,7 @@ impl BackgroundShader {
     pub unsafe fn set_color2(&self, color2: Vec3) {
         gl::Uniform3f(self.color2_location, color2.x, color2.y, color2.z);
     }
-    
+
     pub unsafe fn set_has_texture(&self, value: bool) {
         gl::Uniform1i(self.has_texture_location, value as i32);
     }

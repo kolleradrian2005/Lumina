@@ -1,9 +1,10 @@
+use include_assets::NamedArchive;
+
 use crate::engine::{
     gui::gui_manager::GuiManager,
     math::transformation,
     shader::{gui_shader::GuiShader, shader_program::ShaderProgram},
     texture::texture::Texture,
-    window_handler::WindowHandler,
 };
 
 pub struct GuiRenderer {
@@ -11,21 +12,20 @@ pub struct GuiRenderer {
 }
 
 impl GuiRenderer {
-    pub fn init() -> Self {
+    pub fn init(archive: &NamedArchive) -> Self {
         unsafe {
             GuiRenderer {
-                shader: GuiShader::new(),
+                shader: GuiShader::new(archive),
             }
         }
     }
 
-    pub unsafe fn render(&self, gui_manager: &GuiManager, window_handler: &WindowHandler) {
+    pub unsafe fn render(&self, gui_manager: &GuiManager, aspect_ratio: f32) {
         self.shader.start();
         for model in gui_manager.get_elements() {
             let model_matrix = transformation::create_model_matrix(&model, None);
             self.shader.set_model_matrix(model_matrix);
-            self.shader
-                .set_aspect_ratio(window_handler.get_aspect_ratio());
+            self.shader.set_aspect_ratio(aspect_ratio);
 
             let texture = model.get_texture();
             match texture {

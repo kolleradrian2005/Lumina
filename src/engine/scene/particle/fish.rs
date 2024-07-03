@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::StdRng, Rng};
 
 use crate::engine::{math::vec3::Vec3, model::model::Model, transformable::Transformable};
 
@@ -21,20 +21,16 @@ pub struct Fish {
 const DEFAULT_VELOCITY: Vec3 = Vec3::new(-0.03, 0.0, 0.0);
 
 impl Fish {
-    pub fn spawn(mut model: Model, mut spawn_position: Vec3, rng: &mut ThreadRng) -> Fish {
+    pub fn spawn(mut model: Model, mut spawn_position: Vec3, rng: &mut StdRng) -> Fish {
         let sig = rng.gen_range(0..=1) as f32 * 2.0 - 1.0;
         const MAX_DIST: f32 = 0.04;
         spawn_position.z += sig * 0.01;
         spawn_position.y += rng.gen_range(-MAX_DIST..MAX_DIST);
         model.set_position(spawn_position);
-        let dir = rng.gen_range(0..=1) as f32 * 2.0 - 1.0;
-        if dir == 1.0 {
-            model.set_flipped(true);
-        }
         Fish {
             model,
             spawn_position,
-            velocity: DEFAULT_VELOCITY * dir,
+            velocity: DEFAULT_VELOCITY,
             lifespan: Some(2.0),
             now: 0.0,
             amplitude: rng.gen_range(0.0025..0.0050),

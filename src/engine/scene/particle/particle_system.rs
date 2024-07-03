@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rand::rngs::ThreadRng;
+use rand::rngs::StdRng;
 
 use crate::engine::{
     math::vec3::Vec3, model::model::Model, scene::terrain::Terrain,
@@ -9,8 +9,13 @@ use crate::engine::{
 
 use super::particle::{Particle, ParticleType};
 
+struct TimeOut {
+    pub start: f32,
+    pub duration: f32,
+}
+
 pub struct ParticleSystem {
-    pub particles: Vec<Box<dyn Particle>>,
+    pub particles: Vec<Box<dyn Particle + Send + Sync>>,
     particle_model: Model,
     particle_type: ParticleType, // TODO: use baseparticle as reference and clone it
     spawn_position: Vec3,
@@ -21,6 +26,7 @@ pub struct ParticleSystem {
     alive: bool,
     cycle_time: f32,
     now: f32,
+    timeout: Option<TimeOut>,
 }
 
 impl ParticleSystem {
@@ -41,6 +47,7 @@ impl ParticleSystem {
             alive: true,
             cycle_time: 0.0,
             now: 0.0,
+            timeout: None,
         }
     }
 
@@ -56,7 +63,7 @@ impl ParticleSystem {
         self.particle_velocity = s;
     }
 
-    pub fn update(&mut self, delta_time: f32, rng: &mut ThreadRng, terrain: &Terrain) {
+    pub fn update(&mut self, delta_time: f32, rng: &mut StdRng, terrain: &Terrain) {
         self.cycle_time += delta_time;
         self.now += delta_time;
         let mut should_spawn = true;
@@ -85,6 +92,11 @@ impl ParticleSystem {
             }
             self.cycle_time -= count.floor() * self.interval.as_secs_f32();
         }
+        if let Some(timeout) = &self.timeout {
+            if self.now - timeout.start > timeout.duration {
+                self.particles.clear()
+            }
+        }
         if !has_loaded {
             self.particles.clear();
         }
@@ -103,5 +115,22 @@ impl ParticleSystem {
 
     pub fn is_alive(&mut self) -> bool {
         self.alive
+    }
+
+    pub fn set_model_flipped(&mut self, state: bool) {
+        self.particle_model.set_flipped(state);
+    }
+
+    pub fn set_timeout(&mut self, duration: Option<Duration>) {
+        match duration {
+            Some(duration) => {
+                self.timeout = TimeOut {
+                    start: self.now,
+                    duration: duration.as_secs_f32(),
+                }
+                .into()
+            }
+            None => self.timeout = None,
+        };
     }
 }

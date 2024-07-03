@@ -1,8 +1,9 @@
 [package]
+build = "build.rs"
+
 name = "lumina"
 version = "0.1.0"
 edition = "2021"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -11,4 +12,24 @@ image = "0.25.0"
 noise = "0.9.0"
 rand = "0.8.5"
 rusttype = "0.9.3"
-glfw = "0.55.0"
+tokio = { version = "1", features = ["full"] }
+glutin = "0.31.3"
+# Match versions with glutin
+glutin-winit = { version = "0.4.2" }
+winit = { version = "0.29.15", default-features = false, features = ["rwh_05"] }
+raw-window-handle = "0.5.2"
+include_assets = "1.0.0"
+log = "0.4.21"
+
+[target.'cfg(target_os = "android")'.dependencies]
+winit = { version = "0.29.15", default-features = false, features = [
+    "android-native-activity",
+    "rwh_05",
+] }
+android-activity = { version = "0.5.2", features = ["native-activity"] }
+android_logger = "0.13.3"
+
+[lib]
+name = "lumina"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]

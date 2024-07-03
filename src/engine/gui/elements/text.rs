@@ -1,9 +1,12 @@
-use crate::engine::{gui::{gui_element::GuiElement, ui_model_group::UiModelGroup}, texture::font_texture::FontTexture};
+use crate::engine::{
+    gui::{gui_element::GuiElement, ui_model_group::UiModelGroup},
+    texture::font_texture::FontTexture,
+};
 
 pub struct Text {
     pub text: String,
     pub font: FontTexture,
-    pub font_size: f32
+    pub font_size: f32,
 }
 
 impl GuiElement for Text {
@@ -13,7 +16,7 @@ impl GuiElement for Text {
         let mut max_height = 0.0;
         for c in self.text.chars() {
             let mut ui_model = self.font.get_model(c);
-            
+
             // Size
             let (ref mut width, ref mut height) = ui_model.size;
             *width *= self.font_size;

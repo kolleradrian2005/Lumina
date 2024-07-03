@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, RwLock};
 
 use crate::engine::math::vec2::Vec2;
 
@@ -6,13 +6,13 @@ use super::ui_model::UiModel;
 
 pub struct RawListener {
     pub ui_model: UiModel,
-    pub fun: Rc<RefCell<Box<dyn FnMut() -> bool>>>,
+    pub fun: Arc<RwLock<Box<dyn FnMut() -> bool + Send + Sync>>>,
 }
 
 pub struct Listener {
     pub bottom_left: Vec2,
     pub top_right: Vec2,
-    pub fun: Rc<RefCell<Box<dyn FnMut() -> bool>>>,
+    pub fun: Arc<RwLock<Box<dyn FnMut() -> bool + Send + Sync>>>,
 }
 
 impl RawListener {

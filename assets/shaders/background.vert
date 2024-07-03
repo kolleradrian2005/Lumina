@@ -1,11 +1,18 @@
-#version 450 core
+#ifdef ES
+precision mediump float;
+#endif
 
 in vec3 position;
 in vec2 uv;
 
 out vec2 pass_uvs;
 
-layout (std140, binding = 0) uniform MatrixUniformBuffer {
+layout(
+std140
+#ifndef ES
+, binding = 0
+#endif
+) uniform MatrixUniformBuffer {
     mat4 uProjectionMatrix;
     mat4 uViewMatrix;
 };

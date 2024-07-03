@@ -1,4 +1,8 @@
-use crate::engine::{collider::Collider, math::{vec2::Vec2, vec3::Vec3}, transformable::Transformable};
+use crate::engine::{
+    collider::Collider,
+    math::{vec2::Vec2, vec3::Vec3},
+    transformable::Transformable,
+};
 
 use super::model::Model;
 
@@ -35,7 +39,7 @@ impl ModelGroup {
     pub fn add_model(&mut self, model: Model) {
         self.models.push(model);
     }
-    
+
     pub fn get_model_mut(&mut self, index: usize) -> Option<&mut Model> {
         self.models.get_mut(index)
     }

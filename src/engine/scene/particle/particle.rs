@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rand::rngs::ThreadRng;
+use rand::rngs::StdRng;
 
 use crate::engine::{
     math::vec3::Vec3, model::model::Model, texture::resource_manager::ResourceManager,
@@ -9,7 +9,7 @@ use crate::engine::{
 use super::{bubble::Bubble, fish::Fish};
 
 pub trait Particle {
-    //fn spawn(model: Model, spawn_position: Vec3, rng: &mut ThreadRng) -> Box<dyn Particle>;
+    //fn spawn(model: Model, spawn_position: Vec3, rng: &mut StdRng) -> Box<dyn Particle>;
     fn update(&mut self, delta_time: f32);
     fn is_alive(&self) -> bool;
     fn get_model(&self) -> &Model;
@@ -27,8 +27,8 @@ impl ParticleType {
         &self,
         model: Model,
         spawn_position: Vec3,
-        rng: &mut ThreadRng,
-    ) -> Box<dyn Particle> {
+        rng: &mut StdRng,
+    ) -> Box<dyn Particle + Send + Sync> {
         match self {
             ParticleType::Bubble => Box::new(Bubble::spawn(model, spawn_position, rng)),
             ParticleType::Fish => Box::new(Fish::spawn(model, spawn_position, rng)),

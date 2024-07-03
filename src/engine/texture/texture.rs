@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use crate::engine::math::vec3::Vec3;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Texture {
     StaticColor(StaticColor),
     StaticTexture(StaticTexture),
@@ -45,9 +45,9 @@ impl Texture {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct StaticColor {
-    pub color: Vec3
+    pub color: Vec3,
 }
 
 impl StaticColor {
@@ -57,8 +57,7 @@ impl StaticColor {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct StaticTexture
-{
+pub struct StaticTexture {
     id: u32,
     width: u32,
     height: u32,
@@ -89,11 +88,11 @@ impl StaticTexture {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AnimatedTexture {
     pub textures: Vec<StaticTexture>,
     pub animation_time: u128,
-    pub animation_start_time: Instant
+    pub animation_start_time: Instant,
 }
 
 impl AnimatedTexture {
@@ -101,7 +100,7 @@ impl AnimatedTexture {
         AnimatedTexture {
             textures,
             animation_time,
-            animation_start_time: Instant::now()
+            animation_start_time: Instant::now(),
         }
     }
     pub fn current_texture(&self) -> StaticTexture {
@@ -109,12 +108,17 @@ impl AnimatedTexture {
         if self.animation_time == 0 {
             return *self.textures.get(0).unwrap();
         }
-        let texture_index = ((Instant::now().duration_since(self.animation_start_time).as_millis() % self.animation_time) as f32 / (self.animation_time as f32 / texture_count as f32)) as usize;
+        let texture_index = ((Instant::now()
+            .duration_since(self.animation_start_time)
+            .as_millis()
+            % self.animation_time) as f32
+            / (self.animation_time as f32 / texture_count as f32))
+            as usize;
         *self.textures.get(texture_index).unwrap()
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct GradientTexture {
     pub color1: Vec3,
     pub color2: Vec3,
@@ -125,4 +129,3 @@ impl GradientTexture {
         GradientTexture { color1, color2 }
     }
 }
-

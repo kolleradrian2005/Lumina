@@ -1,4 +1,6 @@
-#version 450 core
+#ifdef ES
+precision mediump float;
+#endif
 
 in vec2 pass_uvs;
 out vec4 FragColor;

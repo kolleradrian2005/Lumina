@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use include_assets::NamedArchive;
+
 use crate::engine::{
     math::{vec2::Vec2, vec3::Vec3},
     model::{model::Model, sprite},
@@ -18,17 +20,23 @@ pub struct ResourceManager {
     models: HashMap<String, Model>,
     fonts: HashMap<String, FontTexture>,
     texture_handler: TextureHandler,
+    archive: NamedArchive,
 }
 
 impl ResourceManager {
-    pub fn new() -> Self {
+    pub fn new(archive: NamedArchive) -> Self {
         ResourceManager {
             place_holder_model: sprite::square(1.0),
             place_holder_font: FontTexture::new(),
             models: HashMap::new(),
             fonts: HashMap::new(),
             texture_handler: TextureHandler::new(),
+            archive,
         }
+    }
+
+    pub fn get_archive(&self) -> &NamedArchive {
+        &self.archive
     }
 
     pub fn preload_models(&mut self) {
@@ -36,11 +44,15 @@ impl ResourceManager {
         square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
         let mut bubble = square.clone();
         bubble.set_scale(Vec2::uniform(0.01));
-        if let Some(texture) = self.texture_handler.load_static_texture("bubble.png") {
+        if let Some(texture) = self
+            .texture_handler
+            .load_static_texture(&self.archive, "bubble.png")
+        {
             bubble.set_texture(texture);
         }
-        if let Some(Texture::StaticTexture(texture)) =
-            self.texture_handler.load_static_texture("seagrass0.png")
+        if let Some(Texture::StaticTexture(texture)) = self
+            .texture_handler
+            .load_static_texture(&self.archive, "seagrass0.png")
         {
             let mut seagrass = sprite::from_texture(texture);
             seagrass.set_scale(Vec2::uniform(0.08));
@@ -48,7 +60,10 @@ impl ResourceManager {
         }
 
         let mut fish = square.clone();
-        if let Some(texture) = self.texture_handler.load_static_texture("fish.png") {
+        if let Some(texture) = self
+            .texture_handler
+            .load_static_texture(&self.archive, "fish.png")
+        {
             fish.set_texture(texture);
         }
         fish.set_scale(Vec2::uniform(0.04));
@@ -59,7 +74,10 @@ impl ResourceManager {
     }
 
     pub fn load_fonts(&mut self) {
-        if let Some(font) = self.texture_handler.load_font("Raleway-Regular.ttf") {
+        if let Some(font) = self
+            .texture_handler
+            .load_font(&self.archive, "Raleway-Regular.ttf")
+        {
             self.save_font("default", font);
         }
     }
@@ -90,5 +108,19 @@ impl ResourceManager {
 
     pub fn get_texture_handler_mut(&mut self) -> &mut TextureHandler {
         &mut self.texture_handler
+    }
+
+    pub fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture> {
+        self.texture_handler
+            .load_static_texture(&self.archive, texture_name)
+    }
+
+    pub fn load_animated_texture(
+        &mut self,
+        texture_names: &[&str],
+        animation_time: u128,
+    ) -> Option<Texture> {
+        self.texture_handler
+            .load_animated_texture(&self.archive, texture_names, animation_time)
     }
 }

@@ -1,8 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::collections::VecDeque;
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
-use rand::rngs::ThreadRng;
+use rand::rngs::StdRng;
 use rand::Rng;
 
 use crate::engine::input_handler::InputHandler;
@@ -28,7 +28,7 @@ pub struct Scene {
     pub background: Background,
     pub foreground: Foreground,
     world: World,
-    particles: Vec<Rc<RefCell<ParticleSystem>>>,
+    particles: Vec<Arc<RwLock<ParticleSystem>>>,
     last_fish_spawn: Instant,
 }
 
@@ -55,10 +55,11 @@ impl Scene {
     pub fn update(
         &mut self,
         delta_time: f32,
+        now: Instant,
         input_handler: &InputHandler,
-        resource_manager: &mut ResourceManager,
-        rng: &mut ThreadRng,
-        updatables: &mut Vec<Updatable>,
+        resource_manager: &mut ResourceManager, // TODO: make optional (so that only physics get updated)
+        rng: &mut StdRng,
+        updatables: &mut VecDeque<Updatable>,
     ) {
         // Update player
         self.player.update(
@@ -74,9 +75,11 @@ impl Scene {
         let tile_index = (self.player.model_group.get_position().x
             / self.world.get_terrain().tile_size)
             .round() as i32;
+
         self.world
             .get_terrain_mut()
             .update_tile_index(tile_index, resource_manager);
+
         // Load godrays correctly
         self.foreground
             .update_god_rays(self.player.model_group.get_position().xy());
@@ -89,42 +92,49 @@ impl Scene {
 
         // Update particles
         self.particles.retain_mut(|particle_ptr| {
-            let mut particle_system = RefCell::borrow_mut(particle_ptr);
+            let mut particle_system = particle_ptr.write().unwrap();
             particle_system.update(delta_time, rng, self.world.get_terrain());
             particle_system.is_alive()
         });
 
         // Spawn fish
         const FISH_Z: f32 = -0.5;
-        let now = Instant::now(); // TODO: dont use now and not: TODO: pass now down the stack anywhere needed
+        const POPULATION_TIME: f32 = 6.0;
+        const X_DIST: f32 = 1.5;
+        const X_SPEED: f32 = 2.5;
+        const FISH_SPAWN_INTERVAL: f32 = 30.0;
 
         // TODO: check if fish already spawned
-        if 2.0 < now.duration_since(self.last_fish_spawn).as_secs_f32() {
-            const POPULATION_TIME: f32 = 6.0;
+        if FISH_SPAWN_INTERVAL < now.duration_since(self.last_fish_spawn).as_secs_f32() {
             let sig = rng.gen_range(0..=1) as f32 * 2.0 - 1.0;
             let y_offset = rng.gen_range(0.0..=1.0) as f32 * 2.0 - 1.0;
             let player_position = self.player.model_group.get_position();
-            let x = player_position.x + sig; // TODO: player.getPosition()
+            let x = player_position.x + sig * X_DIST;
             let y = player_position.y + y_offset;
             let particle_position = Vec3::new(x, y, FISH_Z);
             let mut fish_particle =
                 ParticleSystem::spawn(ParticleType::Fish, particle_position, resource_manager);
+            fish_particle.set_model_flipped(sig == -1.0);
             fish_particle.set_lifespan(Duration::from_secs_f32(POPULATION_TIME).into());
-            //fish_particle.set_particle_lifespan(Duration::from_secs_f32(14.0).into());
             fish_particle.set_particle_lifespan(None);
-            fish_particle.set_particle_velocity(1.5);
+            fish_particle.set_particle_velocity(sig * X_SPEED);
             fish_particle.update(POPULATION_TIME, rng, self.world.get_terrain());
-            let particle_ptr = Rc::new(RefCell::new(fish_particle));
+            fish_particle.set_timeout(Duration::from_secs_f32(60.0).into());
+            let particle_ptr = Arc::new(RwLock::new(fish_particle));
             self.particles.push(particle_ptr);
             self.last_fish_spawn = now;
         }
     }
 
-    pub fn get_particles(&self) -> &Vec<Rc<RefCell<ParticleSystem>>> {
+    pub fn get_particles(&self) -> &Vec<Arc<RwLock<ParticleSystem>>> {
         &self.particles
     }
 
     pub fn get_world(&self) -> &World {
         &self.world
+    }
+
+    pub fn get_world_mut(&mut self) -> &mut World {
+        &mut self.world
     }
 }
