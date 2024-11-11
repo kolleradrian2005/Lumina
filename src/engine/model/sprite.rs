@@ -1,4 +1,9 @@
-use crate::engine::texture::texture::{StaticTexture, Texture};
+use std::sync::Arc;
+
+use crate::engine::{
+    command_queue::CommandQueue,
+    texture::texture::{StaticTexture, Texture},
+};
 
 use super::model::Model;
 
@@ -25,21 +30,22 @@ fn vertices(half_width: f32, half_height: f32) -> [f32; 12] {
     ]
 }
 
-pub fn rectangle(width: f32, height: f32) -> Model {
+pub fn rectangle(command_queue: Arc<CommandQueue>, width: f32, height: f32) -> Model {
     Model::new(
+        command_queue,
         &self::vertices(width / 2.0, height / 2.0),
         &self::INDICES,
         &self::UVS,
     )
 }
 
-pub fn square(size: f32) -> Model {
-    self::rectangle(size, size)
+pub fn square(command_queue: Arc<CommandQueue>, size: f32) -> Model {
+    self::rectangle(command_queue, size, size)
 }
 
-pub fn from_texture(texture: StaticTexture) -> Model {
+pub fn from_texture(command_queue: Arc<CommandQueue>, texture: StaticTexture) -> Model {
     let (width, height) = texture.get_normalized_dimensions();
-    let mut model = self::rectangle(width, height);
+    let mut model = self::rectangle(command_queue, width, height);
     model.set_texture(Texture::StaticTexture(texture));
     model
 }

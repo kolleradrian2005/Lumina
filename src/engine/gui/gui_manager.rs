@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use crate::engine::{
-    input_handler::InputHandler, model::model::Model, texture::resource_manager::ResourceManager,
+    command_queue::CommandQueue, input_handler::InputHandler, model::model::Model,
+    texture::resource_manager::ResourceManager,
 };
 
 use super::{game_gui::GameGui, gui::Gui, listener::Listener};
@@ -40,9 +43,16 @@ impl GuiManager {
         }
     }
 
-    pub fn build(&mut self, resource_manager: &ResourceManager, aspect_ratio: f32) {
+    pub fn build(
+        &mut self,
+        command_queue: Arc<CommandQueue>,
+        resource_manager: &ResourceManager,
+        aspect_ratio: f32,
+    ) {
         match self.current_state {
-            GuiState::Game => self.game_gui.build(resource_manager, aspect_ratio),
+            GuiState::Game => self
+                .game_gui
+                .build(command_queue, resource_manager, aspect_ratio),
         }
     }
 
@@ -50,7 +60,12 @@ impl GuiManager {
         self.dimensions = dimensions;
     }
 
-    pub fn update(&mut self, resource_manager: &ResourceManager, input_handler: &mut InputHandler) {
+    pub fn update(
+        &mut self,
+        command_queue: Arc<CommandQueue>,
+        resource_manager: &ResourceManager,
+        input_handler: &mut InputHandler,
+    ) {
         let mouse_pos = input_handler.get_normalized_mouse_position(self.dimensions);
         let click_state = input_handler.handle_l_mouse();
         // Reverse iteration for hierarchy
@@ -71,6 +86,7 @@ impl GuiManager {
         }
         if rebuild {
             self.build(
+                command_queue,
                 resource_manager,
                 self.dimensions.0 as f32 / self.dimensions.1 as f32,
             );

@@ -1,9 +1,11 @@
 use std::collections::VecDeque;
 use std::ffi::CString;
+use std::sync::Arc;
 
 use glutin::display::{Display, GlDisplay};
 use include_assets::NamedArchive;
 
+use crate::engine::command_queue::CommandQueue;
 use crate::engine::gui::gui_manager::GuiManager;
 use crate::engine::scene::scene::Scene;
 use crate::engine::texture::frame_buffer::Framebuffer;
@@ -25,7 +27,13 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn init(gl_display: &Display, width: i32, height: i32, archive: &NamedArchive) -> Self {
+    pub fn init(
+        command_queue: Arc<CommandQueue>,
+        gl_display: &Display,
+        width: i32,
+        height: i32,
+        archive: &NamedArchive,
+    ) -> Self {
         gl::load_with(|name| {
             let symbol = CString::new(name).unwrap();
             gl_display.get_proc_address(symbol.as_c_str()).cast()
@@ -58,7 +66,7 @@ impl Renderer {
             matrix_uniform_buffer,
             background_renderer: BackgroundRenderer::init(archive),
             scene_renderer: SceneRenderer::init(archive),
-            frame_buffer: Framebuffer::new(width, height, msaa),
+            frame_buffer: Framebuffer::new(command_queue, width, height, msaa),
             postprocess_renderer: PostprocessRenderer::init(archive),
             gui_renderer: GuiRenderer::init(archive),
         }
@@ -80,11 +88,17 @@ impl Renderer {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
 
-    pub fn update_buffers(&mut self, updatables: &mut VecDeque<Updatable>, scene: &mut Scene) {
+    pub fn update_buffers(
+        &mut self,
+        command_queue: Arc<CommandQueue>,
+        updatables: &mut VecDeque<Updatable>,
+        scene: &mut Scene,
+    ) {
         while let Some(updatable) = updatables.pop_front() {
             match updatable {
                 Updatable::Projection { width, height } => {
-                    self.frame_buffer.resize(width, height);
+                    self.frame_buffer
+                        .resize(command_queue.clone(), width, height);
                     unsafe {
                         gl::Viewport(0, 0, width as i32, height as i32);
                         self.matrix_uniform_buffer.set_projection_matrix(
@@ -105,7 +119,12 @@ impl Renderer {
         }
     }
 
-    pub fn render(&mut self, scene: &mut Scene, gui_manager: &GuiManager) {
+    pub fn render(
+        &mut self,
+        command_queue: Arc<CommandQueue>,
+        scene: &mut Scene,
+        gui_manager: &GuiManager,
+    ) {
         unsafe {
             self.clean_up(); // Clean up without framebuffer
             self.frame_buffer.bind();
@@ -113,7 +132,7 @@ impl Renderer {
             gl::Enable(gl::DEPTH_TEST);
             self.matrix_uniform_buffer.bind_base();
             self.background_renderer.render(scene);
-            self.scene_renderer.render(scene);
+            self.scene_renderer.render(command_queue, scene);
             self.frame_buffer.blit();
             self.frame_buffer.unbind();
             // Post-processing

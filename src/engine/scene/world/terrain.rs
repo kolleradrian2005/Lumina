@@ -147,7 +147,7 @@ impl Terrain {
             resoure_manager,
         );
         self.tiles.push_front(new_tile);
-        self.tiles.pop_back(); // TODO: remove from GPU
+        self.tiles.pop_back();
     }
 
     fn sweep_right(&mut self, resoure_manager: &mut ResourceManager) {
@@ -156,6 +156,6 @@ impl Terrain {
             resoure_manager,
         );
         self.tiles.push_back(new_tile);
-        self.tiles.pop_front(); // TODO: remove from GPU
+        self.tiles.pop_front();
     }
 }

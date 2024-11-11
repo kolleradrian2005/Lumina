@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use noise::Perlin;
 
 use crate::engine::{
+    command_queue::CommandQueue,
     math::vec3::Vec3,
     model::{model::Model, sprite},
     texture::{resource_manager::ResourceManager, texture::Texture},
@@ -112,14 +115,14 @@ impl Tile {
         }
     }
 
-    pub fn prepare_model(&mut self) {
+    pub fn prepare_model(&mut self, command_queue: Arc<CommandQueue>) {
         if let TileModel::RawModel {
             vertices,
             texture,
             position,
         } = self.model.clone()
         {
-            let mut model = Model::new(&vertices, &sprite::INDICES, &sprite::UVS);
+            let mut model = Model::new(command_queue, &vertices, &sprite::INDICES, &sprite::UVS);
             model.set_texture(texture);
             model.set_position(position);
             self.model = TileModel::Model(model);

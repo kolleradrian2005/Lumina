@@ -1,10 +1,13 @@
+use std::sync::Arc;
+
 use include_assets::NamedArchive;
 
+use crate::engine::command_queue::CommandQueue;
 use crate::engine::math::transformation;
 use crate::engine::model::model::Model;
 use crate::engine::model::model_group::ModelGroup;
 use crate::engine::scene::scene::Scene;
-use crate::engine::scene::tile::Tile;
+use crate::engine::scene::world::tile::Tile;
 use crate::engine::shader::model_shader::ModelShader;
 use crate::engine::shader::shader_program::ShaderProgram;
 use crate::engine::texture::texture::Texture;
@@ -53,11 +56,12 @@ impl SceneRenderer {
         model: &Model,
         model_matrix_opt: Option<[[f32; 4]; 4]>,
     ) {
+        let mesh = model.get_mesh();
         let model_matrix =
             model_matrix_opt.unwrap_or(transformation::create_model_matrix(model, None));
         shader.set_model_matrix(model_matrix);
         shader.set_flipped(model.is_flipped());
-        gl::BindVertexArray(model.get_vao());
+        gl::BindVertexArray(mesh.get_vao());
         gl::EnableVertexAttribArray(0);
         gl::EnableVertexAttribArray(1);
         let texture = model.get_texture();
@@ -81,7 +85,7 @@ impl SceneRenderer {
                 true => gl::PATCHES,
                 false => gl::TRIANGLES,
             },
-            model.get_vertex_count(),
+            mesh.get_vertex_count(),
             gl::UNSIGNED_INT,
             0 as *const _,
         );
@@ -89,7 +93,7 @@ impl SceneRenderer {
         gl::DisableVertexAttribArray(1);
     }
 
-    pub unsafe fn render(&self, scene: &mut Scene) {
+    pub unsafe fn render(&self, command_queue: Arc<CommandQueue>, scene: &mut Scene) {
         /* TESSELATION ENABLED */
 
         let mut current_shader = match &self.shader_with_tesselation {
@@ -104,10 +108,7 @@ impl SceneRenderer {
         for tile in scene.get_world().get_terrain().get_tiles() {
             for object in tile.get_objects() {
                 let object_position = object.get_position();
-                let mut current = scene
-                    .get_world()
-                    .get_water()
-                    .get_current(&object_position.xy());
+                let mut current = scene.get_world().get_water().get_current(&object_position);
 
                 let player_position = scene.player.model_group.get_position();
                 let player_distance = (object_position - player_position).length();
@@ -131,7 +132,7 @@ impl SceneRenderer {
         current_shader.set_object_type(ObjectType::Terrain);
 
         for tile in scene.get_world_mut().get_terrain_mut().get_tiles_mut() {
-            tile.prepare_model();
+            tile.prepare_model(command_queue.clone());
             self.render_tile(&current_shader, tile);
         }
 

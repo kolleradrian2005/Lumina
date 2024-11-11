@@ -23,6 +23,7 @@ impl GuiRenderer {
     pub unsafe fn render(&self, gui_manager: &GuiManager, aspect_ratio: f32) {
         self.shader.start();
         for model in gui_manager.get_elements() {
+            let mesh = model.get_mesh();
             let model_matrix = transformation::create_model_matrix(&model, None);
             self.shader.set_model_matrix(model_matrix);
             self.shader.set_aspect_ratio(aspect_ratio);
@@ -43,12 +44,12 @@ impl GuiRenderer {
                 Texture::GradientTexture(_) => {}
             }
             self.shader.set_has_texture(texture.has_texture());
-            gl::BindVertexArray(model.get_vao());
+            gl::BindVertexArray(mesh.get_vao());
             gl::EnableVertexAttribArray(0);
             gl::EnableVertexAttribArray(1);
             gl::DrawElements(
                 gl::TRIANGLES,
-                model.get_vertex_count(),
+                mesh.get_vertex_count(),
                 gl::UNSIGNED_INT,
                 0 as *const _,
             );

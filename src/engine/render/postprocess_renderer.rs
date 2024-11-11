@@ -27,6 +27,7 @@ impl PostprocessRenderer {
         self.uniform_buffer.bind_base();
 
         let model = framebuffer.get_model();
+        let mesh = model.get_mesh();
         let foreground = &scene.foreground;
         self.shader
             .set_focal_offset(scene.camera.get_focal_offset());
@@ -40,12 +41,12 @@ impl PostprocessRenderer {
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_2D, framebuffer.get_texture());
         // Draw model
-        gl::BindVertexArray(model.get_vao());
+        gl::BindVertexArray(mesh.get_vao());
         gl::EnableVertexAttribArray(0);
         gl::EnableVertexAttribArray(1);
         gl::DrawElements(
             gl::TRIANGLES,
-            model.get_vertex_count(),
+            mesh.get_vertex_count(),
             gl::UNSIGNED_INT,
             0 as *const _,
         );

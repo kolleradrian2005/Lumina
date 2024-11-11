@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use include_assets::NamedArchive;
 
 use crate::engine::{
+    command_queue::CommandQueue,
     math::{vec2::Vec2, vec3::Vec3},
-    model::{model::Model, sprite},
+    model::{model::Model, model_group::ModelGroup, sprite},
     transformable::Transformable,
 };
 
@@ -16,19 +17,23 @@ use super::{
 
 pub struct ResourceManager {
     place_holder_model: Model,
+    place_holder_model_group: ModelGroup,
     place_holder_font: FontTexture,
     models: HashMap<String, Model>,
+    model_groups: HashMap<String, ModelGroup>,
     fonts: HashMap<String, FontTexture>,
     texture_handler: TextureHandler,
     archive: NamedArchive,
 }
 
 impl ResourceManager {
-    pub fn new(archive: NamedArchive) -> Self {
+    pub fn new(command_queue: Arc<CommandQueue>, archive: NamedArchive) -> Self {
         ResourceManager {
-            place_holder_model: sprite::square(1.0),
+            place_holder_model: sprite::square(command_queue, 1.0),
+            place_holder_model_group: ModelGroup::new(None),
             place_holder_font: FontTexture::new(),
             models: HashMap::new(),
+            model_groups: HashMap::new(),
             fonts: HashMap::new(),
             texture_handler: TextureHandler::new(),
             archive,
@@ -39,8 +44,8 @@ impl ResourceManager {
         &self.archive
     }
 
-    pub fn preload_models(&mut self) {
-        let mut square = sprite::square(1.0);
+    pub fn preload_models(&mut self, command_queue: Arc<CommandQueue>) {
+        let mut square = sprite::square(command_queue.clone(), 1.0);
         square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
         let mut bubble = square.clone();
         bubble.set_scale(Vec2::uniform(0.01));
@@ -54,7 +59,7 @@ impl ResourceManager {
             .texture_handler
             .load_static_texture(&self.archive, "seagrass0.png")
         {
-            let mut seagrass = sprite::from_texture(texture);
+            let mut seagrass = sprite::from_texture(command_queue.clone(), texture);
             seagrass.set_scale(Vec2::uniform(0.08));
             self.save_model("seagrass", seagrass);
         }
@@ -68,9 +73,13 @@ impl ResourceManager {
         }
         fish.set_scale(Vec2::uniform(0.04));
 
+        let mut seagrass = self.load_seagrass(command_queue, &[]);
+        seagrass.set_scale(Vec2::uniform(0.08));
+
         self.save_model("square", square);
         self.save_model("bubble", bubble);
         self.save_model("fish", fish);
+        self.save_model_group("seagrass", seagrass);
     }
 
     pub fn load_fonts(&mut self) {
@@ -86,6 +95,10 @@ impl ResourceManager {
         self.models.insert(name.to_string(), model);
     }
 
+    fn save_model_group(&mut self, name: &str, model_group: ModelGroup) {
+        self.model_groups.insert(name.to_string(), model_group);
+    }
+
     fn save_font(&mut self, name: &str, font: FontTexture) {
         self.fonts.insert(name.to_string(), font);
     }
@@ -95,6 +108,14 @@ impl ResourceManager {
             model.clone()
         } else {
             self.place_holder_model.clone()
+        }
+    }
+
+    pub fn get_model_group(&self, name: &str) -> ModelGroup {
+        if let Some(model_group) = self.model_groups.get(name) {
+            model_group.clone()
+        } else {
+            self.place_holder_model_group.clone()
         }
     }
 
@@ -122,5 +143,28 @@ impl ResourceManager {
     ) -> Option<Texture> {
         self.texture_handler
             .load_animated_texture(&self.archive, texture_names, animation_time)
+    }
+
+    fn load_seagrass(
+        &mut self,
+        command_queue: Arc<CommandQueue>,
+        texture_names: &[&str],
+    ) -> ModelGroup {
+        let mut model_group = ModelGroup::new(None);
+        const MODEL_THICKNESS: f32 = 0.4;
+        let z_step: f32 = -MODEL_THICKNESS / texture_names.len() as f32;
+        let mut z = MODEL_THICKNESS / 2.0;
+        for texture_name in texture_names {
+            if let Some(Texture::StaticTexture(texture)) = self
+                .texture_handler
+                .load_static_texture(&self.archive, texture_name)
+            {
+                let mut model = sprite::from_texture(command_queue.clone(), texture);
+                model.set_position(Vec3::new(0.0, 0.0, z));
+                z += z_step;
+                model_group.add_model(model);
+            }
+        }
+        model_group
     }
 }

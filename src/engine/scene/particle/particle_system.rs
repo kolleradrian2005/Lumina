@@ -3,7 +3,7 @@ use std::time::Duration;
 use rand::rngs::StdRng;
 
 use crate::engine::{
-    math::vec3::Vec3, model::model::Model, scene::terrain::Terrain,
+    math::vec3::Vec3, model::model::Model, scene::world::terrain::Terrain,
     texture::resource_manager::ResourceManager, transformable::Transformable,
 };
 

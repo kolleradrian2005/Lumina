@@ -28,7 +28,7 @@ pub mod engine {
         pub mod vec3;
     }
     pub mod model {
-        pub mod mesh_handler;
+        pub mod mesh;
         pub mod model;
         pub mod model_group;
         pub mod sprite;
@@ -49,15 +49,17 @@ pub mod engine {
             pub mod particle;
             pub mod particle_system;
         }
+        pub mod world {
+            pub mod terrain;
+            pub mod tile;
+            pub mod water;
+            pub mod world;
+        }
         pub mod background;
         pub mod camera;
         pub mod foreground;
         pub mod player;
         pub mod scene;
-        pub mod terrain;
-        pub mod tile;
-        pub mod water;
-        pub mod world;
     }
     pub mod shader {
         pub mod background_shader;
@@ -77,12 +79,15 @@ pub mod engine {
         pub mod texture_handler;
     }
     pub mod collider;
+    pub mod command_queue;
+    pub mod gl_command;
     pub mod input_handler;
     pub mod references;
     pub mod transformable;
     pub mod window_handler;
 }
 
+use engine::command_queue::CommandQueue;
 use engine::math::vec2::Vec2;
 use engine::references;
 use engine::render::renderer::Renderer;
@@ -155,13 +160,19 @@ struct RenderContext {
 }
 
 impl RenderContext {
-    pub fn init(gl_display: &Display, width: i32, height: i32) -> Self {
+    pub fn init(
+        command_queue: Arc<CommandQueue>,
+        gl_display: &Display,
+        width: i32,
+        height: i32,
+    ) -> Self {
         let archive = NamedArchive::load(include_dir!("assets"));
-        let mut renderer = Renderer::init(gl_display, width, height, &archive);
-        let mut resource_manager = ResourceManager::new(archive);
-        resource_manager.preload_models();
+        let mut renderer =
+            Renderer::init(command_queue.clone(), gl_display, width, height, &archive);
+        let mut resource_manager = ResourceManager::new(command_queue.clone(), archive);
+        resource_manager.preload_models(command_queue.clone());
         resource_manager.load_fonts();
-        let scene = Scene::new(&mut resource_manager);
+        let scene = Scene::new(command_queue, &mut resource_manager);
         renderer.load_scene(&scene, width as f32 / height as f32);
         let gui_manager = GuiManager::new((width, height));
         Self {
@@ -252,6 +263,9 @@ pub async fn start(event_loop: EventLoop<()>) {
     let updatables_clone = Arc::clone(&updatables);
     let is_running_clone = Arc::clone(&is_running);
 
+    // Use command queue for asynchronous OpenGL calls
+    let command_queue = Arc::new(CommandQueue::new());
+
     const TARGET_INTERVAL: Duration = Duration::from_millis(10);
 
     let main_loop = tokio::spawn(async move {
@@ -318,7 +332,8 @@ pub async fn start(event_loop: EventLoop<()>) {
                     ) {
                         println!("Error setting vsync: {res:?}");
                     }
-                    let render_ctx = RenderContext::init(&gl_display, width, height);
+                    let render_ctx =
+                        RenderContext::init(command_queue.clone(), &gl_display, width, height);
                     render_context.get_or_insert_with(|| render_ctx.clone());
                     loop_render_context
                         .lock()
@@ -357,6 +372,7 @@ pub async fn start(event_loop: EventLoop<()>) {
                             if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
                                 if let Ok(resource_manager) = render_ctx.resource_manager.lock() {
                                     gui_manager.update(
+                                        command_queue.clone(),
                                         &resource_manager,
                                         loop_input_handler.lock().unwrap().borrow_mut(),
                                     );
@@ -366,11 +382,16 @@ pub async fn start(event_loop: EventLoop<()>) {
                                 if let Ok(scene) = &mut render_ctx.scene.lock() {
                                     // Update buffers based on scene
                                     if let Ok(updatables) = &mut updatables.lock() {
-                                        renderer.update_buffers(updatables, scene);
+                                        renderer.update_buffers(
+                                            command_queue.clone(),
+                                            updatables,
+                                            scene,
+                                        );
                                     }
+                                    command_queue.process_commands();
                                     if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
                                         // Render stuff
-                                        renderer.render(scene, gui_manager);
+                                        renderer.render(command_queue.clone(), scene, gui_manager);
                                     }
                                 }
                             }
@@ -408,6 +429,7 @@ pub async fn start(event_loop: EventLoop<()>) {
                                             &render_ctx.resource_manager.lock()
                                         {
                                             gui_manager.build(
+                                                command_queue.clone(),
                                                 resource_manager,
                                                 width as f32 / height as f32,
                                             )

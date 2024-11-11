@@ -29,6 +29,9 @@ winit = { version = "0.29.15", default-features = false, features = [
 android-activity = { version = "0.5.2", features = ["native-activity"] }
 android_logger = "0.13.3"
 
+[profile.dev]
+incremental = true
+
 [lib]
 name = "lumina"
 path = "src/lib.rs"

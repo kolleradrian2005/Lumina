@@ -23,6 +23,19 @@
             ],
             "problemMatcher": [],
             "dependsOn": ["Build"]
-        }
+        },
+        {
+            "label": "cargo watch",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+              "watch",
+              "-x",
+              "build"
+            ],
+            "isBackground": true,
+            "problemMatcher": [],
+            "detail": "Watch Rust files and rebuild on changes"
+          }
     ]
 }

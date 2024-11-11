@@ -1,18 +1,18 @@
-use gl::types::*;
+use std::sync::Arc;
 
 use crate::engine::collider::Collider;
+use crate::engine::command_queue::CommandQueue;
 use crate::engine::math::vec2::Vec2;
 use crate::engine::math::vec3::Vec3;
 use crate::engine::texture::texture::{StaticColor, Texture};
 use crate::engine::transformable::Transformable;
 
-use super::mesh_handler::MeshHandler;
+use super::mesh::Mesh;
 
 #[derive(Clone, Debug)]
 pub struct Model {
     // Rendering
-    vao: GLuint,
-    vertex_count: GLsizei,
+    mesh: Arc<Mesh>,
     flipped: bool,
     // Transforming
     position: Vec3,
@@ -24,11 +24,14 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(vertices: &[f32], indices: &[u32], uvs: &[f32]) -> Self {
-        let vao: GLuint = MeshHandler.create_mesh(vertices, indices, uvs);
+    pub fn new(
+        command_queue: Arc<CommandQueue>,
+        vertices: &[f32],
+        indices: &[u32],
+        uvs: &[f32],
+    ) -> Self {
         Model {
-            vao,
-            vertex_count: indices.len() as GLsizei,
+            mesh: Arc::new(Mesh::new(command_queue, vertices, indices, uvs)),
             position: Vec3::new(0.0, 0.0, 0.0),
             rotation: 0.0,
             scale: Vec2::uniform(1.0),
@@ -42,12 +45,8 @@ impl Model {
         &self.collider
     }
 
-    pub fn get_vao(&self) -> GLuint {
-        self.vao
-    }
-
-    pub fn get_vertex_count(&self) -> GLsizei {
-        self.vertex_count
+    pub fn get_mesh(&self) -> &Arc<Mesh> {
+        &self.mesh
     }
 
     pub fn set_flipped(&mut self, state: bool) {

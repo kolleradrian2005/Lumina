@@ -17,7 +17,7 @@ use crate::engine::{
 
 use super::{
     particle::{particle::ParticleType, particle_system::ParticleSystem},
-    world::World,
+    world::world::World,
 };
 
 #[derive(PartialEq)]

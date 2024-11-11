@@ -1,6 +1,11 @@
-use crate::engine::gui::{
-    gui_element::{Alignment, GuiElement, UiElement},
-    ui_model_group::UiModelGroup,
+use std::sync::Arc;
+
+use crate::engine::{
+    command_queue::CommandQueue,
+    gui::{
+        gui_element::{Alignment, GuiElement, UiElement},
+        ui_model_group::UiModelGroup,
+    },
 };
 
 pub struct Align {
@@ -9,8 +14,12 @@ pub struct Align {
 }
 
 impl GuiElement for Align {
-    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup {
-        let mut model_group = self.child.collect_models(max_size);
+    fn collect_models(
+        &self,
+        command_queue: Arc<CommandQueue>,
+        max_size: (f32, f32),
+    ) -> UiModelGroup {
+        let mut model_group = self.child.collect_models(command_queue, max_size);
         let (width, height) = model_group.dimensions;
         let inv_width = max_size.0 - width;
         let inv_height = max_size.1 - height;

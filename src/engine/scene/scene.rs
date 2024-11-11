@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use rand::rngs::StdRng;
 use rand::Rng;
 
+use crate::engine::command_queue::CommandQueue;
 use crate::engine::input_handler::InputHandler;
 
 use crate::engine::math::vec3::Vec3;
@@ -19,7 +20,7 @@ use super::camera::Camera;
 use super::foreground::Foreground;
 use super::particle::particle_system::ParticleSystem;
 use super::player::Player;
-use super::world::World;
+use super::world::world::World;
 
 pub struct Scene {
     pub models: Vec<Model>,
@@ -35,12 +36,12 @@ pub struct Scene {
 const WORLD_SEED: u32 = 696969;
 
 impl Scene {
-    pub fn new(resource_manager: &mut ResourceManager) -> Self {
+    pub fn new(command_queue: Arc<CommandQueue>, resource_manager: &mut ResourceManager) -> Self {
         Scene {
             models: Vec::new(),
             camera: Camera::new(),
             player: Player::new(resource_manager),
-            background: Background::construct(resource_manager),
+            background: Background::construct(command_queue, resource_manager),
             foreground: Foreground::construct(),
             world: World::load(WORLD_SEED, resource_manager),
             particles: Vec::new(),

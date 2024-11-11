@@ -6,6 +6,7 @@ use crate::engine::{
 
 use super::model::Model;
 
+#[derive(Clone)]
 pub struct ModelGroup {
     models: Vec<Model>,
     // Transforming

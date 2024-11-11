@@ -26,6 +26,7 @@ impl BackgroundRenderer {
         let layers = &scene.background.layers;
         for i in 0..layers.len() {
             let model = layers.get(i).unwrap();
+            let mesh = model.get_mesh();
             let model_matrix = transformation::create_model_matrix(model, None);
             self.shader.set_model_matrix(&model_matrix);
             let texture = model.get_texture();
@@ -48,12 +49,12 @@ impl BackgroundRenderer {
             }
             self.shader.set_has_texture(texture.has_texture());
             self.shader.set_flipped(model.is_flipped());
-            gl::BindVertexArray(model.get_vao());
+            gl::BindVertexArray(mesh.get_vao());
             gl::EnableVertexAttribArray(0);
             gl::EnableVertexAttribArray(1);
             gl::DrawElements(
                 gl::TRIANGLES,
-                model.get_vertex_count(),
+                mesh.get_vertex_count(),
                 gl::UNSIGNED_INT,
                 0 as *const _,
             );

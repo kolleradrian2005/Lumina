@@ -1,6 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use crate::engine::{
+    command_queue::CommandQueue,
     gui::{
         gui_element::{GuiElement, UiElement},
         listener::RawListener,
@@ -16,11 +17,15 @@ pub struct GestureDetector {
 }
 
 impl GuiElement for GestureDetector {
-    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup {
-        let mut model_group = self.child.collect_models(max_size);
+    fn collect_models(
+        &self,
+        command_queue: Arc<CommandQueue>,
+        max_size: (f32, f32),
+    ) -> UiModelGroup {
+        let mut model_group = self.child.collect_models(command_queue.clone(), max_size);
         model_group.listeners.push(RawListener {
             ui_model: UiModel {
-                model: sprite::square(1.0),
+                model: sprite::square(command_queue.clone(), 1.0),
                 size: (model_group.dimensions.0, model_group.dimensions.1),
                 margin: (0.0, 0.0),
             },

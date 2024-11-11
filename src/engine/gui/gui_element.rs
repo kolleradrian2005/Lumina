@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use crate::engine::command_queue::CommandQueue;
+
 use super::{
     elements::{
         align::Align, column::Column, container::Container, gesture_detector::GestureDetector,
@@ -7,7 +11,11 @@ use super::{
 };
 
 pub trait GuiElement {
-    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup;
+    fn collect_models(
+        &self,
+        command_queue: Arc<CommandQueue>,
+        max_size: (f32, f32),
+    ) -> UiModelGroup;
 }
 
 pub enum UiElement {
@@ -64,16 +72,20 @@ impl From<GestureDetector> for Box<UiElement> {
 
 // Unwrap functions
 impl GuiElement for UiElement {
-    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup {
+    fn collect_models(
+        &self,
+        command_queue: Arc<CommandQueue>,
+        max_size: (f32, f32),
+    ) -> UiModelGroup {
         match self {
-            UiElement::Padding(padding) => padding.collect_models(max_size),
-            UiElement::Align(align) => align.collect_models(max_size),
-            UiElement::Container(container) => container.collect_models(max_size),
-            UiElement::Text(text) => text.collect_models(max_size),
-            UiElement::Row(row) => row.collect_models(max_size),
-            UiElement::Column(column) => column.collect_models(max_size),
+            UiElement::Padding(padding) => padding.collect_models(command_queue, max_size),
+            UiElement::Align(align) => align.collect_models(command_queue, max_size),
+            UiElement::Container(container) => container.collect_models(command_queue, max_size),
+            UiElement::Text(text) => text.collect_models(command_queue, max_size),
+            UiElement::Row(row) => row.collect_models(command_queue, max_size),
+            UiElement::Column(column) => column.collect_models(command_queue, max_size),
             UiElement::GestureDetector(gesture_detector) => {
-                gesture_detector.collect_models(max_size)
+                gesture_detector.collect_models(command_queue, max_size)
             }
         }
     }

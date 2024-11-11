@@ -1,6 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
-use crate::engine::{gui::ui_model::UiModel, model::sprite, texture::texture::Texture};
+use crate::engine::{
+    command_queue::CommandQueue, gui::ui_model::UiModel, model::sprite, texture::texture::Texture,
+};
 
 #[derive(Clone)]
 pub struct OffsetTexture {
@@ -36,9 +38,9 @@ impl FontTexture {
         }
     }
 
-    pub fn get_model(&self, c: char) -> UiModel {
+    pub fn get_model(&self, command_queue: Arc<CommandQueue>, c: char) -> UiModel {
         let font_texture = self.get(c);
-        let mut model = sprite::square(1.0);
+        let mut model = sprite::square(command_queue, 1.0);
         if let Some(texture) = &font_texture.texture {
             model.set_texture(texture.clone());
         }

@@ -1,6 +1,11 @@
-use crate::engine::gui::{
-    gui_element::{EdgeInsets, GuiElement, UiElement},
-    ui_model_group::UiModelGroup,
+use std::sync::Arc;
+
+use crate::engine::{
+    command_queue::CommandQueue,
+    gui::{
+        gui_element::{EdgeInsets, GuiElement, UiElement},
+        ui_model_group::UiModelGroup,
+    },
 };
 
 impl EdgeInsets {
@@ -28,8 +33,12 @@ pub struct Padding {
 }
 
 impl GuiElement for Padding {
-    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup {
-        let mut model_group = self.child.collect_models(max_size);
+    fn collect_models(
+        &self,
+        command_queue: Arc<CommandQueue>,
+        max_size: (f32, f32),
+    ) -> UiModelGroup {
+        let mut model_group = self.child.collect_models(command_queue, max_size);
         if let EdgeInsets::Zero = self.padding {
             return model_group;
         }
