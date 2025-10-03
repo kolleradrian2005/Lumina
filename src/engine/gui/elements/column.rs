@@ -1,11 +1,8 @@
-use std::sync::Arc;
 
-use crate::engine::{
-    command_queue::CommandQueue,
-    gui::{
-        gui_element::{CrossAxisAlignment, GuiElement, MainAxisAlignment, UiElement},
-        ui_model_group::UiModelGroup,
-    },
+
+use crate::engine::gui::{
+    gui_element::{CrossAxisAlignment, GuiElement, MainAxisAlignment, UiElement},
+    ui_model_group::UiModelGroup,
 };
 
 pub struct Column {
@@ -15,18 +12,14 @@ pub struct Column {
 }
 
 impl GuiElement for Column {
-    fn collect_models(
-        &self,
-        command_queue: Arc<CommandQueue>,
-        max_size: (f32, f32),
-    ) -> UiModelGroup {
+    fn collect_models(&self, max_size: (f32, f32)) -> UiModelGroup {
         let children_count = self.children.len();
         let child_max_size = (max_size.0, max_size.1 / children_count as f32);
 
         let child_model_groups: Vec<_> = self
             .children
             .iter()
-            .map(|child| child.collect_models(command_queue.clone(), child_max_size))
+            .map(|child| child.collect_models(child_max_size))
             .collect();
 
         // Only calculate if necessary

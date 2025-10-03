@@ -1,8 +1,7 @@
-use std::sync::Arc;
+
 
 use crate::engine::{
-    command_queue::CommandQueue, input_handler::InputHandler, model::model::Model,
-    texture::resource_manager::ResourceManager,
+    input_handler::InputHandler, model::model::Model, texture::resource_provider::ResourceProvider,
 };
 
 use super::{game_gui::GameGui, gui::Gui, listener::Listener};
@@ -43,16 +42,9 @@ impl GuiManager {
         }
     }
 
-    pub fn build(
-        &mut self,
-        command_queue: Arc<CommandQueue>,
-        resource_manager: &ResourceManager,
-        aspect_ratio: f32,
-    ) {
+    pub fn build(&mut self, resource_provider: &dyn ResourceProvider, aspect_ratio: f32) {
         match self.current_state {
-            GuiState::Game => self
-                .game_gui
-                .build(command_queue, resource_manager, aspect_ratio),
+            GuiState::Game => self.game_gui.build(resource_provider, aspect_ratio),
         }
     }
 
@@ -62,8 +54,7 @@ impl GuiManager {
 
     pub fn update(
         &mut self,
-        command_queue: Arc<CommandQueue>,
-        resource_manager: &ResourceManager,
+        resource_provider: &dyn ResourceProvider,
         input_handler: &mut InputHandler,
     ) {
         let mouse_pos = input_handler.get_normalized_mouse_position(self.dimensions);
@@ -86,8 +77,7 @@ impl GuiManager {
         }
         if rebuild {
             self.build(
-                command_queue,
-                resource_manager,
+                resource_provider,
                 self.dimensions.0 as f32 / self.dimensions.1 as f32,
             );
         }

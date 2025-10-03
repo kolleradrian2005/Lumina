@@ -1,8 +1,6 @@
-use std::sync::Arc;
+
 
 use gl::types::{GLsizei, GLsizeiptr, GLuint, GLvoid};
-
-use crate::engine::{command_queue::CommandQueue, gl_command::GlCommand};
 
 #[derive(Clone, Debug)]
 pub struct Mesh {
@@ -11,16 +9,10 @@ pub struct Mesh {
     uvs_vbo: Option<GLuint>,
     ebo: GLuint,
     vertex_count: GLsizei,
-    command_queue: Arc<CommandQueue>,
 }
 
 impl Mesh {
-    pub fn new(
-        command_queue: Arc<CommandQueue>,
-        vertices: &[f32],
-        indices: &[u32],
-        uvs: &[f32],
-    ) -> Self {
+    pub fn new(vertices: &[f32], indices: &[u32], uvs: &[f32]) -> Self {
         let mut vao: GLuint = 0;
         let mut uvs_vbo = None;
         unsafe {
@@ -41,7 +33,6 @@ impl Mesh {
                 uvs_vbo,
                 ebo,
                 vertex_count: indices.len() as GLsizei,
-                command_queue,
             };
         };
     }
@@ -102,19 +93,19 @@ impl Mesh {
         self.vao
     }
 
+    pub fn get_vert_vbo(&self) -> GLuint {
+        self.vert_vbo
+    }
+
+    pub fn get_uvs_vbo(&self) -> Option<GLuint> {
+        self.uvs_vbo
+    }
+
+    pub fn get_ebo(&self) -> GLuint {
+        self.ebo
+    }
+
     pub fn get_vertex_count(&self) -> GLsizei {
         self.vertex_count
-    }
-}
-
-impl Drop for Mesh {
-    fn drop(&mut self) {
-        let sender = self.command_queue.get_sender();
-        sender.send(GlCommand::DeleteVao(self.vao)).unwrap();
-        sender.send(GlCommand::DeleteBuffer(self.vert_vbo)).unwrap();
-        if let Some(uvs_vbo) = self.uvs_vbo {
-            sender.send(GlCommand::DeleteBuffer(uvs_vbo)).unwrap();
-        }
-        sender.send(GlCommand::DeleteBuffer(self.ebo)).unwrap();
     }
 }

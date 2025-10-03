@@ -4,6 +4,7 @@ use winit::keyboard::Key;
 
 use super::math::vec2::Vec2;
 
+// TODO: InputState
 pub struct InputHandler {
     key_states: HashMap<Key, bool>,
     l_mouse: Option<bool>,
@@ -35,7 +36,6 @@ impl InputHandler {
         }
         *self.key_states.entry(key_code).or_insert(state) = state;
         true
-        //*self.key_states.entry(key_code).or_insert(state) = state;
     }
 
     pub fn is_pressed(&self, key_code: Key) -> bool {

@@ -77,7 +77,8 @@ void applyVignette(inout vec4 color, vec2 raw_position, vec2 screenspace_positio
 
 void applyFocusFactor(inout vec4 color, vec2 raw_position, vec2 screenspace_position) {
     float distanceToFocus = length(screenspace_position - uFocalOffset);
-    float focusFactor = uDarkeningFactor * smoothstep(uFocalRadius, uFocalRadius + uSmoothFactor, distanceToFocus);
+    float darkening_factor = clamp(1.0 - worldspace_position.y, 0.0, 1.0) * uDarkeningFactor;
+    float focusFactor = darkening_factor * smoothstep(uFocalRadius, uFocalRadius + uSmoothFactor, distanceToFocus);
     color.rgb = mix(color.rgb, darkColor, focusFactor);
 }
 
@@ -92,8 +93,8 @@ void applyGodRays(inout vec4 color) {
         float depth = length(dist);
         float decay = exp(-godray_density * depth);
         float fadeFactor = 1.0 - clamp((abs(angle + godray_angle) - godray_max_angle / 2.0) / (godray_fade_angle / 2.0), 0.0, 1.0);
-        color.rgb += fadeFactor * decay * godray_exposure;
-        //color.rgb = vec3(1.0, 0.0, 0.0);
+        float lighting_factor = clamp(1.0 - worldspace_position.y, 0.0, 1.0);
+        color.rgb += lighting_factor * fadeFactor * decay * godray_exposure;
     }
 }
 

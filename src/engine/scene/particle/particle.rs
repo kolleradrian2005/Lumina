@@ -3,7 +3,7 @@ use std::time::Duration;
 use rand::rngs::StdRng;
 
 use crate::engine::{
-    math::vec3::Vec3, model::model::Model, texture::resource_manager::ResourceManager,
+    math::vec3::Vec3, model::model::Model, texture::resource_provider::ResourceProvider,
 };
 
 use super::{bubble::Bubble, fish::Fish};
@@ -34,10 +34,10 @@ impl ParticleType {
             ParticleType::Fish => Box::new(Fish::spawn(model, spawn_position, rng)),
         }
     }
-    pub fn create_model(&self, resource_manager: &mut ResourceManager) -> Model {
+    pub fn create_model(&self, resource_provider: &dyn ResourceProvider) -> Model {
         match self {
-            ParticleType::Bubble => resource_manager.get_model("bubble"),
-            ParticleType::Fish => resource_manager.get_model("fish"),
+            ParticleType::Bubble => resource_provider.get_model("bubble"),
+            ParticleType::Fish => resource_provider.get_model("fish"),
         }
     }
 }

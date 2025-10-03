@@ -20,7 +20,12 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "preLaunchTask": "",
+            "env": {
+                "RUST_SRC": "${env:RUSTUP_HOME}/toolchains/${env:RUSTUP_TOOLCHAIN}/lib/rustlib/src/rust/src"
+            }
         },
         {
             "type": "lldb",

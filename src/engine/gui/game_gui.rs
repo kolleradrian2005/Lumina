@@ -1,8 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use crate::engine::{
-    command_queue::CommandQueue, model::model::Model, texture::resource_manager::ResourceManager,
-};
+use crate::engine::{model::model::Model, texture::resource_provider::ResourceProvider};
 
 use super::{
     elements::{align::Align, container::Container, gesture_detector::GestureDetector, text::Text},
@@ -29,12 +27,7 @@ impl GameGui {
 }
 
 impl Gui for GameGui {
-    fn build(
-        &mut self,
-        command_queue: Arc<CommandQueue>,
-        resource_manager: &ResourceManager,
-        aspect_ratio: f32,
-    ) {
+    fn build(&mut self, resource_provider: &dyn ResourceProvider, aspect_ratio: f32) {
         let counter = self.counter.clone();
         let state: Box<UiElement> = Align {
             alignment: Alignment::Top,
@@ -55,7 +48,7 @@ impl Gui for GameGui {
                                     "Counter: {}",
                                     self.counter.read().unwrap().to_string()
                                 ), //"Lumina".into(), //num.to_string(),
-                                font: resource_manager.get_font("default"),
+                                font: resource_provider.get_font("default"),
                                 font_size: 0.001,
                             }
                             .into(),
@@ -70,7 +63,7 @@ impl Gui for GameGui {
             .into(),
         }
         .into();
-        (self.elements, self.listeners) = gui::build(command_queue, &state, aspect_ratio);
+        (self.elements, self.listeners) = gui::build(&state, aspect_ratio);
     }
 
     fn get_listeners(&mut self) -> &Vec<Listener> {

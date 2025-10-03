@@ -37,19 +37,9 @@ impl TextureHandler {
         let asset = archive
             .get(path_str)
             .expect(format!("Failed to load texture {:?}", path_str).as_str());
-        //let raw_path: String =
-        //    (String::new() + references::TEXTURES_PATH + texture_name).to_string();
-        //let canonicalized_path = fs::canonicalize(&raw_path);
-        //if canonicalized_path.is_err() {
-        //    println!("Could not load image: {}", raw_path);
-        //    return None;
-        //}
-        //let path = canonicalized_path.unwrap();
         if let Some(texture) = self.id_map.get(&path) {
             return Some(texture.clone());
         }
-        //let img = image::open(&path);
-        //let img = Reader::new(Cursor::new(asset)).decode();
         let mut img = match image::load_from_memory(asset) {
             Ok(img) => img,
             Err(err) => {
@@ -103,13 +93,6 @@ impl TextureHandler {
     }
 
     pub fn load_font(&mut self, archive: &NamedArchive, font_name: &str) -> Option<FontTexture> {
-        //let raw_path: String = (String::new() + references::FONTS_PATH + font_name).to_string();
-        //let canonicalized_path = fs::canonicalize(&raw_path);
-        //if canonicalized_path.is_err() {
-        //    println!("Could not load font: {}", raw_path);
-        //    return None;
-        //}
-        //let path = canonicalized_path.unwrap();
         let path = Path::new(references::FONTS_PATH).join(font_name.replace("/", "\\"));
         let binding = path.to_string_lossy().replace("/", "\\");
         let path_str = binding.as_str();
@@ -117,7 +100,6 @@ impl TextureHandler {
         let asset = archive
             .get(path_str)
             .expect(format!("Failed to load font {:?}", path_str).as_str());
-        //let file_opt = File::open(path);
 
         let ft_opt = Font::try_from_bytes(asset);
         if ft_opt.is_none() {

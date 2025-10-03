@@ -2,7 +2,7 @@ use include_assets::NamedArchive;
 
 use crate::engine::{
     math::transformation,
-    scene::scene::Scene,
+    scene::{background::Background, scene::Scene},
     shader::{background_shader::BackgroundShader, shader_program::ShaderProgram},
     texture::texture::Texture,
 };
@@ -23,7 +23,8 @@ impl BackgroundRenderer {
     pub unsafe fn render(&self, scene: &Scene) {
         self.shader.start();
 
-        let layers = &scene.background.layers;
+        let background = scene.get_world().expect_resource::<Background>();
+        let layers = &background.layers;
         for i in 0..layers.len() {
             let model = layers.get(i).unwrap();
             let mesh = model.get_mesh();

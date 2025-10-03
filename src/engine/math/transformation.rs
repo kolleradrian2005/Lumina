@@ -1,5 +1,6 @@
 use crate::engine::{
     model::{model::Model, model_group::ModelGroup},
+    scene::world::component::transform_component::TransformComponent,
     transformable::Transformable,
 };
 
@@ -99,4 +100,52 @@ pub fn create_ortographic_projection_matrix(
         [0.0, 0.0, -2.0 / f_minus_n, tz],
         [0.0, 0.0, 0.0, 1.0],
     ]
+}
+
+pub fn create_transform_matrix(
+    model: &TransformComponent,
+    parent_component: Option<&TransformComponent>,
+) -> [[f32; 4]; 4] {
+    let inherited = calc_intherited_transform(model, parent_component);
+
+    let translation_matrix = create_translation_matrix(inherited.position);
+    let rotation_matrix = create_rotation_matrix(inherited.rotation);
+    let scale_matrix = create_scale_matrix(inherited.scale);
+
+    let mut model_matrix = scale_matrix;
+    multiply_matrix(&mut model_matrix, &rotation_matrix);
+    multiply_matrix(&mut model_matrix, &translation_matrix);
+
+    model_matrix
+}
+
+pub fn calc_intherited_transform(
+    model: &TransformComponent,
+    parent_component: Option<&TransformComponent>,
+) -> TransformComponent {
+    let mut position = model.position;
+    let mut rotation = model.rotation;
+    let mut scale = model.scale;
+
+    if let Some(parent_transform) = parent_component {
+        let m_scale = parent_transform.scale;
+        let m_rotation = parent_transform.rotation;
+        let flip_mul = -((parent_transform.is_flipped as i32) * 2 - 1) as f32;
+
+        position = Vec3::from_vec2(position.xy().rotated(m_rotation * flip_mul), position.z);
+        position.x *= flip_mul;
+        position += parent_transform.position;
+
+        rotation *= -flip_mul;
+        rotation += m_rotation;
+        scale.x *= m_scale.x;
+        scale.y *= m_scale.y;
+    }
+
+    TransformComponent {
+        position,
+        rotation,
+        scale,
+        is_flipped: false,
+    }
 }

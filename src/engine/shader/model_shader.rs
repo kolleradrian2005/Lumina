@@ -4,7 +4,8 @@ use gl::types::GLuint;
 use include_assets::NamedArchive;
 
 use crate::engine::{
-    math::vec3::Vec3, render::scene_renderer::ObjectType, texture::texture::Texture,
+    math::vec3::Vec3, render::scene_renderer::ObjectType,
+    scene::world::component::shader_params_component::ShaderParam, texture::texture::Texture,
 };
 
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
@@ -113,6 +114,17 @@ impl ModelShader {
     }
     pub fn has_tesselation(&self) -> bool {
         self.use_tesselation
+    }
+    pub fn set_shader_params(&self, params: &[ShaderParam]) {
+        for param in params {
+            unsafe {
+                match param {
+                    ShaderParam::IsUphill(v) => self.set_isuphill(*v),
+                    ShaderParam::Height(h) => self.set_height(*h),
+                    ShaderParam::Current(c) => self.set_current(*c),
+                }
+            }
+        }
     }
 }
 

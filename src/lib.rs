@@ -2,6 +2,7 @@ extern crate gl;
 extern crate glutin;
 extern crate glutin_winit;
 
+pub mod render_context;
 pub mod engine {
     pub mod gui {
         pub mod elements {
@@ -37,6 +38,7 @@ pub mod engine {
         pub mod background_renderer;
         pub mod gui_renderer;
         pub mod postprocess_renderer;
+        pub mod renderable;
         pub mod renderer;
         pub mod scene_renderer;
         pub mod uniformbuffer;
@@ -47,19 +49,59 @@ pub mod engine {
             pub mod bubble;
             pub mod fish;
             pub mod particle;
-            pub mod particle_system;
+            //pub mod particle_system;
         }
         pub mod world {
-            pub mod terrain;
-            pub mod tile;
-            pub mod water;
+            pub mod entity {
+                pub mod entity;
+                pub mod particle_entity;
+            }
+            pub mod component {
+                pub mod camera_component;
+                pub mod collider_component;
+                pub mod component;
+                pub mod conditional_parent_component;
+                pub mod current_component;
+                pub mod emitter_component;
+                pub mod model_component;
+                pub mod movement_component;
+                pub mod multi_conditional_parent_component;
+                pub mod parent_component;
+                pub mod player_part_component;
+                pub mod player_state_component;
+                pub mod shader_params_component;
+                pub mod texture_component;
+                pub mod transform_component;
+            }
+            pub mod system {
+                pub mod animation_system;
+                pub mod camera_system;
+                pub mod collider_system;
+                pub mod current_system;
+                pub mod emitter_system;
+                pub mod input_system;
+                pub mod movement_system;
+                pub mod particle_system;
+                pub mod player_movement_system;
+                pub mod render_system;
+                pub mod system;
+                pub mod terrain_system;
+                pub mod update_focal_radius_system;
+                pub mod update_god_rays_system;
+            }
+            pub mod component_storage;
+            pub mod create_mesh_manager;
+            pub mod drop_mesh_request;
+            pub mod query;
             pub mod world;
         }
         pub mod background;
-        pub mod camera;
         pub mod foreground;
-        pub mod player;
+        pub mod player_state;
         pub mod scene;
+        pub mod terrain;
+        pub mod tile;
+        pub mod water;
     }
     pub mod shader {
         pub mod background_shader;
@@ -75,38 +117,33 @@ pub mod engine {
         pub mod font_texture;
         pub mod frame_buffer;
         pub mod resource_manager;
+        pub mod resource_provider;
         pub mod texture;
         pub mod texture_handler;
     }
     pub mod collider;
-    pub mod command_queue;
-    pub mod gl_command;
     pub mod input_handler;
     pub mod references;
     pub mod transformable;
     pub mod window_handler;
 }
 
-use engine::command_queue::CommandQueue;
+use engine::input_handler::InputHandler;
 use engine::math::vec2::Vec2;
 use engine::references;
-use engine::render::renderer::Renderer;
 use engine::render::updatable::Updatable;
-use engine::scene::scene::Scene;
-use engine::texture::resource_manager::ResourceManager;
-use engine::{gui::gui_manager::GuiManager, input_handler::InputHandler};
 
 use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
     ContextApi, ContextAttributesBuilder, NotCurrentContext, NotCurrentGlContext,
     PossiblyCurrentContext, PossiblyCurrentGlContext, Version,
 };
-use glutin::display::{Display, GetGlDisplay, GlDisplay};
+use glutin::display::{GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface, SwapInterval, WindowSurface};
 use glutin_winit::{DisplayBuilder, GlWindow};
-use include_assets::{include_dir, NamedArchive};
 use rand::{rngs::StdRng, SeedableRng};
 use raw_window_handle::HasRawWindowHandle;
+use render_context::RenderContext;
 use std::borrow::BorrowMut;
 use std::collections::VecDeque;
 
@@ -119,6 +156,9 @@ use winit::event::{DeviceEvent, ElementState, Event, KeyEvent, TouchPhase, Windo
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowBuilder};
+
+use crate::engine::scene::world::create_mesh_manager::CreateMeshManager;
+use crate::engine::scene::world::drop_mesh_request::DropMeshRequest;
 
 #[cfg(target_os = "android")]
 #[no_mangle]
@@ -149,39 +189,6 @@ pub fn gl_config_picker(configs: Box<dyn Iterator<Item = Config> + '_>) -> Confi
             }
         })
         .unwrap()
-}
-
-#[derive(Clone)]
-struct RenderContext {
-    pub renderer: Arc<Mutex<Renderer>>,
-    pub resource_manager: Arc<Mutex<ResourceManager>>,
-    pub scene: Arc<Mutex<Scene>>,
-    pub gui_manager: Arc<Mutex<GuiManager>>,
-}
-
-impl RenderContext {
-    pub fn init(
-        command_queue: Arc<CommandQueue>,
-        gl_display: &Display,
-        width: i32,
-        height: i32,
-    ) -> Self {
-        let archive = NamedArchive::load(include_dir!("assets"));
-        let mut renderer =
-            Renderer::init(command_queue.clone(), gl_display, width, height, &archive);
-        let mut resource_manager = ResourceManager::new(command_queue.clone(), archive);
-        resource_manager.preload_models(command_queue.clone());
-        resource_manager.load_fonts();
-        let scene = Scene::new(command_queue, &mut resource_manager);
-        renderer.load_scene(&scene, width as f32 / height as f32);
-        let gui_manager = GuiManager::new((width, height));
-        Self {
-            renderer: Arc::new(Mutex::new(renderer)),
-            resource_manager: Arc::new(Mutex::new(resource_manager)),
-            scene: Arc::new(Mutex::new(scene)),
-            gui_manager: Arc::new(Mutex::new(gui_manager)),
-        }
-    }
 }
 
 fn build_window() -> WindowBuilder {
@@ -246,6 +253,10 @@ pub async fn start(event_loop: EventLoop<()>) {
 
     let mut state: Option<(PossiblyCurrentContext, Surface<WindowSurface>, Window)> = None;
     let updatables: Arc<Mutex<VecDeque<Updatable>>> = Arc::new(Mutex::new(VecDeque::new()));
+    let drop_mesh_requests: Arc<Mutex<VecDeque<DropMeshRequest>>> =
+        Arc::new(Mutex::new(VecDeque::new()));
+    let create_mesh_manager: Arc<Mutex<CreateMeshManager>> =
+        Arc::new(Mutex::new(CreateMeshManager::new()));
 
     let is_running = Arc::new(Mutex::new(true));
 
@@ -260,19 +271,34 @@ pub async fn start(event_loop: EventLoop<()>) {
     let loop_render_context_clone: Arc<Mutex<Option<RenderContext>>> =
         Arc::clone(&loop_render_context);
 
-    let updatables_clone = Arc::clone(&updatables);
+    let updatables_clone: Arc<Mutex<VecDeque<Updatable>>> = Arc::clone(&updatables);
+    let drop_mesh_requests_clone: Arc<Mutex<VecDeque<DropMeshRequest>>> =
+        Arc::clone(&drop_mesh_requests);
+    let create_mesh_manager_clone: Arc<Mutex<CreateMeshManager>> = Arc::clone(&create_mesh_manager);
     let is_running_clone = Arc::clone(&is_running);
-
-    // Use command queue for asynchronous OpenGL calls
-    let command_queue = Arc::new(CommandQueue::new());
 
     const TARGET_INTERVAL: Duration = Duration::from_millis(10);
 
     let main_loop = tokio::spawn(async move {
         tokio::time::sleep(TARGET_INTERVAL).await;
-        let mut rng: StdRng = SeedableRng::from_entropy();
+        let rng: StdRng = SeedableRng::from_entropy();
         let mut delta_time: Duration;
         let mut last: Instant = Instant::now();
+
+        loop {
+            if let Some(render_ctx) = loop_render_context_clone.lock().unwrap().as_ref() {
+                if let Ok(scene) = &mut render_ctx.scene.lock() {
+                    let world = scene.get_world_mut();
+                    world.insert_resource(render_ctx.resource_handle.get_inner());
+                    world.insert_resource(loop_input_handler_clone.clone());
+                    world.insert_resource(updatables_clone.clone());
+                    world.insert_resource(drop_mesh_requests_clone.clone());
+                    world.insert_resource(create_mesh_manager_clone.clone());
+                    world.insert_resource(rng);
+                }
+                break;
+            }
+        }
 
         while *is_running_clone.lock().unwrap() {
             // Calculate delta time
@@ -286,16 +312,7 @@ pub async fn start(event_loop: EventLoop<()>) {
             if let Some(render_ctx) = loop_render_context_clone.lock().unwrap().as_ref() {
                 // Update the scene
                 if let Ok(scene) = &mut render_ctx.scene.lock() {
-                    if let Ok(resource_manager) = &mut render_ctx.resource_manager.lock() {
-                        scene.update(
-                            delta_time.as_secs_f32(),
-                            last,
-                            loop_input_handler_clone.lock().unwrap().borrow_mut(),
-                            resource_manager,
-                            &mut rng,
-                            updatables_clone.lock().unwrap().borrow_mut(),
-                        );
-                    }
+                    scene.update(delta_time.as_secs_f32());
                 }
             }
         }
@@ -332,8 +349,7 @@ pub async fn start(event_loop: EventLoop<()>) {
                     ) {
                         println!("Error setting vsync: {res:?}");
                     }
-                    let render_ctx =
-                        RenderContext::init(command_queue.clone(), &gl_display, width, height);
+                    let render_ctx = RenderContext::init(&gl_display, width, height);
                     render_context.get_or_insert_with(|| render_ctx.clone());
                     loop_render_context
                         .lock()
@@ -370,10 +386,9 @@ pub async fn start(event_loop: EventLoop<()>) {
                         if let Some(render_ctx) = &render_context {
                             // Handle ui logic
                             if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                if let Ok(resource_manager) = render_ctx.resource_manager.lock() {
+                                if let Ok(resource_provider) = render_ctx.resource_handle.lock() {
                                     gui_manager.update(
-                                        command_queue.clone(),
-                                        &resource_manager,
+                                        &*resource_provider,
                                         loop_input_handler.lock().unwrap().borrow_mut(),
                                     );
                                 }
@@ -382,16 +397,19 @@ pub async fn start(event_loop: EventLoop<()>) {
                                 if let Ok(scene) = &mut render_ctx.scene.lock() {
                                     // Update buffers based on scene
                                     if let Ok(updatables) = &mut updatables.lock() {
-                                        renderer.update_buffers(
-                                            command_queue.clone(),
-                                            updatables,
-                                            scene,
-                                        );
+                                        renderer.update_buffers(updatables, scene);
                                     }
-                                    command_queue.process_commands();
                                     if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
+                                        let drop_mesh_requests =
+                                            &mut drop_mesh_requests.lock().unwrap();
+                                        let create_mesh_manager =
+                                            &mut create_mesh_manager.lock().unwrap();
+                                        renderer.handle_mesh_requests(
+                                            drop_mesh_requests,
+                                            create_mesh_manager,
+                                        );
                                         // Render stuff
-                                        renderer.render(command_queue.clone(), scene, gui_manager);
+                                        renderer.render(scene, gui_manager);
                                     }
                                 }
                             }
@@ -425,12 +443,11 @@ pub async fn start(event_loop: EventLoop<()>) {
                                 if let Some(render_ctx) = &render_context {
                                     if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
                                         gui_manager.resize((width, height));
-                                        if let Ok(resource_manager) =
-                                            &render_ctx.resource_manager.lock()
+                                        if let Ok(resource_provider) =
+                                            &render_ctx.resource_handle.lock()
                                         {
                                             gui_manager.build(
-                                                command_queue.clone(),
-                                                resource_manager,
+                                                &**resource_provider,
                                                 width as f32 / height as f32,
                                             )
                                         }

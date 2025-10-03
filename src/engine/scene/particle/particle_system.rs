@@ -33,11 +33,11 @@ impl ParticleSystem {
     pub fn spawn(
         particle_type: ParticleType,
         spawn_position: Vec3,
-        resource_manager: &mut ResourceManager,
+        resource_provider: &mut dyn ResourceProvider,
     ) -> Self {
         ParticleSystem {
             particles: Vec::new(),
-            particle_model: particle_type.create_model(resource_manager),
+            particle_model: particle_type.create_model(resource_provider),
             particle_type,
             spawn_position,
             interval: Duration::from_secs_f32(0.25),

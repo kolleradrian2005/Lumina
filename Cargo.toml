@@ -21,6 +21,9 @@ raw-window-handle = "0.5.2"
 include_assets = "1.0.0"
 log = "0.4.21"
 
+[dev-dependencies]
+mockall = "0.13.1"
+
 [target.'cfg(target_os = "android")'.dependencies]
 winit = { version = "0.29.15", default-features = false, features = [
     "android-native-activity",

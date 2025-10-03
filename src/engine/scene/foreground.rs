@@ -4,19 +4,17 @@ use noise::{NoiseFn, Perlin};
 
 use crate::engine::{
     math::vec2::Vec2,
-    render::{uniformbuffer::PostProcessUniformBuffer, updatable::Updatable},
+    render::{uniformbuffer::PostProcessUniformBuffer},
 };
 
-use super::player::Player;
-
 pub struct Foreground {
-    noise: Perlin,
-    focal_radius: f32,
-    focus_speed: f32,
-    god_rays_noise: VecDeque<f64>,
-    god_rays_max_count: i32,
-    loaded_noise_index: i32,
-    god_rays_min_distance: f32,
+    pub noise: Perlin,
+    pub focal_radius: f32,
+    pub focus_speed: f32,
+    pub god_rays_noise: VecDeque<f64>,
+    pub god_rays_max_count: i32,
+    pub loaded_noise_index: i32,
+    pub god_rays_min_distance: f32,
 }
 
 impl Foreground {
@@ -27,9 +25,7 @@ impl Foreground {
             focus_speed: 0.25,
             god_rays_noise: VecDeque::new(),
             god_rays_max_count: 30, // Min 2, first and last are cut out
-            //god_rays_max_count: 5,
             loaded_noise_index: 0,
-            //god_rays_min_distance: 0.075
             god_rays_min_distance: 0.2,
         };
         foreground
@@ -45,7 +41,7 @@ impl Foreground {
         }
         foreground
     }
-    fn get_noise_value(&self, x: i32) -> f64 {
+    pub fn get_noise_value(&self, x: i32) -> f64 {
         let frequency = 0.2;
         self.noise.get([frequency * x as f64, x as f64 * 0.1])
     }
@@ -95,23 +91,5 @@ impl Foreground {
 
     pub fn get_focal_radius(&self) -> f32 {
         self.focal_radius
-    }
-    pub fn update(
-        &mut self,
-        delta_time: f32,
-        player: &Player,
-        updatables: &mut VecDeque<Updatable>,
-    ) {
-        let focal_dest = player.get_state().light_level();
-        let difference = focal_dest - self.focal_radius;
-        if 0.0 < difference.abs() {
-            updatables.push_front(Updatable::FocalRadius);
-        }
-        let change = difference.signum() * (delta_time * self.focus_speed);
-        if (focal_dest - self.focal_radius).abs() < change {
-            self.focal_radius = focal_dest;
-        } else {
-            self.focal_radius += change;
-        }
     }
 }

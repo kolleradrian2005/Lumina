@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use crate::engine::collider::Collider;
-use crate::engine::command_queue::CommandQueue;
 use crate::engine::math::vec2::Vec2;
 use crate::engine::math::vec3::Vec3;
 use crate::engine::texture::texture::{StaticColor, Texture};
@@ -24,14 +23,9 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(
-        command_queue: Arc<CommandQueue>,
-        vertices: &[f32],
-        indices: &[u32],
-        uvs: &[f32],
-    ) -> Self {
+    pub fn new(vertices: &[f32], indices: &[u32], uvs: &[f32]) -> Self {
         Model {
-            mesh: Arc::new(Mesh::new(command_queue, vertices, indices, uvs)),
+            mesh: Arc::new(Mesh::new(vertices, indices, uvs)),
             position: Vec3::new(0.0, 0.0, 0.0),
             rotation: 0.0,
             scale: Vec2::uniform(1.0),

@@ -4,24 +4,28 @@ use noise::{NoiseFn, Perlin};
 
 use crate::engine::{
     math::vec3::Vec3,
+    scene::{tile::Tile, world::world::World},
     texture::{
-        resource_manager::ResourceManager,
+        resource_provider::ResourceProvider,
         texture::{StaticColor, Texture},
     },
 };
 
-use super::tile::Tile;
 pub struct Terrain {
-    noise: Perlin,
-    pub tile_size: f32,
-    tiles: VecDeque<Tile>,
-    loaded_tile_index: i32,
+    pub noise: Perlin,
+    tile_size: f32,
+    pub tiles: VecDeque<Tile>,
+    pub loaded_tile_index: i32,
     default_tile_count: i32,
     tile_texture: Texture,
 }
 
 impl Terrain {
-    pub fn generate(seed: u32, resoure_manager: &mut ResourceManager) -> Self {
+    pub fn generate(
+        world: &mut World,
+        seed: u32,
+        resource_provider: &mut dyn ResourceProvider,
+    ) -> Self {
         let tile_size = 0.5;
         let extra_tiles = 4;
         let mut default_tile_count = (2.0 / tile_size as f32) as i32 + extra_tiles;
@@ -37,16 +41,32 @@ impl Terrain {
         };
         terrain
             .tiles
-            .push_back(terrain.generate_tile(loaded_tile_index, resoure_manager));
+            .push_back(terrain.generate_tile(world, loaded_tile_index, resource_provider));
         for i in 1..default_tile_count / 2 + 1 as i32 {
-            terrain
-                .tiles
-                .push_back(terrain.generate_tile(loaded_tile_index + i, resoure_manager));
-            terrain
-                .tiles
-                .push_front(terrain.generate_tile(loaded_tile_index - i, resoure_manager));
+            terrain.tiles.push_back(terrain.generate_tile(
+                world,
+                loaded_tile_index + i,
+                resource_provider,
+            ));
+            terrain.tiles.push_front(terrain.generate_tile(
+                world,
+                loaded_tile_index - i,
+                resource_provider,
+            ));
         }
         terrain
+    }
+
+    pub fn get_tile_size(&self) -> f32 {
+        self.tile_size
+    }
+
+    pub fn get_default_tile_count(&self) -> i32 {
+        self.default_tile_count
+    }
+
+    pub fn get_tile_texture(&self) -> &Texture {
+        &self.tile_texture
     }
 
     pub fn is_loaded(&self, pos: Vec3) -> bool {
@@ -60,18 +80,6 @@ impl Terrain {
 
     pub fn get_tiles_mut(&mut self) -> &mut VecDeque<Tile> {
         &mut self.tiles
-    }
-
-    pub fn update_tile_index(&mut self, tile_index: i32, resoure_manager: &mut ResourceManager) {
-        let difference = self.loaded_tile_index - tile_index;
-        if difference != 0 {
-            self.loaded_tile_index = tile_index;
-            if difference > 0 {
-                self.sweep_left(resoure_manager);
-            } else {
-                self.sweep_right(resoure_manager);
-            }
-        }
     }
 
     pub fn get_height(&self, x_f: f32) -> f32 {
@@ -131,31 +139,19 @@ impl Terrain {
         noise_value as f32
     }
 
-    fn generate_tile(&self, x: i32, resoure_manager: &mut ResourceManager) -> Tile {
+    fn generate_tile(
+        &self,
+        world: &mut World,
+        x: i32,
+        resource_provider: &mut dyn ResourceProvider,
+    ) -> Tile {
         Tile::generate(
+            world,
             self.tile_size,
             x,
             &self.noise,
             &self.tile_texture,
-            resoure_manager,
+            resource_provider,
         )
-    }
-
-    fn sweep_left(&mut self, resoure_manager: &mut ResourceManager) {
-        let new_tile = self.generate_tile(
-            (self.loaded_tile_index - self.default_tile_count / 2) as i32,
-            resoure_manager,
-        );
-        self.tiles.push_front(new_tile);
-        self.tiles.pop_back();
-    }
-
-    fn sweep_right(&mut self, resoure_manager: &mut ResourceManager) {
-        let new_tile = self.generate_tile(
-            (self.loaded_tile_index + self.default_tile_count / 2) as i32,
-            resoure_manager,
-        );
-        self.tiles.push_back(new_tile);
-        self.tiles.pop_front();
     }
 }

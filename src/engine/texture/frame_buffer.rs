@@ -1,11 +1,8 @@
-use std::{ptr, sync::Arc};
+use std::{ptr};
 
 use gl::types::*;
 
-use crate::engine::{
-    command_queue::CommandQueue,
-    model::{model::Model, sprite},
-};
+use crate::engine::model::{model::Model, sprite};
 
 pub struct Framebuffer {
     model: Model,
@@ -21,12 +18,7 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-    pub fn new(
-        command_queue: Arc<CommandQueue>,
-        width: i32,
-        height: i32,
-        msaa: Option<u8>,
-    ) -> Self {
+    pub fn new(width: i32, height: i32, msaa: Option<u8>) -> Self {
         //let msaa_samples: i32 = 16;
         let mut fbo: GLuint = 0;
         let mut rbo: GLuint = 0;
@@ -154,7 +146,7 @@ impl Framebuffer {
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
         }
         Framebuffer {
-            model: sprite::square(command_queue, 2.0),
+            model: sprite::square(2.0),
             fbo,
             post_processing_fbo,
             texture,
@@ -182,9 +174,9 @@ impl Framebuffer {
         }
     }
 
-    pub fn resize(&mut self, command_queue: Arc<CommandQueue>, width: i32, height: i32) {
+    pub fn resize(&mut self, width: i32, height: i32) {
         self.destroy();
-        *self = Framebuffer::new(command_queue, width, height, self.msaa);
+        *self = Framebuffer::new(width, height, self.msaa);
     }
 
     pub fn get_aspect_ratio(&self) -> f32 {
@@ -196,7 +188,6 @@ impl Framebuffer {
     }
 
     pub unsafe fn blit(&self) {
-        //let (width, height) = window_handler.get_dimensions();
         gl::BindFramebuffer(gl::READ_FRAMEBUFFER, self.fbo);
         gl::BindFramebuffer(gl::DRAW_FRAMEBUFFER, self.post_processing_fbo);
         gl::BlitFramebuffer(

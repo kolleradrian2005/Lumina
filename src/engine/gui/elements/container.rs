@@ -1,7 +1,6 @@
-use std::sync::Arc;
+
 
 use crate::engine::{
-    command_queue::CommandQueue,
     gui::{
         gui_element::{EdgeInsets, GuiElement, UiElement},
         ui_model::UiModel,
@@ -20,11 +19,11 @@ pub struct Container {
 }
 
 impl GuiElement for Container {
-    fn collect_models(&self, command_queue: Arc<CommandQueue>, _: (f32, f32)) -> UiModelGroup {
+    fn collect_models(&self, _: (f32, f32)) -> UiModelGroup {
         let mut model_group = UiModelGroup::new();
         model_group.dimensions = (self.width, self.height);
         if let Some(color) = self.color {
-            let mut model = sprite::square(command_queue.clone(), 1.0);
+            let mut model = sprite::square(1.0);
             model.set_texture(color.into());
             model_group.models.push(UiModel {
                 model,
@@ -33,8 +32,7 @@ impl GuiElement for Container {
             });
         }
         if let Some(child) = &self.child {
-            let mut child_model_group =
-                child.collect_models(command_queue.clone(), (self.width, self.height));
+            let mut child_model_group = child.collect_models((self.width, self.height));
             let (x_size, y_size, x_pad, y_pad) = self.padding.get_attributes();
             let (mut min_width, mut min_height) = child_model_group.dimensions;
             min_width += x_size;

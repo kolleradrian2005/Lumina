@@ -1,4 +1,4 @@
-use super::math::vec2::Vec2;
+use super::{math::vec2::Vec2, scene::world::component::transform_component::TransformComponent};
 
 #[derive(Clone, Debug)]
 pub struct Collider {
@@ -59,6 +59,19 @@ impl Collider {
             transformed_point.scale(&self.scale);
             transformed_point.rotate(self.rotation);
             transformed_point += self.position;
+            self.transformed_points[index] = transformed_point;
+        }
+    }
+
+    pub fn update(&mut self, transform: TransformComponent) {
+        for (index, point) in self.points.iter().enumerate() {
+            let mut transformed_point = point.clone();
+            if transform.is_flipped {
+                transformed_point.x *= -1.0;
+            }
+            transformed_point.scale(&transform.scale);
+            transformed_point.rotate(transform.rotation);
+            transformed_point += transform.position.xy();
             self.transformed_points[index] = transformed_point;
         }
     }
