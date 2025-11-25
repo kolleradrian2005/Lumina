@@ -7,10 +7,7 @@ use std::{
 
 use crate::engine::{
     model::mesh::Mesh,
-    render::{
-        self,
-        renderable::{MeshLoadState, Renderable},
-    },
+    render::renderable::{MeshLoadState, Renderable},
     scene::world::{
         component::model_component::ModelComponent, drop_mesh_request::DropMeshRequest,
         query::QueryMut,

@@ -1,13 +1,12 @@
 use std::sync::{Arc, Mutex};
 
 use crate::engine::{
-    render::renderable::MeshLoadState,
     scene::{
         terrain::Terrain,
         tile::Tile,
         world::{
             component::{
-                model_component::ModelComponent, player_state_component::PlayerStateComponent,
+                player_state_component::PlayerStateComponent,
                 transform_component::TransformComponent,
             },
             world::World,

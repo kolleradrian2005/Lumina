@@ -28,7 +28,7 @@ impl BackgroundRenderer {
         for i in 0..layers.len() {
             let model = layers.get(i).unwrap();
             let mesh = model.get_mesh();
-            let model_matrix = transformation::create_model_matrix(model, None);
+            let model_matrix = transformation::create_model_matrix(model);
             self.shader.set_model_matrix(&model_matrix);
             let texture = model.get_texture();
             match texture {

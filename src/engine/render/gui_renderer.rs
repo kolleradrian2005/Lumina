@@ -24,7 +24,7 @@ impl GuiRenderer {
         self.shader.start();
         for model in gui_manager.get_elements() {
             let mesh = model.get_mesh();
-            let model_matrix = transformation::create_model_matrix(&model, None);
+            let model_matrix = transformation::create_model_matrix(&model);
             self.shader.set_model_matrix(model_matrix);
             self.shader.set_aspect_ratio(aspect_ratio);
 

@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod world_test {
-    use include_assets::NamedArchive;
     use lumina::engine::model::model::Model;
-    use lumina::engine::model::model_group::ModelGroup;
     use lumina::engine::scene::world::component::component::Component;
     use lumina::engine::scene::world::component::model_component::ModelComponent;
     use lumina::engine::scene::world::entity::entity::Entity;
@@ -10,32 +8,22 @@ mod world_test {
     use lumina::engine::texture::font_texture::FontTexture;
     use lumina::engine::texture::resource_provider::ResourceProvider;
     use lumina::engine::texture::texture::Texture;
-    use lumina::engine::texture::texture_handler::TextureHandler;
     use mockall::mock;
 
     mock! {
         pub ResourceProvider {}
         impl ResourceProvider for ResourceProvider {
-            fn get_archive(&self) -> &NamedArchive;
-            fn preload_models(&mut self);
+            fn load_default_models(&mut self);
             fn load_fonts(&mut self);
             fn save_model(&mut self, name: &str, model: Model);
-            fn save_model_group(&mut self, name: &str, model_group: ModelGroup);
             fn get_model(&self, name: &str) -> Model;
-            fn get_model_group(&self, name: &str) -> ModelGroup;
-            fn save_font(&mut self, name: &str, font: FontTexture);
             fn get_font(&self, name: &str) -> FontTexture;
-            fn get_texture_handler_mut(&mut self) -> &mut TextureHandler;
             fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
             fn load_animated_texture<'a>(
                 &mut self,
                 texture_names: &[&'a str],
                 animation_time: u128,
             ) -> Option<Texture>;
-            fn load_seagrass<'a>(
-                &mut self,
-                texture_names: &[&'a str],
-            ) -> ModelGroup;
         }
     }
 
@@ -67,6 +55,22 @@ mod world_test {
     }
 
     #[test]
+    fn test_delete_entity() {
+        let mut world = create_world();
+
+        let entity = world.create_entity();
+        world.add_component::<MockComponent>(entity, MockComponent {});
+        world.delete_entity(entity);
+
+        assert_eq!(1, world.entities.len());
+        assert!(world.get_component::<MockComponent>(entity).is_none());
+        assert!(world.get_component_mut::<MockComponent>(entity).is_none());
+
+        let new_entity = world.create_entity();
+        assert_eq!(Entity(1), new_entity);
+    }
+
+    #[test]
     fn test_add_component() {
         let mut world = create_world();
         let entity = world.create_entity();
@@ -87,19 +91,18 @@ mod world_test {
     }
 
     #[test]
-    fn test_delete_entity() {
+    fn test_remove_component() {
         let mut world = create_world();
-
         let entity = world.create_entity();
         world.add_component::<MockComponent>(entity, MockComponent {});
-        world.delete_entity(entity);
+        assert!(world.get_component::<MockComponent>(entity).is_some());
+        assert!(world.get_component_mut::<MockComponent>(entity).is_some());
 
-        assert_eq!(1, world.entities.len());
+        let removed = world.remove_component::<MockComponent>(entity);
+        assert!(removed.is_some());
+
         assert!(world.get_component::<MockComponent>(entity).is_none());
         assert!(world.get_component_mut::<MockComponent>(entity).is_none());
-
-        let new_entity = world.create_entity();
-        assert_eq!(Entity(1), new_entity);
     }
 
     #[test]

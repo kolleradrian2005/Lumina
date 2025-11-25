@@ -26,7 +26,7 @@ impl RenderContext {
         let archive = NamedArchive::load(include_dir!("assets"));
         let mut renderer = Renderer::init(gl_display, width, height, &archive);
         let mut resource_provider = ResourceManager::new(archive);
-        resource_provider.preload_models();
+        resource_provider.load_default_models();
         resource_provider.load_fonts();
         let mut scene = Scene::new(&mut resource_provider);
         scene

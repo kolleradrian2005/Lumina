@@ -1,26 +1,14 @@
 use crate::engine::{
-    model::{model::Model, model_group::ModelGroup},
-    scene::world::component::transform_component::TransformComponent,
+    model::model::Model, scene::world::component::transform_component::TransformComponent,
     transformable::Transformable,
 };
 
 use super::{vec2::Vec2, vec3::Vec3};
 
-pub fn create_model_matrix(model: &Model, model_group: Option<&ModelGroup>) -> [[f32; 4]; 4] {
-    let mut position = model.get_position();
-    let mut rotation = model.get_rotation();
-    let mut scale = model.get_scale();
-
-    if let Some(m_group) = model_group {
-        let m_scale = m_group.get_scale();
-        let m_rotation = m_group.get_rotation();
-
-        position = Vec3::from_vec2(position.xy().rotated(m_rotation), position.z);
-        position += m_group.get_position();
-        rotation += m_rotation;
-        scale.x *= m_scale.x;
-        scale.y *= m_scale.y;
-    }
+pub fn create_model_matrix(model: &Model) -> [[f32; 4]; 4] {
+    let position = model.get_position();
+    let rotation = model.get_rotation();
+    let scale = model.get_scale();
 
     let translation_matrix = create_translation_matrix(position);
     let rotation_matrix = create_rotation_matrix(rotation);
