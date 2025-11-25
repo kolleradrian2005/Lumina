@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'lumina'",
+            "name": "Debug executable 'lumina_game'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=lumina",
-                    "--package=lumina"
+                    "--bin=lumina_game",
+                    "--package=lumina_game"
                 ],
                 "filter": {
-                    "name": "lumina",
+                    "name": "lumina_game",
                     "kind": "bin"
                 }
             },
@@ -28,23 +28,16 @@
             }
         },
         {
-            "type": "lldb",
+            "name": "Run Test Debugger",
+            "type": "cppvsdbg",
             "request": "launch",
-            "name": "Debug unit tests in executable 'lumina'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=lumina",
-                    "--package=lumina"
-                ],
-                "filter": {
-                    "name": "lumina",
-                    "kind": "bin"
-                }
-            },
+            "program": "${workspaceFolder}/target/debug/deps/lumina_engine-f5d23a52b4e1ce44.exe",
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "preLaunchTask": "cargo test build",
         }
     ]
 }

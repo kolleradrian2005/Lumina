@@ -36,6 +36,17 @@
             "isBackground": true,
             "problemMatcher": [],
             "detail": "Watch Rust files and rebuild on changes"
-          }
+        },
+        {
+            "type": "shell",
+            "label": "cargo test build",
+            "command": "cargo",
+            "args": [
+                "test", "--no-run", "--package=lumina_engine"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ]
+        }
     ]
 }
