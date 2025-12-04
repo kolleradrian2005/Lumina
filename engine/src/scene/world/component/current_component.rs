@@ -1,8 +1,6 @@
-use super::component::Component;
+use crate::scene::world::component::component::Component;
 
-#[derive(Debug, Default)]
+#[derive(Component, Debug, Default)]
 pub struct CurrentComponent {
     pub current: f32,
 }
-
-impl Component for CurrentComponent {}

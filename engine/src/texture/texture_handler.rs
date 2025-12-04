@@ -34,9 +34,7 @@ impl TextureHandler {
         let binding = path.to_string_lossy().replace("/", "\\");
         let path_str = binding.as_str();
 
-        let asset = archive
-            .get(path_str)
-            .expect(format!("Failed to load texture {:?}", path_str).as_str());
+        let asset = archive.get(path_str)?;
         if let Some(texture) = self.id_map.get(&path) {
             return Some(texture.clone());
         }

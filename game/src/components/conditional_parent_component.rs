@@ -1,6 +1,4 @@
-use crate::scene::world::entity::entity::Entity;
-
-use super::component::Component;
+use lumina_engine::scene::world::{component::component::Component, entity::entity::Entity};
 
 #[derive(Debug)]
 pub enum AnimationCondition {
@@ -10,7 +8,7 @@ pub enum AnimationCondition {
     True,
 }
 
-#[derive(Debug)]
+#[derive(Component, Debug)]
 pub struct ConditionalParentComponent {
     pub parent: Entity,
     pub condition: AnimationCondition,
@@ -24,5 +22,3 @@ impl From<Entity> for ConditionalParentComponent {
         }
     }
 }
-
-impl Component for ConditionalParentComponent {}

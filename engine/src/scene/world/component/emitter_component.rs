@@ -2,18 +2,18 @@ use std::time::Duration;
 
 use crate::{
     math::vec3::Vec3,
-    scene::{
-        world::entity::particle_entity::{ParticleEntity, ParticleEntityType},
+    scene::world::{
+        component::component::Component,
+        entity::particle_entity::{ParticleEntity, ParticleEntityType},
     },
 };
-
-use super::component::Component;
 
 pub struct TimeOut {
     pub start: f32,
     pub duration: f32,
 }
 
+#[derive(Component)]
 pub struct EmitterComponent {
     pub emitter_type: ParticleEntityType,
     pub particles: Vec<ParticleEntity>,
@@ -52,5 +52,3 @@ impl From<ParticleEntityType> for EmitterComponent {
         Self::create(particle_type, Vec3::zero())
     }
 }
-
-impl Component for EmitterComponent {}

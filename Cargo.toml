@@ -1,5 +1,5 @@
 [workspace]
-members = ["engine", "game"]
+members = ["engine", "game", "macro_lib"]
 resolver = "2"
 
 [profile.dev]

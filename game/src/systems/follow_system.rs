@@ -3,40 +3,42 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{
+use lumina_engine::{
     math::vec3::Vec3,
     render::updatable::Updatable,
     scene::world::{
-        component::{
-            camera_component::CameraComponent, player_state_component::PlayerStateComponent,
-            transform_component::TransformComponent,
-        },
+        component::{camera_component::CameraComponent, transform_component::TransformComponent},
+        system::system::System,
         world::World,
     },
 };
 
-use super::system::System;
+use crate::components::{
+    follow_component::FollowComponent, player_state_component::PlayerStateComponent,
+};
 
-pub struct CameraSystem;
+pub struct FollowSystem;
 
-impl System for CameraSystem {
+impl System for FollowSystem {
     fn run(&self, world: &mut World, delta_time: f32) {
         let updatables = world
             .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
             .clone();
-        for (_, camera) in world.query_mut::<&mut CameraComponent>() {
+        for (_, (camera, follow_component)) in
+            world.query_mut::<(&mut CameraComponent, &mut FollowComponent)>()
+        {
             let target_transform_component =
-                world.get_component_mut::<TransformComponent>(camera.target_entity.unwrap());
+                world.get_component_mut::<TransformComponent>(follow_component.target_entity);
             let player_state_component =
-                world.get_component::<PlayerStateComponent>(camera.target_entity.unwrap());
+                world.get_component::<PlayerStateComponent>(follow_component.target_entity);
             if let Some(target_transform) = target_transform_component {
                 let player_position = &mut target_transform.position;
                 let z_dest = match player_state_component {
                     Some(player_state_component) => player_state_component.cam_zoom(),
                     None => 0.0,
                 };
-                let x_max_dist = camera.max_distance_from_player;
-                let y_max_dist = camera.max_distance_from_player;
+                let x_max_dist = follow_component.max_distance;
+                let y_max_dist = follow_component.max_distance;
 
                 let treshold = 0.002;
                 let mut difference =
@@ -80,8 +82,6 @@ impl System for CameraSystem {
                 } else {
                     camera.position.z = z_curr + change;
                 }
-
-                camera.focal_offset = player_position.xy() - camera.position.xy();
             }
         }
     }

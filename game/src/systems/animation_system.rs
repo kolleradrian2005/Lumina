@@ -1,22 +1,23 @@
 use std::f32::consts::PI;
 
-use crate::{
+use lumina_engine::{
     scene::world::{
         component::{
-            conditional_parent_component::{AnimationCondition, ConditionalParentComponent},
-            multi_conditional_parent_component::MultiConditionalParentComponent,
-            parent_component::ParentComponent,
-            player_part_component::PlayerPartComponent,
-            player_state_component::PlayerStateComponent,
-            texture_component::TextureComponent,
+            parent_component::ParentComponent, texture_component::TextureComponent,
             transform_component::TransformComponent,
         },
+        system::system::System,
         world::World,
     },
     texture::texture::Texture,
 };
 
-use super::system::System;
+use crate::components::{
+    conditional_parent_component::{AnimationCondition, ConditionalParentComponent},
+    multi_conditional_parent_component::MultiConditionalParentComponent,
+    player_part_component::PlayerPartComponent,
+    player_state_component::PlayerStateComponent,
+};
 
 pub struct AnimationSystem;
 

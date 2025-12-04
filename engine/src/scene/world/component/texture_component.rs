@@ -5,7 +5,7 @@ use crate::{
 
 use super::component::Component;
 
-#[derive(Clone, Debug)]
+#[derive(Component, Clone, Debug)]
 pub struct TextureComponent {
     pub texture: Texture,
 }
@@ -23,5 +23,3 @@ impl From<Texture> for TextureComponent {
         Self { texture }
     }
 }
-
-impl Component for TextureComponent {}

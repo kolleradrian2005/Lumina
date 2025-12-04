@@ -2,7 +2,7 @@ use crate::scene::world::entity::entity::Entity;
 
 use super::component::Component;
 
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub struct ParentComponent {
     pub parent: Entity,
 }
@@ -12,5 +12,3 @@ impl From<Entity> for ParentComponent {
         Self { parent }
     }
 }
-
-impl Component for ParentComponent {}

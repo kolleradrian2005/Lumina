@@ -1,11 +1,8 @@
-use crate::scene::world::{
-    component::{
-        movement_component::MovementComponent, player_state_component::PlayerStateComponent,
-    },
-    world::World,
+use lumina_engine::scene::world::{
+    component::movement_component::MovementComponent, system::system::System, world::World,
 };
 
-use super::system::System;
+use crate::components::player_state_component::PlayerStateComponent;
 
 pub struct PlayerMovementSystem;
 

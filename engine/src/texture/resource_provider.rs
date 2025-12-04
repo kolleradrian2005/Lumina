@@ -3,6 +3,8 @@ use std::{
     sync::{Arc, Mutex, PoisonError},
 };
 
+use include_assets::NamedArchive;
+
 use crate::model::model::Model;
 
 use super::{font_texture::FontTexture, texture::Texture};
@@ -48,6 +50,7 @@ pub trait ResourceProvider: Send + Sync {
         texture_names: &[&'a str],
         animation_time: u128,
     ) -> Option<Texture>;
+    fn attach_archive(&mut self, archive: NamedArchive);
     fn load_fonts(&mut self);
     fn get_font(&self, name: &str) -> FontTexture;
 }

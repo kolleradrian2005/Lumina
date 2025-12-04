@@ -1,22 +1,18 @@
-use std::{
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use crate::{
+use lumina_engine::scene::world::system::system::System;
+use lumina_engine::{
     math::vec3::Vec3,
     scene::{
         foreground::Foreground,
         world::{
             component::{
-                camera_component::CameraComponent,
-                transform_component::TransformComponent,
+                camera_component::CameraComponent, transform_component::TransformComponent,
             },
             world::World,
         },
     },
 };
-
-use super::system::System;
 
 pub struct UpdateGodRaysSystem;
 

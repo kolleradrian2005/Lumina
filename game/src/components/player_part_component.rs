@@ -1,5 +1,6 @@
-use super::component::Component;
+use lumina_engine::scene::world::component::component::Component;
 
+#[derive(Component)]
 pub enum PlayerPartComponent {
     LeftHand,
     Legs,
@@ -8,5 +9,3 @@ pub enum PlayerPartComponent {
     Tank,
     Head,
 }
-
-impl Component for PlayerPartComponent {}

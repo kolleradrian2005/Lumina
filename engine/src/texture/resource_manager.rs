@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use include_assets::NamedArchive;
 
 use crate::{
-    math::{vec2::Vec2, vec3::Vec3},
+    math::vec3::Vec3,
     model::{model::Model, sprite},
-    transformable::Transformable,
 };
 
 use super::{
@@ -21,7 +20,7 @@ pub struct ResourceManager {
     models: HashMap<String, Model>,
     fonts: HashMap<String, FontTexture>,
     texture_handler: TextureHandler,
-    archive: NamedArchive,
+    archives: Vec<NamedArchive>,
 }
 
 impl ResourceManager {
@@ -32,7 +31,7 @@ impl ResourceManager {
             models: HashMap::new(),
             fonts: HashMap::new(),
             texture_handler: TextureHandler::new(),
-            archive,
+            archives: vec![archive],
         }
     }
 }
@@ -41,43 +40,18 @@ impl ResourceProvider for ResourceManager {
     fn load_default_models(&mut self) {
         let mut square = sprite::square(1.0);
         square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
-        let mut bubble = square.clone();
-        bubble.set_scale(Vec2::uniform(0.01));
-        if let Some(texture) = self
-            .texture_handler
-            .load_static_texture(&self.archive, "bubble.png")
-        {
-            bubble.set_texture(texture);
-        }
-        if let Some(Texture::StaticTexture(texture)) = self
-            .texture_handler
-            .load_static_texture(&self.archive, "seagrass0.png")
-        {
-            let mut seagrass = sprite::from_texture(texture);
-            seagrass.set_scale(Vec2::uniform(0.08));
-            self.save_model("seagrass", seagrass);
-        }
-
-        let mut fish = square.clone();
-        if let Some(texture) = self
-            .texture_handler
-            .load_static_texture(&self.archive, "fish.png")
-        {
-            fish.set_texture(texture);
-        }
-        fish.set_scale(Vec2::uniform(0.04));
-
         self.save_model("square", square);
-        self.save_model("bubble", bubble);
-        self.save_model("fish", fish);
     }
 
     fn load_fonts(&mut self) {
-        if let Some(font) = self
-            .texture_handler
-            .load_font(&self.archive, "Raleway-Regular.ttf")
-        {
-            self.save_font("default", font);
+        for archive in self.archives.iter().rev() {
+            if let Some(font) = self
+                .texture_handler
+                .load_font(archive, "Raleway-Regular.ttf")
+            {
+                self.save_font("default", font);
+                return;
+            }
         }
     }
 
@@ -102,8 +76,16 @@ impl ResourceProvider for ResourceManager {
     }
 
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture> {
-        self.texture_handler
-            .load_static_texture(&self.archive, texture_name)
+        for archive in self.archives.iter().rev() {
+            if let Some(texture) = self
+                .texture_handler
+                .load_static_texture(archive, texture_name)
+            {
+                return Some(texture);
+            }
+        }
+        println!("Failed to load static texture: {:?}", texture_name);
+        None
     }
 
     fn load_animated_texture(
@@ -111,8 +93,19 @@ impl ResourceProvider for ResourceManager {
         texture_names: &[&str],
         animation_time: u128,
     ) -> Option<Texture> {
-        self.texture_handler
-            .load_animated_texture(&self.archive, texture_names, animation_time)
+        for archive in self.archives.iter().rev() {
+            if let Some(texture) =
+                self.texture_handler
+                    .load_animated_texture(archive, texture_names, animation_time)
+            {
+                return Some(texture);
+            }
+        }
+        println!("Failed to load animated texture: {:?}", texture_names);
+        None
+    }
+    fn attach_archive(&mut self, archive: NamedArchive) {
+        self.archives.push(archive);
     }
 }
 

@@ -58,34 +58,23 @@ pub mod scene {
             pub mod camera_component;
             pub mod collider_component;
             pub mod component;
-            pub mod conditional_parent_component;
             pub mod current_component;
             pub mod emitter_component;
             pub mod model_component;
             pub mod movement_component;
-            pub mod multi_conditional_parent_component;
+            pub mod movement_stats_component;
             pub mod parent_component;
-            pub mod player_part_component;
-            pub mod player_state_component;
             pub mod shader_params_component;
             pub mod texture_component;
             pub mod transform_component;
         }
         pub mod system {
-            pub mod animation_system;
-            pub mod camera_system;
             pub mod collider_system;
-            pub mod current_system;
             pub mod emitter_system;
-            pub mod input_system;
             pub mod movement_system;
             pub mod particle_system;
-            pub mod player_movement_system;
             pub mod render_system;
             pub mod system;
-            pub mod terrain_system;
-            pub mod update_focal_radius_system;
-            pub mod update_god_rays_system;
         }
         pub mod component_storage;
         pub mod create_mesh_manager;
@@ -95,7 +84,6 @@ pub mod scene {
     }
     pub mod background;
     pub mod foreground;
-    pub mod player_state;
     pub mod scene;
     pub mod terrain;
     pub mod tile;
@@ -182,7 +170,10 @@ fn build_window() -> WindowBuilder {
 }
 
 #[tokio::main]
-pub async fn start(event_loop: EventLoop<()>) {
+pub async fn start(
+    event_loop: EventLoop<()>,
+    mut on_render_ctx_init: impl FnMut(&mut RenderContext) + Send + 'static,
+) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(3)
         .enable_all()
@@ -329,7 +320,8 @@ pub async fn start(event_loop: EventLoop<()>) {
                     ) {
                         println!("Error setting vsync: {res:?}");
                     }
-                    let render_ctx = RenderContext::init(&gl_display, width, height);
+                    let mut render_ctx = RenderContext::init(&gl_display, width, height);
+                    on_render_ctx_init(&mut render_ctx);
                     render_context.get_or_insert_with(|| render_ctx.clone());
                     loop_render_context
                         .lock()

@@ -1131,6 +1131,7 @@ dependencies = [
  "image",
  "include_assets",
  "log",
+ "lumina_macro",
  "mockall",
  "noise",
  "rand 0.8.5",
@@ -1145,9 +1146,19 @@ name = "lumina_game"
 version = "0.1.0"
 dependencies = [
  "android_logger",
+ "include_assets",
  "log",
  "lumina_engine",
  "winit",
+]
+
+[[package]]
+name = "lumina_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

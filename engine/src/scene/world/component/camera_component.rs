@@ -1,11 +1,9 @@
 use crate::{
     math::{transformation, vec2::Vec2, vec3::Vec3},
-    scene::world::entity::entity::Entity,
+    scene::world::component::component::Component,
 };
 
-use super::component::Component;
-
-#[derive(Clone)]
+#[derive(Clone, Component)]
 pub struct CameraComponent {
     pub position: Vec3,
     pub move_speed: f32,
@@ -13,8 +11,6 @@ pub struct CameraComponent {
     pub near: f32,
     pub far: f32,
     pub focal_offset: Vec2,
-    pub max_distance_from_player: f32,
-    pub target_entity: Option<Entity>,
 }
 
 impl CameraComponent {
@@ -25,5 +21,3 @@ impl CameraComponent {
         transformation::create_ortographic_projection_matrix(aspect_ratio, self.near, self.far)
     }
 }
-
-impl Component for CameraComponent {}

@@ -7,7 +7,7 @@ use crate::{
 
 use super::component::Component;
 
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub struct ModelComponent {
     pub mesh: MeshLoadState,
     pub object_type: ObjectType,
@@ -30,5 +30,3 @@ impl From<Arc<Mesh>> for ModelComponent {
         }
     }
 }
-
-impl Component for ModelComponent {}

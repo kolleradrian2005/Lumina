@@ -24,6 +24,7 @@ mod world_test {
                 texture_names: &[&'a str],
                 animation_time: u128,
             ) -> Option<Texture>;
+            fn attach_archive(&mut self, archive: include_assets::NamedArchive);
         }
     }
 

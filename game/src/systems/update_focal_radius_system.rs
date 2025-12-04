@@ -3,22 +3,18 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{
+use lumina_engine::scene::world::system::system::System;
+
+use lumina_engine::{
     math::vec3::Vec3,
     render::updatable::Updatable,
     scene::{
         foreground::Foreground,
-        world::{
-            component::{
-                player_state_component::{PlayerStateComponent},
-                transform_component::TransformComponent,
-            },
-            world::World,
-        },
+        world::{component::transform_component::TransformComponent, world::World},
     },
 };
 
-use super::system::System;
+use crate::components::player_state_component::PlayerStateComponent;
 
 pub struct UpdateFocalRadiusSystem;
 

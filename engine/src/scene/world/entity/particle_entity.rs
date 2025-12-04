@@ -6,12 +6,7 @@ use std::{
 
 use rand::{rngs::StdRng, Rng};
 
-use crate::{
-    math::vec3::Vec3,
-    scene::world::component::{
-        model_component::ModelComponent,
-    },
-};
+use crate::{math::vec3::Vec3, scene::world::component::model_component::ModelComponent};
 #[derive(Clone)]
 pub enum ParticleEntityType {
     Bubble,

@@ -1,21 +1,18 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{
+use lumina_engine::{
     scene::{
         terrain::Terrain,
         tile::Tile,
         world::{
-            component::{
-                player_state_component::PlayerStateComponent,
-                transform_component::TransformComponent,
-            },
+            component::transform_component::TransformComponent, system::system::System,
             world::World,
         },
     },
     texture::resource_provider::ResourceProvider,
 };
 
-use super::system::System;
+use crate::components::player_state_component::PlayerStateComponent;
 
 pub struct TerrainSystem;
 

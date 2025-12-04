@@ -1,8 +1,6 @@
-use crate::collider::Collider;
+use crate::{collider::Collider, scene::world::component::component::Component};
 
-use super::component::Component;
-
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub struct ColliderComponent {
     pub collider: Collider,
 }
@@ -12,5 +10,3 @@ impl From<Collider> for ColliderComponent {
         Self { collider }
     }
 }
-
-impl Component for ColliderComponent {}

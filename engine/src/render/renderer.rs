@@ -73,9 +73,9 @@ impl Renderer {
     }
 
     pub fn load_scene(&mut self, scene: &Scene, aspect_ratio: f32) {
-        let (_camera, camera_component) = scene
+        let (_camera, (camera_component,)) = scene
             .get_world()
-            .query::<&CameraComponent>()
+            .query::<(&CameraComponent,)>()
             .next()
             .expect("No camera found in the scene");
         let matrix_uniform_buffer_content = MatrixUniformBuffer {
@@ -103,9 +103,9 @@ impl Renderer {
                 Updatable::Projection { width, height } => {
                     self.frame_buffer.resize(width, height);
 
-                    let (_camera, camera_component) = scene
+                    let (_camera, (camera_component,)) = scene
                         .get_world_mut()
-                        .query_mut::<&mut CameraComponent>()
+                        .query_mut::<(&mut CameraComponent,)>()
                         .next()
                         .expect("No camera found in the scene");
 

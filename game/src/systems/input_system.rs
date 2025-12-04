@@ -1,14 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use winit::keyboard::{Key, NamedKey};
-
-use crate::{
+use lumina_engine::{
     input_handler::InputHandler,
     math::vec3::Vec3,
-    scene::world::{component::player_state_component::PlayerStateComponent, world::World},
+    scene::world::{system::system::System, world::World},
 };
+use winit::keyboard::{Key, NamedKey};
 
-use super::system::System;
+use crate::components::player_state_component::PlayerStateComponent;
 
 pub struct InputSystem;
 
@@ -39,9 +38,9 @@ impl System for InputSystem {
             }
         }
         world
-            .query_mut::<&mut PlayerStateComponent>()
+            .query_mut::<(&mut PlayerStateComponent,)>()
             .last()
-            .map(|(_, player_input)| {
+            .map(|(_, (player_input,))| {
                 *player_input = match 0.0 < direction.length() {
                     true => match fast_pressed {
                         true => PlayerStateComponent::FastSwimming { direction },

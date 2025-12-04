@@ -1,8 +1,6 @@
-use crate::math::vec3::Vec3;
+use lumina_engine::{math::vec3::Vec3, scene::world::component::component::Component};
 
-use super::component::Component;
-
-#[derive(Clone)]
+#[derive(Component, Clone)]
 pub enum PlayerStateComponent {
     Idle,
     Swimming { direction: Vec3 },
@@ -53,5 +51,3 @@ impl PlayerStateComponent {
         }
     }
 }
-
-impl Component for PlayerStateComponent {}

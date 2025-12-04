@@ -26,9 +26,9 @@ impl PostprocessRenderer {
     }
 
     pub unsafe fn render(&mut self, scene: &Scene, framebuffer: &Framebuffer) {
-        let (_camera, camera_component) = scene
+        let (_camera, (camera_component,)) = scene
             .get_world()
-            .query::<&CameraComponent>()
+            .query::<(&CameraComponent,)>()
             .next()
             .expect("No camera found in the scene");
 
