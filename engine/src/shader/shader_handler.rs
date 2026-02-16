@@ -1,6 +1,8 @@
 use gl::types::*;
 
-use super::{shader::Shader, shader_program::ShaderProgram};
+use crate::shader::shader_program::{ShaderHandle, ShaderProgram};
+
+use super::shader::Shader;
 
 pub fn load_program(shaders: &[Shader]) -> GLuint {
     unsafe {
@@ -30,19 +32,19 @@ pub fn load_program(shaders: &[Shader]) -> GLuint {
 }
 
 pub unsafe fn bind_attributes_to_program(
-    shader_program: &dyn ShaderProgram,
+    shader_program: &ShaderProgram,
     attribute: u32,
     variable_name: &str,
 ) {
     gl::BindAttribLocation(
-        shader_program.get_id(),
+        shader_program.get_handle().id,
         attribute,
         variable_name.as_bytes().as_ptr() as *const GLchar,
     );
 }
 
-pub unsafe fn start_program(shader_program: &dyn ShaderProgram) {
-    gl::UseProgram(shader_program.get_id());
+pub unsafe fn start_program(shader_handle: &ShaderHandle) {
+    gl::UseProgram(shader_handle.id);
 }
 
 pub unsafe fn stop_program() {

@@ -1,18 +1,13 @@
-use std::{
-    mem,
-    sync::{Arc, Mutex},
-};
-
 use crate::{
     math::transformation,
-    render::renderable::{MeshLoadState, Renderable},
+    render::render_entity::RenderEntity,
     scene::world::{
         component::{
-            emitter_component::EmitterComponent, model_component::ModelComponent,
-            parent_component::ParentComponent, shader_params_component::ShaderParamsComponent,
-            texture_component::TextureComponent, transform_component::TransformComponent,
+            emitter_component::EmitterComponent, material_component::MaterialComponent,
+            model_component::ModelComponent, parent_component::ParentComponent,
+            shader_params_component::ShaderParamsComponent, texture_component::TextureComponent,
+            transform_component::TransformComponent,
         },
-        create_mesh_manager::CreateMeshManager,
         entity::entity::Entity,
         world::World,
     },
@@ -24,8 +19,6 @@ pub struct RenderSystem;
 
 impl System for RenderSystem {
     fn run(&self, world: &mut World, _: f32) {
-        world.clear_renderables();
-
         for (entity, (emitter, model, transform)) in world.query_mut::<(
             &mut EmitterComponent,
             &mut ModelComponent,
@@ -61,6 +54,7 @@ impl RenderSystem {
         entity: Entity,
         parent: Option<ParentComponent>,
         transform: TransformComponent,
+        material_component: MaterialComponent,
         model: &mut ModelComponent,
     ) {
         if let Some(parent) = parent.clone() {
@@ -77,7 +71,7 @@ impl RenderSystem {
             .get_component::<TextureComponent>(entity)
             .cloned()
             .unwrap_or(TextureComponent::default());
-        let create_mesh_manager = world.expect_resource::<Arc<Mutex<CreateMeshManager>>>();
+        /*let create_mesh_manager = world.expect_resource::<Arc<Mutex<CreateMeshManager>>>();
         if let Ok(create_mesh_manager) = &mut create_mesh_manager.lock() {
             match model.mesh {
                 MeshLoadState::CreateRequest { .. } => {
@@ -98,20 +92,16 @@ impl RenderSystem {
                 }
                 _ => {}
             }
-        }
-        world.renderables.push(Renderable {
-            mesh: match &model.mesh {
-                MeshLoadState::Loaded(mesh) => Some(mesh.clone()),
-                _ => None,
-            },
+        }*/
+        world.render_packet.entities.push(RenderEntity {
+            mesh: model.mesh.clone(),
             is_flipped: transform.is_flipped
                 ^ parent_transform.map(|e| e.is_flipped).unwrap_or(false),
-            texture: texture.texture,
+            //texture: texture.texture,
             transform_matrix,
-            object_type: model.object_type,
-            shader_params: world
-                .get_component::<ShaderParamsComponent>(entity)
-                .cloned(),
+            //object_type: model.object_type,
+            //shader_params: world.get_component::<ShaderParamsComponent>(entity).cloned(),
+            material: material_component,
         });
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
-    input_handler::InputHandler, model::model::Model, texture::resource_provider::ResourceProvider,
+    input::input_state::InputState, model::model::Model,
+    texture::resource_provider::ResourceProvider,
 };
 
 use super::{game_gui::GameGui, gui::Gui, listener::Listener};
@@ -53,10 +54,10 @@ impl GuiManager {
     pub fn update(
         &mut self,
         resource_provider: &dyn ResourceProvider,
-        input_handler: &mut InputHandler,
+        input_state: &mut InputState,
     ) {
-        let mouse_pos = input_handler.get_normalized_mouse_position(self.dimensions);
-        let click_state = input_handler.handle_l_mouse();
+        let mouse_pos = input_state.get_normalized_mouse_position(self.dimensions);
+        let click_state = input_state.handle_l_mouse();
         // Reverse iteration for hierarchy
         let mut rebuild = false;
         for listener in self.get_listeners_mut().iter_mut().rev() {

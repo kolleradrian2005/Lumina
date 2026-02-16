@@ -3,7 +3,7 @@ use crate::{
     scene::world::component::component::Component,
 };
 
-#[derive(Clone, Component)]
+#[derive(Clone, Component, Debug)]
 pub struct CameraComponent {
     pub position: Vec3,
     pub move_speed: f32,

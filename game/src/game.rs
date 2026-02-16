@@ -15,16 +15,14 @@ use crate::{
     systems::{
         animation_system::AnimationSystem, camera_system::CameraSystem,
         current_system::CurrentSystem, follow_system::FollowSystem, input_system::InputSystem,
-        player_movement_system::PlayerMovementSystem, terrain_system::TerrainSystem,
-        update_focal_radius_system::UpdateFocalRadiusSystem,
-        update_god_rays_system::UpdateGodRaysSystem,
+        player_movement_system::PlayerMovementSystem,
     },
 };
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
     collider::Collider,
     math::{vec2::Vec2, vec3::Vec3},
-    model::sprite,
+    model::model::Model,
     scene::{
         terrain::Terrain,
         world::{
@@ -39,6 +37,7 @@ use lumina_engine::{
         },
     },
     texture::{
+        resource_manager::ResourceManager,
         resource_provider::ResourceProvider,
         texture::{StaticColor, Texture},
     },
@@ -47,56 +46,54 @@ use lumina_engine::{
 use winit::event_loop::EventLoop;
 
 pub fn initialize(event_loop: EventLoop<()>) {
-    // TODO: Move scene out of render context
-    lumina_engine::start(event_loop, |render_ctx| {
-        let mut resource_provider = render_ctx
-            .resource_handle
-            .lock()
-            .expect("Failed to lock resource manager");
-        load_resources(&mut *resource_provider);
-        let mut scene = render_ctx.scene.lock().expect("Failed to lock scene");
-        init_world(scene.get_world_mut(), &mut *resource_provider);
+    // TODO: Move scene out of render context?
+    lumina_engine::start(event_loop, |scene, resource_manager| {
+        load_resources(resource_manager);
+        //let mut scene = render_ctx.scene.lock().expect("Failed to lock scene");
+        init_world(scene.get_world_mut(), resource_manager);
         scene.register_system(Box::new(InputSystem));
         scene.register_system(Box::new(PlayerMovementSystem));
         scene.register_system(Box::new(CurrentSystem));
-        scene.register_system(Box::new(TerrainSystem));
+        //scene.register_system(Box::new(TerrainSystem));
         scene.register_system(Box::new(FollowSystem));
         scene.register_system(Box::new(CameraSystem));
         scene.register_system(Box::new(AnimationSystem));
-        scene.register_system(Box::new(UpdateFocalRadiusSystem));
-        scene.register_system(Box::new(UpdateGodRaysSystem));
+        //scene.register_system(Box::new(UpdateFocalRadiusSystem));
+        //scene.register_system(Box::new(UpdateGodRaysSystem));
     });
 }
 
-fn load_resources(resource_provider: &mut dyn ResourceProvider) {
-    resource_provider.attach_archive(NamedArchive::load(include_dir!("assets")));
-    let mut square = resource_provider.get_model("square");
+fn load_resources(resource_manager: &mut ResourceManager) {
+    resource_manager.attach_archive(NamedArchive::load(include_dir!("assets")));
+    let mut square = resource_manager.get_model("square");
     square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
     let mut bubble = square.clone();
     bubble.set_scale(Vec2::uniform(0.01));
-    if let Some(texture) = resource_provider.load_static_texture("bubble.png") {
+    if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
         bubble.set_texture(texture);
     }
     if let Some(Texture::StaticTexture(texture)) =
-        resource_provider.load_static_texture("seagrass0.png")
+        resource_manager.load_static_texture("seagrass0.png")
     {
-        let mut seagrass = sprite::from_texture(texture);
+        let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
+        let mut seagrass = Model::new(seagrass_mesh);
+        seagrass.set_texture(texture.into());
         seagrass.set_scale(Vec2::uniform(0.08));
-        resource_provider.save_model("seagrass", seagrass);
+        resource_manager.save_model("seagrass", seagrass);
     }
 
     let mut fish = square.clone();
-    if let Some(texture) = resource_provider.load_static_texture("fish.png") {
+    if let Some(texture) = resource_manager.load_static_texture("fish.png") {
         fish.set_texture(texture);
     }
     fish.set_scale(Vec2::uniform(0.04));
 
-    resource_provider.save_model("bubble", bubble);
-    resource_provider.save_model("fish", fish);
+    resource_manager.save_model("bubble", bubble);
+    resource_manager.save_model("fish", fish);
 }
 
-fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
-    let terrain = Terrain::generate(world, 6969, resource_provider);
+fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
+    let terrain = Terrain::generate(world, 6969, resource_manager);
     world.insert_resource(Arc::new(Mutex::new(terrain)));
 
     let model_scale = 0.15;
@@ -150,25 +147,25 @@ fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
     }
 
     let moving_legs_textures: &[&str] = &["player/legs0.png", "player/legs1.png"];
-    let left_hand_texture = resource_provider
+    let left_hand_texture = resource_manager
         .load_static_texture("player/left_hand.png")
         .unwrap();
-    let legs_texture = resource_provider
+    let legs_texture = resource_manager
         .load_static_texture("player/legs0.png")
         .unwrap();
-    let torso_texture = resource_provider
+    let torso_texture = resource_manager
         .load_static_texture("player/torso.png")
         .unwrap();
-    let right_hand_texture = resource_provider
+    let right_hand_texture = resource_manager
         .load_static_texture("player/right_hand.png")
         .unwrap();
-    let tank_texture = resource_provider
+    let tank_texture = resource_manager
         .load_static_texture("player/tank.png")
         .unwrap();
-    let head_texture = resource_provider
+    let head_texture = resource_manager
         .load_animated_texture(head_textures.as_slice(), 6000)
         .unwrap();
-    let moving_legs_texture = resource_provider
+    let moving_legs_texture = resource_manager
         .load_animated_texture(
             moving_legs_textures,
             PlayerState::Swimming.legs_animation_time(),
@@ -203,7 +200,7 @@ fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
         ),
     ];
 
-    let pattern_model = resource_provider.get_model("square");
+    let pattern_model = resource_manager.get_model("square");
 
     let children = vec![
         left_hand_model,
@@ -238,10 +235,7 @@ fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
                 is_flipped: false,
             },
         );
-        world.add_component::<ModelComponent>(
-            *child,
-            pattern_model.clone().get_mesh().clone().into(),
-        );
+        world.add_component::<ModelComponent>(*child, pattern_model.get_mesh().clone().into());
         match idx {
             1 | 6 => {
                 let condition = if idx == 1 {
@@ -291,7 +285,7 @@ fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
         }
     }
 
-    let bubble_model = resource_provider.get_model("bubble");
+    let bubble_model = resource_manager.get_model("bubble");
     let bubble_emitter = world.create_entity();
     world.add_component::<EmitterComponent>(bubble_emitter, ParticleEntityType::Bubble.into());
     world.add_component::<TransformComponent>(
@@ -300,7 +294,7 @@ fn init_world(world: &mut World, resource_provider: &mut dyn ResourceProvider) {
             position: (0.025, -0.025, 0.0001).into(),
             rotation: bubble_model.get_rotation(),
             scale: bubble_model.get_scale(),
-            is_flipped: bubble_model.is_flipped(),
+            is_flipped: false,
         },
     );
     world.add_component::<ModelComponent>(bubble_emitter, bubble_model.get_mesh().clone().into());

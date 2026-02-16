@@ -5,9 +5,12 @@ use std::{
 
 use include_assets::NamedArchive;
 
-use crate::model::model::Model;
+use crate::{
+    model::model::Model,
+    shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
+};
 
-use super::{font_texture::FontTexture, texture::Texture};
+use super::texture::Texture;
 
 #[derive(Clone)]
 pub struct ResourceProviderHandle {
@@ -51,6 +54,12 @@ pub trait ResourceProvider: Send + Sync {
         animation_time: u128,
     ) -> Option<Texture>;
     fn attach_archive(&mut self, archive: NamedArchive);
-    fn load_fonts(&mut self);
-    fn get_font(&self, name: &str) -> FontTexture;
+    fn get_shader(&self, shader_name: &str) -> Arc<ShaderProgram>;
+    fn load_shader(
+        &mut self,
+        shader_name: &str,
+        shader_configuration: ShaderConfiguration,
+    ) -> Option<Arc<ShaderProgram>>;
+    //fn load_fonts(&mut self);
+    //fn get_font(&self, name: &str) -> FontTexture;
 }

@@ -3,10 +3,11 @@ use noise::Perlin;
 use crate::{
     math::{vec2::Vec2, vec3::Vec3},
     model::sprite,
-    render::{renderable::MeshLoadState, scene_renderer::ObjectType},
+    render::scene_renderer::ObjectType,
     scene::world::{
         component::{
             current_component::CurrentComponent,
+            material_component::MaterialComponent,
             model_component::ModelComponent,
             shader_params_component::{ShaderParam, ShaderParamsComponent},
             texture_component::TextureComponent,
@@ -15,7 +16,9 @@ use crate::{
         entity::entity::Entity,
         world::World,
     },
-    texture::{resource_provider::ResourceProvider, texture::Texture},
+    texture::{
+        resource_manager::ResourceManager, resource_provider::ResourceProvider, texture::Texture,
+    },
     transformable::Transformable,
 };
 
@@ -35,7 +38,7 @@ impl Tile {
         x: i32,
         noise: &Perlin,
         texture: &Texture,
-        resource_provider: &mut dyn ResourceProvider,
+        resource_manager: &mut ResourceManager,
     ) -> Tile {
         // Generate raw model
 
@@ -95,7 +98,7 @@ impl Tile {
                 );
                 position.z = z_index;
                 let seaweed = world.create_entity();
-                let seaweed_model = resource_provider.get_model("seagrass");
+                let seaweed_model = resource_manager.get_model("seagrass");
                 if let Texture::StaticTexture(texture) = seaweed_model.get_texture() {
                     position.y +=
                         seaweed_model.get_scale().y * texture.get_normalized_dimensions().1 / 2.0;
@@ -104,14 +107,24 @@ impl Tile {
                 world.add_component::<ModelComponent>(
                     seaweed,
                     ModelComponent {
-                        mesh: MeshLoadState::Loaded(seaweed_model.get_mesh().clone()),
+                        mesh: seaweed_model.get_mesh().clone(),
                         object_type: ObjectType::SeaGrass,
                     },
                 );
-                world.add_component::<TextureComponent>(
+                world.add_component(
+                    seaweed,
+                    MaterialComponent::new(seaweed_model.get_texture().clone(), shader),
+                );
+                /*world.add_component::<TextureComponent>(
                     seaweed,
                     seaweed_model.get_texture().clone().into(),
                 );
+                world.add_component(
+                    seaweed,
+                    ShaderParamsComponent {
+                        params: vec![ShaderParam::Current(0f32)].into(),
+                    },
+                );*/
                 world.add_component(
                     seaweed,
                     TransformComponent {
@@ -121,25 +134,21 @@ impl Tile {
                         is_flipped: false,
                     },
                 );
-                world.add_component(
-                    seaweed,
-                    ShaderParamsComponent {
-                        params: vec![ShaderParam::Current(0f32)].into(),
-                    },
-                );
                 objects.push(seaweed);
             }
         }
         let tile = world.create_entity();
+        let mesh = resource_manager
+            .load_mesh(
+                vertices.to_vec(),
+                sprite::INDICES.to_vec(),
+                sprite::UVS.to_vec(),
+            )
+            .unwrap();
         world.add_component::<ModelComponent>(
             tile,
             ModelComponent {
-                mesh: MeshLoadState::CreateRequest {
-                    vertices: vertices.into(),
-                    indices: sprite::INDICES.into(),
-                    uvs: sprite::UVS.into(),
-                }
-                .into(),
+                mesh: mesh.into(),
                 object_type: ObjectType::Terrain,
             },
         );

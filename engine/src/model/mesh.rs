@@ -1,5 +1,3 @@
-
-
 use gl::types::{GLsizei, GLsizeiptr, GLuint, GLvoid};
 
 #[derive(Clone, Debug)]
@@ -107,5 +105,16 @@ impl Mesh {
 
     pub fn get_vertex_count(&self) -> GLsizei {
         self.vertex_count
+    }
+
+    pub fn destroy(self) {
+        unsafe {
+            gl::DeleteVertexArrays(1, &self.vao);
+            gl::DeleteBuffers(1, &self.vert_vbo);
+            if let Some(uvs_vbo) = &self.uvs_vbo {
+                gl::DeleteBuffers(1, uvs_vbo);
+            }
+            gl::DeleteBuffers(1, &self.ebo);
+        }
     }
 }

@@ -1,17 +1,18 @@
 use std::{
     any::{type_name, Any, TypeId},
-    collections::{HashMap, VecDeque},
+    collections::HashMap,
     mem,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use crate::{
     model::mesh::Mesh,
-    render::renderable::{MeshLoadState, Renderable},
+    render::render_packet::RenderPacket,
     scene::world::{
-        component::model_component::ModelComponent, drop_mesh_request::DropMeshRequest,
+        component::model_component::ModelComponent,
         query::QueryMut,
     },
+    texture::resource_manager::ResourceManager,
 };
 
 use super::{
@@ -28,7 +29,7 @@ pub struct World {
     pub components: HashMap<TypeId, Box<dyn ComponentStorageTrait + Send + Sync>>,
     resources: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
     pub particle_pool: Vec<ParticleEntity>,
-    pub renderables: Vec<Renderable>,
+    pub render_packet: RenderPacket,
 }
 
 impl World {
@@ -39,7 +40,11 @@ impl World {
             components: HashMap::new(),
             resources: HashMap::new(),
             particle_pool: Vec::new(),
-            renderables: Vec::new(),
+            render_packet: RenderPacket {
+                entities: Vec::new(),
+                window_resize: None,
+                camera_component: None,
+            },
         }
     }
 
@@ -95,9 +100,7 @@ impl World {
     pub fn delete_entity(&mut self, entity: Entity) {
         if let Some(idx) = self.entities.iter().position(|e| e.0 == entity.0) {
             if let Some(model_component) = self.remove_component::<ModelComponent>(entity) {
-                if let MeshLoadState::Loaded(mesh) = model_component.mesh {
-                    self.mesh_removed(&mesh);
-                }
+                self.mesh_removed(model_component.mesh);
             }
             self.entities.remove(idx);
             self.available_ids.push(entity.0);
@@ -117,6 +120,11 @@ impl World {
 
     pub fn expect_resource<T: 'static + Any + Send + Sync>(&self) -> &T {
         self.get_resource::<T>()
+            .unwrap_or_else(|| panic!("Resource {:?} not found", type_name::<T>()))
+    }
+
+    pub fn expect_resource_mut<T: 'static + Any + Send + Sync>(&mut self) -> &mut T {
+        self.get_resource_mut::<T>()
             .unwrap_or_else(|| panic!("Resource {:?} not found", type_name::<T>()))
     }
 
@@ -169,24 +177,18 @@ impl World {
         T::create_query(self)
     }
 
-    pub fn clear_renderables(&mut self) {
-        for renderable in mem::take(&mut self.renderables) {
-            if let Some(mesh) = &renderable.mesh {
-                self.mesh_removed(mesh);
-            }
+    pub fn clear_render_packet(&mut self) {
+        for renderable in mem::take(&mut self.render_packet.entities) {
+            self.mesh_removed(renderable.mesh);
         }
+        self.render_packet.window_resize = None;
+        self.render_packet.camera_component = None;
     }
 
-    fn mesh_removed(&mut self, mesh: &Arc<Mesh>) {
-        let ref_count = Arc::strong_count(mesh);
-        if ref_count == 1 {
-            let mesh = mesh.clone();
-            if let Some(requests) = self.get_resource_mut::<Arc<Mutex<VecDeque<DropMeshRequest>>>>()
-            {
-                requests
-                    .lock()
-                    .unwrap()
-                    .push_back(DropMeshRequest { mesh: mesh });
+    fn mesh_removed(&mut self, mesh: Arc<Mesh>) {
+        if let Some(mesh) = Arc::into_inner(mesh) {
+            if let Some(resource_manager) = self.get_resource_mut::<ResourceManager>() {
+                resource_manager.unload_mesh(mesh);
             }
         }
     }

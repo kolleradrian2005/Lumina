@@ -1,13 +1,12 @@
 use include_assets::NamedArchive;
 
-
-use crate::scene::scene::Scene;
+use crate::render::render_packet::RenderPacket;
 
 use crate::shader::model_shader::ModelShader;
-use crate::shader::shader_program::ShaderProgram;
+use crate::shader::shader_program_old::ShaderProgram;
 use crate::texture::texture::Texture;
 
-use super::renderable::Renderable;
+use super::render_entity::RenderEntity;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ObjectType {
@@ -34,7 +33,7 @@ impl SceneRenderer {
         }
     }
 
-    pub unsafe fn render(&self, scene: &mut Scene) {
+    pub unsafe fn render(&self, render_packet: RenderPacket) {
         /* TESSELATION ENABLED */
 
         let mut current_shader = self
@@ -46,7 +45,7 @@ impl SceneRenderer {
         // Render seagrass
         current_shader.set_object_type(ObjectType::SeaGrass);
 
-        for renderable in scene.get_world().renderables.iter() {
+        for renderable in render_packet.entities.iter() {
             if let ObjectType::SeaGrass = renderable.object_type {
                 self.render_entity(renderable, current_shader);
             }
@@ -61,7 +60,7 @@ impl SceneRenderer {
         current_shader.set_object_type(ObjectType::Default);
 
         let mut current_type = ObjectType::Default;
-        for renderable in scene.get_world().renderables.iter() {
+        for renderable in render_packet.entities.iter() {
             if let ObjectType::SeaGrass = renderable.object_type {
                 continue;
             }
@@ -77,17 +76,13 @@ impl SceneRenderer {
         current_shader.stop();
     }
 
-    pub unsafe fn render_entity(&self, renderable: &Renderable, shader: &ModelShader) {
-        let mesh = match &renderable.mesh {
-            Some(mesh) => mesh,
-            None => return,
-        };
+    pub unsafe fn render_entity(&self, renderable: &RenderEntity, shader: &ModelShader) {
         if let Some(shader_params) = &renderable.shader_params {
             shader.set_shader_params(&shader_params.params);
         }
         shader.set_model_matrix(renderable.transform_matrix);
         shader.set_flipped(renderable.is_flipped);
-        gl::BindVertexArray(mesh.get_vao());
+        gl::BindVertexArray(renderable.mesh.get_vao());
         gl::EnableVertexAttribArray(0);
         gl::EnableVertexAttribArray(1);
         match &renderable.texture {
@@ -110,7 +105,7 @@ impl SceneRenderer {
                 true => gl::PATCHES,
                 false => gl::TRIANGLES,
             },
-            mesh.get_vertex_count(),
+            renderable.mesh.get_vertex_count(),
             gl::UNSIGNED_INT,
             0 as *const _,
         );

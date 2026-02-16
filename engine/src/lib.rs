@@ -2,7 +2,7 @@ extern crate gl;
 extern crate glutin;
 extern crate glutin_winit;
 
-pub mod render_context;
+/*
 pub mod gui {
     pub mod elements {
         pub mod align;
@@ -20,7 +20,7 @@ pub mod gui {
     pub mod listener;
     pub mod ui_model;
     pub mod ui_model_group;
-}
+}*/
 pub mod math {
     pub mod rect;
     pub mod transformation;
@@ -33,22 +33,18 @@ pub mod model {
     pub mod sprite;
 }
 pub mod render {
-    pub mod background_renderer;
-    pub mod gui_renderer;
-    pub mod postprocess_renderer;
-    pub mod renderable;
+    //pub mod background_renderer;
+    //pub mod gui_renderer;
+    //pub mod postprocess_renderer;
+    pub mod generic_renderer;
+    pub mod render_entity;
+    pub mod render_packet;
     pub mod renderer;
-    pub mod scene_renderer;
+    //pub mod scene_renderer;
     pub mod uniformbuffer;
     pub mod updatable;
 }
 pub mod scene {
-    pub mod particle {
-        pub mod bubble;
-        pub mod fish;
-        pub mod particle;
-        //pub mod particle_system;
-    }
     pub mod world {
         pub mod entity {
             pub mod entity;
@@ -60,6 +56,7 @@ pub mod scene {
             pub mod component;
             pub mod current_component;
             pub mod emitter_component;
+            pub mod material_component;
             pub mod model_component;
             pub mod movement_component;
             pub mod movement_stats_component;
@@ -90,30 +87,41 @@ pub mod scene {
     pub mod water;
 }
 pub mod shader {
-    pub mod background_shader;
-    pub mod gui_shader;
-    pub mod model_shader;
-    pub mod postprocess_shader;
-    pub mod shader;
-    pub mod shader_handler;
+    //pub mod background_shader;
     pub mod shader_program;
-    pub mod terrain_shader;
+    //pub mod gui_shader;
+    pub mod material_parameter;
+    //pub mod model_shader;
+    pub mod parameter_schema;
+    //pub mod postprocess_shader;
+    pub mod shader;
+    pub mod shader_configuration;
+    pub mod shader_handler;
+    pub mod shader_parameter_type;
+    //pub mod shader_program_old;
+    //pub mod terrain_shader;
 }
 pub mod texture {
-    pub mod font_texture;
+    //pub mod font_texture;
     pub mod frame_buffer;
+    pub mod resource_command;
+    pub mod resource_loader;
     pub mod resource_manager;
     pub mod resource_provider;
     pub mod texture;
     pub mod texture_handler;
 }
+pub mod input {
+    pub mod input_event;
+    pub mod input_state;
+}
 pub mod collider;
-pub mod input_handler;
+pub mod logic;
 pub mod references;
 pub mod transformable;
-pub mod window_handler;
 
-use input_handler::InputHandler;
+use flume::Sender;
+use include_assets::{include_dir, NamedArchive};
 use math::vec2::Vec2;
 use render::updatable::Updatable;
 
@@ -125,24 +133,28 @@ use glutin::context::{
 use glutin::display::{GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface, SwapInterval, WindowSurface};
 use glutin_winit::{DisplayBuilder, GlWindow};
-use rand::{rngs::StdRng, SeedableRng};
 use raw_window_handle::HasRawWindowHandle;
-use render_context::RenderContext;
-use std::borrow::BorrowMut;
 use std::collections::VecDeque;
 
 use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-use tokio::time;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
-use winit::event::{DeviceEvent, ElementState, Event, KeyEvent, TouchPhase, WindowEvent};
+use winit::event::{
+    DeviceEvent, ElementState, Event, KeyEvent, MouseButton, TouchPhase, WindowEvent,
+};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowBuilder};
 
+use crate::input::input_event::InputEvent;
+use crate::logic::run_logic_loop;
+use crate::render::renderer::Renderer;
+use crate::scene::scene::Scene;
 use crate::scene::world::create_mesh_manager::CreateMeshManager;
 use crate::scene::world::drop_mesh_request::DropMeshRequest;
+use crate::texture::resource_loader::ResourceLoader;
+use crate::texture::resource_manager::ResourceManager;
+use crate::texture::resource_provider::ResourceProvider;
 
 pub fn gl_config_picker(configs: Box<dyn Iterator<Item = Config> + '_>) -> Config {
     configs
@@ -156,7 +168,7 @@ pub fn gl_config_picker(configs: Box<dyn Iterator<Item = Config> + '_>) -> Confi
                 accum
             }
         })
-        .unwrap()
+        .expect("No valid standard OpenGL config found!")
 }
 
 fn build_window() -> WindowBuilder {
@@ -172,10 +184,10 @@ fn build_window() -> WindowBuilder {
 #[tokio::main]
 pub async fn start(
     event_loop: EventLoop<()>,
-    mut on_render_ctx_init: impl FnMut(&mut RenderContext) + Send + 'static,
+    mut on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static,
 ) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(3)
+        .worker_threads(1)
         .enable_all()
         .build()
         .unwrap();
@@ -231,25 +243,32 @@ pub async fn start(
 
     let is_running = Arc::new(Mutex::new(true));
 
-    // Two instances of the same input handler for more efficent concurrency
-    let mut input_handler = InputHandler::init();
-    let loop_input_handler = Arc::new(Mutex::new(InputHandler::init()));
-    let loop_input_handler_clone = Arc::clone(&loop_input_handler);
-
     // Two instances of the same render context for more efficent concurrency
-    let mut render_context: Option<RenderContext> = None;
-    let loop_render_context: Arc<Mutex<Option<RenderContext>>> = Arc::new(Mutex::new(None));
-    let loop_render_context_clone: Arc<Mutex<Option<RenderContext>>> =
-        Arc::clone(&loop_render_context);
 
-    let updatables_clone: Arc<Mutex<VecDeque<Updatable>>> = Arc::clone(&updatables);
-    let drop_mesh_requests_clone: Arc<Mutex<VecDeque<DropMeshRequest>>> =
-        Arc::clone(&drop_mesh_requests);
-    let create_mesh_manager_clone: Arc<Mutex<CreateMeshManager>> = Arc::clone(&create_mesh_manager);
-    let is_running_clone = Arc::clone(&is_running);
+    /*let mut render_context: Option<RenderContext> = None;
+        let loop_render_context: Arc<Mutex<Option<RenderContext>>> = Arc::new(Mutex::new(None));
+        let loop_render_context_clone: Arc<Mutex<Option<RenderContext>>> =
+            Arc::clone(&loop_render_context);
 
-    const TARGET_INTERVAL: Duration = Duration::from_millis(10);
-
+        let updatables_clone: Arc<Mutex<VecDeque<Updatable>>> = Arc::clone(&updatables);
+        let drop_mesh_requests_clone: Arc<Mutex<VecDeque<DropMeshRequest>>> =
+            Arc::clone(&drop_mesh_requests);
+        let create_mesh_manager_clone: Arc<Mutex<CreateMeshManager>> = Arc::clone(&create_mesh_manager);
+        let is_running_clone = Arc::clone(&is_running);
+    */
+    let (input_tx, input_rx) = flume::unbounded();
+    let (render_tx, render_rx) = flume::bounded(2);
+    let (resource_tx, resource_rx) = flume::bounded(2);
+    let _logic_handle = std::thread::spawn(move || {
+        let mut scene = Scene::new();
+        let mut resource_manager = ResourceManager::new(resource_tx.clone());
+        resource_manager.attach_archive(NamedArchive::load(include_dir!("assets")));
+        resource_manager.load_default_models();
+        on_init(&mut scene, &mut resource_manager);
+        scene.get_world_mut().insert_resource(resource_manager);
+        runtime.block_on(run_logic_loop(input_rx, render_tx, scene));
+    });
+    /*
     let main_loop = tokio::spawn(async move {
         tokio::time::sleep(TARGET_INTERVAL).await;
         let rng: StdRng = SeedableRng::from_entropy();
@@ -261,7 +280,7 @@ pub async fn start(
                 if let Ok(scene) = &mut render_ctx.scene.lock() {
                     let world = scene.get_world_mut();
                     world.insert_resource(render_ctx.resource_handle.get_inner());
-                    world.insert_resource(loop_input_handler_clone.clone());
+                    world.insert_resource(loop_input_state_clone.clone());
                     world.insert_resource(updatables_clone.clone());
                     world.insert_resource(drop_mesh_requests_clone.clone());
                     world.insert_resource(create_mesh_manager_clone.clone());
@@ -288,6 +307,10 @@ pub async fn start(
             }
         }
     });
+    */
+
+    let mut renderer: Option<Renderer> = None;
+    let mut resource_loader: Option<ResourceLoader> = None;
     event_loop
         .run(move |event, window_target| {
             log::debug!("Incoming event: {:?}", event);
@@ -320,13 +343,19 @@ pub async fn start(
                     ) {
                         println!("Error setting vsync: {res:?}");
                     }
-                    let mut render_ctx = RenderContext::init(&gl_display, width, height);
+                    /*let mut render_ctx = RenderContext::init(&gl_display, width, height);
                     on_render_ctx_init(&mut render_ctx);
                     render_context.get_or_insert_with(|| render_ctx.clone());
                     loop_render_context
                         .lock()
                         .unwrap()
-                        .get_or_insert_with(|| render_ctx);
+                        .get_or_insert_with(|| render_ctx);*/
+                    let archive = NamedArchive::load(include_dir!("assets"));
+                    renderer = Renderer::init(&gl_display, width, height, &archive).into();
+                    resource_loader = ResourceLoader::new(resource_rx.clone()).into();
+                    //resource_loader.load_default_models();
+                    //resource_loader.load_fonts();
+
                     state.replace((gl_context, gl_surface, window));
                 }
                 Event::Suspended => {
@@ -337,17 +366,24 @@ pub async fn start(
                     device_id: _,
                     event,
                 } => match event {
-                    DeviceEvent::Button { button, state } => match button {
-                        0 => loop_input_handler
-                            .lock()
-                            .unwrap()
-                            .set_l_mouse(state.is_pressed()),
-                        1 => loop_input_handler
-                            .lock()
-                            .unwrap()
-                            .set_r_mouse(state.is_pressed()),
-                        _ => {}
-                    },
+                    DeviceEvent::Button { button, state } => {
+                        let mouse_event: Option<InputEvent> = match button {
+                            0 => InputEvent::MouseEvent {
+                                button: MouseButton::Left,
+                                pressed: state.is_pressed(),
+                            }
+                            .into(),
+                            1 => InputEvent::MouseEvent {
+                                button: MouseButton::Right,
+                                pressed: state.is_pressed(),
+                            }
+                            .into(),
+                            _ => None,
+                        };
+                        if let Some(mouse_event) = mouse_event {
+                            let _ = input_tx.send(mouse_event);
+                        }
+                    }
                     _ => {}
                 },
                 Event::WindowEvent {
@@ -355,43 +391,60 @@ pub async fn start(
                     event,
                 } => match event {
                     WindowEvent::RedrawRequested => {
-                        if let Some(render_ctx) = &render_context {
-                            // Handle ui logic
-                            if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                if let Ok(resource_provider) = render_ctx.resource_handle.lock() {
-                                    gui_manager.update(
-                                        &*resource_provider,
-                                        loop_input_handler.lock().unwrap().borrow_mut(),
-                                    );
-                                }
-                            }
-                            if let Ok(renderer) = &mut render_ctx.renderer.lock() {
-                                if let Ok(scene) = &mut render_ctx.scene.lock() {
-                                    // Update buffers based on scene
-                                    if let Ok(updatables) = &mut updatables.lock() {
-                                        renderer.update_buffers(updatables, scene);
-                                    }
-                                    if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                        let drop_mesh_requests =
-                                            &mut drop_mesh_requests.lock().unwrap();
-                                        let create_mesh_manager =
-                                            &mut create_mesh_manager.lock().unwrap();
-                                        renderer.handle_mesh_requests(
-                                            drop_mesh_requests,
-                                            create_mesh_manager,
+                        if let (Some(renderer), Some(resource_loader)) =
+                            (&mut renderer, &mut resource_loader)
+                        {
+                            resource_loader.run();
+                            if let Ok(packet) = render_rx.try_recv() {
+                                // Handle ui logic
+                                /*if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
+                                    if let Ok(resource_provider) = render_ctx.resource_handle.lock() {
+                                        gui_manager.update(
+                                            &*resource_provider,
+                                            loop_input_state.lock().unwrap().borrow_mut(),
                                         );
-                                        // Render stuff
-                                        renderer.render(scene, gui_manager);
                                     }
+                                }*/
+
+                                // Update buffers based on scene
+                                /*if let Ok(updatables) = &mut updatables.lock() {
+                                                                renderer.update_buffers(updatables, scene);
+                                                            }
+                                                            //if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
+                                                            let drop_mesh_requests = &mut drop_mesh_requests.lock().unwrap();
+                                                            let create_mesh_manager = &mut create_mesh_manager.lock().unwrap();
+                                                            renderer.handle_mesh_requests(drop_mesh_requests, create_mesh_manager);
+                                                            let background =
+                                                                scene.get_world_mut().expect_resource_ptr::<Background>();
+                                                            let foreground_lock = &scene
+                                                                .get_world()
+                                                                .expect_resource::<Arc<Mutex<Foreground>>>()
+                                                                .clone();
+                                                            let foreground = foreground_lock.lock().unwrap();
+                                                            let (_camera, (camera_component,)) = scene
+                                                                .get_world()
+                                                                .query::<(&CameraComponent,)>()
+                                                                .next()
+                                                                .expect("No camera found in the scene")
+                                                                .clone();
+                                */
+                                // Render stuff
+                                renderer.render(
+                                    packet,
+                                    /*gui_manager,
+                                    camera_component,
+                                    unsafe { &*background },
+                                    &foreground,*/
+                                );
+                                //}
+                                if let Some((_, _, window)) = &state {
+                                    window.pre_present_notify();
                                 }
-                            }
-                            if let Some((_, _, window)) = &state {
-                                window.pre_present_notify();
-                            }
-                            if let Some((gl_context, gl_surface, _)) = &state {
-                                gl_surface
-                                    .swap_buffers(gl_context)
-                                    .expect("Error swapping buffers!");
+                                if let Some((gl_context, gl_surface, _)) = &state {
+                                    gl_surface
+                                        .swap_buffers(gl_context)
+                                        .expect("Error swapping buffers!");
+                                }
                             }
                         }
                         if let Some((_, _, window)) = &state {
@@ -408,11 +461,13 @@ pub async fn start(
                                 );
                                 let width = size.width as i32;
                                 let height = size.height as i32;
-                                updatables
-                                    .lock()
-                                    .unwrap()
-                                    .push_back(Updatable::Projection { width, height });
-                                if let Some(render_ctx) = &render_context {
+                                /*updatables
+                                .lock()
+                                .unwrap()
+                                .push_back(Updatable::Projection { width, height });*/
+                                let _ = input_tx.send(InputEvent::WindowResize { width, height });
+
+                                /*if let Some(render_ctx) = &render_context {
                                     if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
                                         gui_manager.resize((width, height));
                                         if let Ok(resource_provider) =
@@ -424,7 +479,7 @@ pub async fn start(
                                             )
                                         }
                                     }
-                                }
+                                }*/
                             }
                         }
                     }
@@ -448,27 +503,29 @@ pub async fn start(
                         is_synthetic: _,
                     } => {
                         let new_state = match state {
-                            ElementState::Pressed => true,
-                            ElementState::Released => false,
+                            ElementState::Pressed => InputEvent::KeyDown(logical_key.clone()),
+                            ElementState::Released => InputEvent::KeyUp(logical_key.clone()),
                         };
-                        if input_handler.update_key_state(logical_key.clone(), new_state) {
-                            let _ = loop_input_handler
-                                .lock()
-                                .unwrap()
-                                .update_key_state(logical_key, new_state);
-                        }
+                        let _ = input_tx.send(new_state);
                     }
+
                     WindowEvent::CursorMoved {
                         device_id: _,
                         position: pos,
-                    } => handle_cursor_movement(&loop_input_handler, pos),
+                    } => handle_cursor_movement(&input_tx, pos),
                     WindowEvent::Touch(touch) => match touch.phase {
-                        TouchPhase::Moved => {
-                            handle_cursor_movement(&loop_input_handler, touch.location)
+                        TouchPhase::Moved => handle_cursor_movement(&input_tx, touch.location),
+                        TouchPhase::Started => {
+                            let _ = input_tx.send(InputEvent::MouseEvent {
+                                button: MouseButton::Left,
+                                pressed: true,
+                            });
                         }
-                        TouchPhase::Started => loop_input_handler.lock().unwrap().set_l_mouse(true),
                         TouchPhase::Ended | TouchPhase::Cancelled => {
-                            loop_input_handler.lock().unwrap().set_l_mouse(false)
+                            let _ = input_tx.send(InputEvent::MouseEvent {
+                                button: MouseButton::Left,
+                                pressed: false,
+                            });
                         }
                     },
                     _ => {}
@@ -477,20 +534,14 @@ pub async fn start(
             }
         })
         .expect("Error running event loop!");
-    *is_running.lock().unwrap() = false;
-    if let Err(err) = main_loop.await {
+    //*is_running.lock().unwrap() = false;
+    /*if let Err(err) = main_loop.await {
         panic!("An error occured running main loop! {err}");
     }
-    runtime.shutdown_background();
+    runtime.shutdown_background();*/
 }
 
-fn handle_cursor_movement(
-    loop_input_handler: &Arc<Mutex<InputHandler>>,
-    pos: PhysicalPosition<f64>,
-) {
+fn handle_cursor_movement(input_tx: &Sender<InputEvent>, pos: PhysicalPosition<f64>) {
     let vec = Vec2::new(pos.x as f32, pos.y as f32);
-    let _ = loop_input_handler
-        .lock()
-        .unwrap()
-        .update_mouse_position(vec);
+    let _ = input_tx.send(InputEvent::MouseMove(vec));
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{gui::ui_model::UiModel, model::sprite, texture::texture::Texture};
+use crate::{model::sprite, texture::texture::Texture};
 
 #[derive(Clone)]
 pub struct OffsetTexture {

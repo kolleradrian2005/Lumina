@@ -1,11 +1,6 @@
-use std::{
-    collections::VecDeque,
-    sync::{Arc, Mutex},
-};
 
 use lumina_engine::{
     math::vec3::Vec3,
-    render::updatable::Updatable,
     scene::world::{
         component::{camera_component::CameraComponent, transform_component::TransformComponent},
         system::system::System,
@@ -21,9 +16,10 @@ pub struct FollowSystem;
 
 impl System for FollowSystem {
     fn run(&self, world: &mut World, delta_time: f32) {
-        let updatables = world
-            .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
-            .clone();
+        /*let updatables = world
+        .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
+        .clone();*/
+        let mut update_camera = None;
         for (_, (camera, follow_component)) in
             world.query_mut::<(&mut CameraComponent, &mut FollowComponent)>()
         {
@@ -53,11 +49,12 @@ impl System for FollowSystem {
                 let length = difference.length();
 
                 if 0.0 < length {
-                    if let Ok(updatables) = &mut updatables.lock() {
+                    /*if let Ok(updatables) = &mut updatables.lock() {
                         updatables.push_back(Updatable::View {
                             camera_component: camera.clone(),
                         });
-                    }
+                    }*/
+                    update_camera = camera.clone().into();
                 }
 
                 camera.position +=
@@ -83,6 +80,9 @@ impl System for FollowSystem {
                     camera.position.z = z_curr + change;
                 }
             }
+        }
+        if update_camera.is_some() {
+            world.render_packet.camera_component = update_camera;
         }
     }
 }

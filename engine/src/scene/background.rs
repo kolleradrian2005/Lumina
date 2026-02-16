@@ -1,8 +1,6 @@
-
-
 use crate::{
     math::{vec2::Vec2, vec3::Vec3},
-    model::{model::Model, sprite},
+    model::model::Model,
     texture::{resource_provider::ResourceProvider, texture::GradientTexture},
     transformable::Transformable,
 };
@@ -12,8 +10,8 @@ pub struct Background {
 }
 
 impl Background {
-    pub fn construct(_: &dyn ResourceProvider) -> Self {
-        let mut layer1 = sprite::square(1.0);
+    pub fn construct(resource_provider: &dyn ResourceProvider) -> Self {
+        let mut layer1 = resource_provider.get_model("square");
         layer1.set_position(Vec3::new(0.0, 0.0, -7.5));
         layer1.set_scale(Vec2::uniform(2.0));
         layer1.set_texture(

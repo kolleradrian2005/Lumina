@@ -2,10 +2,10 @@ use std::ptr;
 
 use gl::types::*;
 
-use crate::model::{model::Model, sprite};
+use crate::model::{mesh::Mesh, sprite};
 
 pub struct Framebuffer {
-    model: Model,
+    mesh: Mesh,
     fbo: GLuint,
     post_processing_fbo: GLuint,
     texture: GLuint,
@@ -145,8 +145,9 @@ impl Framebuffer {
             }
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
         }
+        let (vertices, indices, uvs) = sprite::square(2.0);
         Framebuffer {
-            model: sprite::square(2.0),
+            mesh: Mesh::new(&vertices, &indices, &uvs),
             fbo,
             post_processing_fbo,
             texture,
@@ -212,7 +213,7 @@ impl Framebuffer {
         self.post_processing_texture
     }
 
-    pub fn get_model(&self) -> &Model {
-        &self.model
+    pub fn get_mesh(&self) -> &Mesh {
+        &self.mesh
     }
 }

@@ -1,32 +1,23 @@
 use std::sync::Arc;
 
-use crate::{
-    model::mesh::Mesh,
-    render::{renderable::MeshLoadState, scene_renderer::ObjectType},
-};
+use crate::model::mesh::Mesh;
 
 use super::component::Component;
 
 #[derive(Component, Clone)]
 pub struct ModelComponent {
-    pub mesh: MeshLoadState,
-    pub object_type: ObjectType,
+    pub mesh: Arc<Mesh>,
+    //pub object_type: ObjectType,
 }
 
 impl ModelComponent {
-    pub fn new(mesh: MeshLoadState, object_type: Option<ObjectType>) -> Self {
-        Self {
-            mesh,
-            object_type: object_type.unwrap_or(ObjectType::Default),
-        }
+    pub fn new(mesh: Mesh) -> Self {
+        Self { mesh: mesh.into() }
     }
 }
 
 impl From<Arc<Mesh>> for ModelComponent {
     fn from(mesh: Arc<Mesh>) -> Self {
-        Self {
-            mesh: MeshLoadState::Loaded(mesh),
-            object_type: ObjectType::Default,
-        }
+        Self { mesh }
     }
 }

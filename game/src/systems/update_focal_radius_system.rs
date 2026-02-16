@@ -1,13 +1,9 @@
-use std::{
-    collections::VecDeque,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use lumina_engine::scene::world::system::system::System;
 
 use lumina_engine::{
     math::vec3::Vec3,
-    render::updatable::Updatable,
     scene::{
         foreground::Foreground,
         world::{component::transform_component::TransformComponent, world::World},
@@ -20,9 +16,9 @@ pub struct UpdateFocalRadiusSystem;
 
 impl System for UpdateFocalRadiusSystem {
     fn run(&self, world: &mut World, delta_time: f32) {
-        let updatables = world
-            .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
-            .clone();
+        /*let updatables = world
+        .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
+        .clone();*/
         let mut player_position: Option<Vec3> = None;
         let mut light_level: Option<f32> = None;
 
@@ -38,9 +34,10 @@ impl System for UpdateFocalRadiusSystem {
                     let focal_dest = light_level.unwrap_or(0.5);
                     let difference = focal_dest - foreground.focal_radius;
                     if 0.0 < difference.abs() {
-                        if let Ok(updatables) = &mut updatables.lock() {
+                        /*if let Ok(updatables) = &mut updatables.lock() {
                             updatables.push_front(Updatable::FocalRadius);
-                        }
+                        }*/
+                        // TODO: send update to render packet
                     }
                     let change = difference.signum() * (delta_time * foreground.focus_speed);
                     if (focal_dest - foreground.focal_radius).abs() < change {

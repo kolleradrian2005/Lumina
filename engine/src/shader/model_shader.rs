@@ -4,8 +4,11 @@ use gl::types::GLuint;
 use include_assets::NamedArchive;
 
 use crate::{
-    math::vec3::Vec3, render::scene_renderer::ObjectType,
-    scene::world::component::shader_params_component::ShaderParam, texture::texture::Texture,
+    math::vec3::Vec3,
+    render::scene_renderer::ObjectType,
+    scene::world::component::shader_params_component::ShaderParam,
+    shader::{parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType},
+    texture::texture::Texture,
 };
 
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
@@ -15,7 +18,6 @@ pub struct ModelShader {
     use_tesselation: bool,
     model_location: i32,
     object_type_location: i32,
-    //has_texture_location: i32,
     texture_type_location: i32,
     color_location: i32,
     flipped_location: i32,
@@ -137,5 +139,20 @@ impl ShaderProgram for ModelShader {
     }
     unsafe fn stop(&self) {
         shader_handler::stop_program()
+    }
+
+    fn get_parameter_schema(&self) -> ParameterSchema {
+        ParameterSchema {
+            required_params: vec![
+                ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
+                ("uObjectType".to_string(), ShaderParameterType::Int),
+                ("uTextureType".to_string(), ShaderParameterType::Int),
+                ("uColor".to_string(), ShaderParameterType::Vec3),
+                ("uFlipped".to_string(), ShaderParameterType::Bool),
+                ("uTerrainIsUphill".to_string(), ShaderParameterType::Bool),
+                ("uTerrainHeight".to_string(), ShaderParameterType::Float),
+                ("uCurrent".to_string(), ShaderParameterType::Float),
+            ],
+        }
     }
 }

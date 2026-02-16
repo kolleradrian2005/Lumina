@@ -1,8 +1,5 @@
+use crate::texture::texture::StaticTexture;
 
-
-use crate::texture::texture::{StaticTexture, Texture};
-
-use super::model::Model;
 
 pub static Z_DEFAULT: f32 = 0.0;
 
@@ -27,21 +24,19 @@ fn vertices(half_width: f32, half_height: f32) -> [f32; 12] {
     ]
 }
 
-pub fn rectangle(width: f32, height: f32) -> Model {
-    Model::new(
-        &self::vertices(width / 2.0, height / 2.0),
-        &self::INDICES,
-        &self::UVS,
+pub fn rectangle(width: f32, height: f32) -> (Vec<f32>, Vec<u32>, Vec<f32>) {
+    (
+        self::vertices(width / 2.0, height / 2.0).to_vec(),
+        self::INDICES.to_vec(),
+        self::UVS.to_vec(),
     )
 }
 
-pub fn square(size: f32) -> Model {
+pub fn square(size: f32) -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     self::rectangle(size, size)
 }
 
-pub fn from_texture(texture: StaticTexture) -> Model {
+pub fn from_texture(texture: &StaticTexture) -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     let (width, height) = texture.get_normalized_dimensions();
-    let mut model = self::rectangle(width, height);
-    model.set_texture(Texture::StaticTexture(texture));
-    model
+    self::rectangle(width, height)
 }

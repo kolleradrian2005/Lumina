@@ -3,7 +3,10 @@ use std::ffi::CString;
 use gl::types::GLuint;
 use include_assets::NamedArchive;
 
-use crate::math::vec3::Vec3;
+use crate::{
+    math::vec3::Vec3,
+    shader::{parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType},
+};
 
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
 
@@ -72,5 +75,16 @@ impl ShaderProgram for GuiShader {
     }
     unsafe fn stop(&self) {
         shader_handler::stop_program()
+    }
+
+    fn get_parameter_schema(&self) -> ParameterSchema {
+        ParameterSchema {
+            required_params: vec![
+                ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
+                ("uAspectRatio".to_string(), ShaderParameterType::Float),
+                ("uHasTexture".to_string(), ShaderParameterType::Bool),
+                ("uColor".to_string(), ShaderParameterType::Vec3),
+            ],
+        }
     }
 }

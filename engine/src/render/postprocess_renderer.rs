@@ -3,9 +3,9 @@ use std::sync::{Arc, Mutex};
 use include_assets::NamedArchive;
 
 use crate::scene::foreground::Foreground;
-use crate::scene::{scene::Scene, world::component::camera_component::CameraComponent};
+use crate::scene::world::component::camera_component::CameraComponent;
 use crate::shader::postprocess_shader::PostprocessShader;
-use crate::shader::shader_program::ShaderProgram;
+use crate::shader::shader_program_old::ShaderProgram;
 use crate::texture::frame_buffer::Framebuffer;
 
 use super::uniformbuffer::{PostProcessUniformBuffer, UniformBuffer};
@@ -25,26 +25,19 @@ impl PostprocessRenderer {
         }
     }
 
-    pub unsafe fn render(&mut self, scene: &Scene, framebuffer: &Framebuffer) {
-        let (_camera, (camera_component,)) = scene
-            .get_world()
-            .query::<(&CameraComponent,)>()
-            .next()
-            .expect("No camera found in the scene");
-
+    pub unsafe fn render(
+        &mut self,
+        camera_component: &CameraComponent,
+        foreground: &Foreground,
+        framebuffer: &Framebuffer,
+    ) {
         self.shader.start();
         self.uniform_buffer.bind_base();
 
-        let model = framebuffer.get_model();
-        let mesh = model.get_mesh();
+        let mesh = framebuffer.get_mesh();
         self.shader.set_focal_offset(&camera_component.focal_offset);
         self.shader.set_aspect_ratio(framebuffer.get_aspect_ratio());
 
-        let foreground = &scene
-            .get_world()
-            .expect_resource::<Arc<Mutex<Foreground>>>()
-            .lock()
-            .unwrap();
         let light_positions: Vec<f32> = foreground.get_light_positions();
         let num_lights = light_positions.len() as i32 / 2;
         self.shader.set_num_lights(num_lights);

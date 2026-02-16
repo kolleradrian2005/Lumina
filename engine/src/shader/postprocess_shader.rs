@@ -3,7 +3,10 @@ use std::ffi::CString;
 use gl::types::GLuint;
 use include_assets::NamedArchive;
 
-use crate::math::vec2::Vec2;
+use crate::{
+    math::vec2::Vec2,
+    shader::{parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType},
+};
 
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
 
@@ -69,10 +72,26 @@ impl ShaderProgram for PostprocessShader {
     fn get_id(&self) -> GLuint {
         self.id
     }
+
     unsafe fn start(&self) {
         shader_handler::start_program(self)
     }
+
     unsafe fn stop(&self) {
         shader_handler::stop_program()
+    }
+
+    fn get_parameter_schema(&self) -> ParameterSchema {
+        ParameterSchema {
+            required_params: vec![
+                ("uFocalOffset".to_string(), ShaderParameterType::Vec2),
+                ("uAspectRatio".to_string(), ShaderParameterType::Float),
+                ("uNumLights".to_string(), ShaderParameterType::Int),
+                (
+                    "uLightPositions".to_string(),
+                    ShaderParameterType::Vec2Array,
+                ),
+            ],
+        }
     }
 }

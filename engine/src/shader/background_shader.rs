@@ -3,7 +3,10 @@ use std::ffi::CString;
 use gl::types::GLuint;
 use include_assets::NamedArchive;
 
-use crate::math::vec3::Vec3;
+use crate::{
+    math::vec3::Vec3,
+    shader::{parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType},
+};
 
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
 
@@ -88,10 +91,26 @@ impl ShaderProgram for BackgroundShader {
     fn get_id(&self) -> GLuint {
         self.id
     }
+
     unsafe fn start(&self) {
         shader_handler::start_program(self)
     }
+
     unsafe fn stop(&self) {
         shader_handler::stop_program()
+    }
+
+    fn get_parameter_schema(&self) -> ParameterSchema {
+        ParameterSchema {
+            required_params: vec![
+                ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
+                ("uFlipped".to_string(), ShaderParameterType::Bool),
+                ("uColor".to_string(), ShaderParameterType::Vec3),
+                ("uColor1".to_string(), ShaderParameterType::Vec3),
+                ("uColor2".to_string(), ShaderParameterType::Vec3),
+                ("uHasTexture".to_string(), ShaderParameterType::Bool),
+                ("uFlipped".to_string(), ShaderParameterType::Bool),
+            ],
+        }
     }
 }

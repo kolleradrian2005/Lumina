@@ -6,7 +6,7 @@ use crate::{
     math::vec3::Vec3,
     scene::{tile::Tile, world::world::World},
     texture::{
-        resource_provider::ResourceProvider,
+        resource_manager::ResourceManager,
         texture::{StaticColor, Texture},
     },
 };
@@ -21,11 +21,7 @@ pub struct Terrain {
 }
 
 impl Terrain {
-    pub fn generate(
-        world: &mut World,
-        seed: u32,
-        resource_provider: &mut dyn ResourceProvider,
-    ) -> Self {
+    pub fn generate(world: &mut World, seed: u32, resource_manager: &mut ResourceManager) -> Self {
         let tile_size = 0.5;
         let extra_tiles = 4;
         let mut default_tile_count = (2.0 / tile_size as f32) as i32 + extra_tiles;
@@ -41,17 +37,17 @@ impl Terrain {
         };
         terrain
             .tiles
-            .push_back(terrain.generate_tile(world, loaded_tile_index, resource_provider));
+            .push_back(terrain.generate_tile(world, loaded_tile_index, resource_manager));
         for i in 1..default_tile_count / 2 + 1 as i32 {
             terrain.tiles.push_back(terrain.generate_tile(
                 world,
                 loaded_tile_index + i,
-                resource_provider,
+                resource_manager,
             ));
             terrain.tiles.push_front(terrain.generate_tile(
                 world,
                 loaded_tile_index - i,
-                resource_provider,
+                resource_manager,
             ));
         }
         terrain
@@ -143,7 +139,7 @@ impl Terrain {
         &self,
         world: &mut World,
         x: i32,
-        resource_provider: &mut dyn ResourceProvider,
+        resource_manager: &mut ResourceManager,
     ) -> Tile {
         Tile::generate(
             world,
@@ -151,7 +147,7 @@ impl Terrain {
             x,
             &self.noise,
             &self.tile_texture,
-            resource_provider,
+            resource_manager,
         )
     }
 }

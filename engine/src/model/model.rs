@@ -12,7 +12,6 @@ use super::mesh::Mesh;
 pub struct Model {
     // Rendering
     mesh: Arc<Mesh>,
-    flipped: bool,
     // Transforming
     position: Vec3,
     rotation: f32,
@@ -23,14 +22,13 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(vertices: &[f32], indices: &[u32], uvs: &[f32]) -> Self {
+    pub fn new(mesh: Mesh) -> Self {
         Model {
-            mesh: Arc::new(Mesh::new(vertices, indices, uvs)),
+            mesh: Arc::new(mesh),
             position: Vec3::new(0.0, 0.0, 0.0),
             rotation: 0.0,
             scale: Vec2::uniform(1.0),
             texture: StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into(),
-            flipped: false,
             collider: None,
         }
     }
@@ -41,19 +39,6 @@ impl Model {
 
     pub fn get_mesh(&self) -> &Arc<Mesh> {
         &self.mesh
-    }
-
-    pub fn set_flipped(&mut self, state: bool) {
-        if self.flipped != state {
-            self.flipped = state;
-            if let Some(collider) = &mut self.collider {
-                collider.set_flipped(state);
-            }
-        }
-    }
-
-    pub fn is_flipped(&self) -> bool {
-        self.flipped
     }
 
     pub fn set_texture(&mut self, texture: Texture) {

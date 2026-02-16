@@ -2,19 +2,18 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use winit::keyboard::Key;
 
-use super::math::vec2::Vec2;
+use crate::math::vec2::Vec2;
 
-// TODO: InputState
-pub struct InputHandler {
+pub struct InputState {
     key_states: HashMap<Key, bool>,
     l_mouse: Option<bool>,
     r_mouse: Option<bool>,
     mouse_position: Vec2,
 }
 
-impl InputHandler {
+impl InputState {
     pub fn init() -> Self {
-        InputHandler {
+        InputState {
             key_states: HashMap::new(),
             l_mouse: None,
             r_mouse: None,

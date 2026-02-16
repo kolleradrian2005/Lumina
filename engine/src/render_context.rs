@@ -17,7 +17,7 @@ use crate::{
 pub struct RenderContext {
     pub renderer: Arc<Mutex<Renderer>>,
     pub resource_handle: ResourceProviderHandle,
-    pub scene: Arc<Mutex<Scene>>,
+    //pub scene: Arc<Mutex<Scene>>,
     pub gui_manager: Arc<Mutex<GuiManager>>,
 }
 
@@ -28,16 +28,16 @@ impl RenderContext {
         let mut resource_provider = ResourceManager::new(archive);
         resource_provider.load_default_models();
         resource_provider.load_fonts();
-        let mut scene = Scene::new(&mut resource_provider);
-        scene
-            .get_world_mut()
-            .insert_resource(Arc::new(Mutex::new(Foreground::construct())));
-        renderer.load_scene(&scene, width as f32 / height as f32);
+        //let mut scene = Scene::new(&mut resource_provider);
+        /*scene
+        .get_world_mut()
+        .insert_resource(Arc::new(Mutex::new(Foreground::construct())));*/
+        //renderer.load_scene(&scene, width as f32 / height as f32);
         let gui_manager = GuiManager::new((width, height));
         Self {
             renderer: Arc::new(Mutex::new(renderer)),
             resource_handle: ResourceProviderHandle::new(resource_provider),
-            scene: Arc::new(Mutex::new(scene)),
+            //scene: Arc::new(Mutex::new(scene)),
             gui_manager: Arc::new(Mutex::new(gui_manager)),
         }
     }

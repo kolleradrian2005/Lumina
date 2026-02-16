@@ -21,10 +21,11 @@
             },
             "args": [],
             "cwd": "${workspaceFolder}",
+            "terminal": "integrated",
             "stopOnEntry": false,
             "preLaunchTask": "",
             "env": {
-                "RUST_SRC": "${env:RUSTUP_HOME}/toolchains/${env:RUSTUP_TOOLCHAIN}/lib/rustlib/src/rust/src"
+                "RUST_SRC": "${env:RUSTUP_HOME}/toolchains/${env:RUSTUP_TOOLCHAIN}/lib/rustlib/src/rust/src",
             }
         },
         {

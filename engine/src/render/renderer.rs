@@ -1,35 +1,32 @@
 use std::collections::VecDeque;
 use std::ffi::CString;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use glutin::display::{Display, GlDisplay};
 use include_assets::NamedArchive;
 
-use crate::gui::gui_manager::GuiManager;
 use crate::model::mesh::Mesh;
 
-use crate::render::renderable::MeshLoadState;
-use crate::scene::foreground::Foreground;
+use crate::render::generic_renderer::GenericRenderer;
+use crate::render::render_entity::MeshLoadState;
+use crate::render::render_packet::RenderPacket;
 use crate::scene::scene::Scene;
 use crate::scene::world::component::camera_component::CameraComponent;
 use crate::scene::world::create_mesh_manager::CreateMeshManager;
 use crate::scene::world::drop_mesh_request::DropMeshRequest;
 use crate::texture::frame_buffer::Framebuffer;
 
-use super::background_renderer::BackgroundRenderer;
-use super::gui_renderer::GuiRenderer;
-use super::postprocess_renderer::PostprocessRenderer;
-use super::scene_renderer::SceneRenderer;
 use super::uniformbuffer::{MatrixUniformBuffer, UniformBuffer};
 use super::updatable::Updatable;
 
 pub struct Renderer {
     matrix_uniform_buffer: UniformBuffer<MatrixUniformBuffer>,
-    background_renderer: BackgroundRenderer,
-    scene_renderer: SceneRenderer,
+    //background_renderer: BackgroundRenderer,
+    //scene_renderer: SceneRenderer,
     frame_buffer: Framebuffer,
-    postprocess_renderer: PostprocessRenderer,
-    gui_renderer: GuiRenderer,
+    //postprocess_renderer: PostprocessRenderer,
+    generic_renderer: GenericRenderer,
+    //gui_renderer: GuiRenderer,
 }
 
 impl Renderer {
@@ -39,10 +36,15 @@ impl Renderer {
             gl_display.get_proc_address(symbol.as_c_str()).cast()
         });
 
-        let matrix_uniform_buffer;
+        let mut matrix_uniform_buffer;
         let msaa = match cfg!(not(target_os = "android")) {
             true => Some(16),
             false => None,
+        };
+
+        let matrix_uniform_buffer_content = MatrixUniformBuffer {
+            projection_matrix: [[0.0; 4]; 4],
+            view_matrix: [[0.0; 4]; 4],
         };
 
         unsafe {
@@ -60,24 +62,21 @@ impl Renderer {
             gl::PatchParameteri(gl::PATCH_VERTICES, 3);
 
             matrix_uniform_buffer = UniformBuffer::create(0);
+            matrix_uniform_buffer.set_data(matrix_uniform_buffer_content);
         };
 
         Renderer {
             matrix_uniform_buffer,
-            background_renderer: BackgroundRenderer::init(archive),
-            scene_renderer: SceneRenderer::init(archive),
+            //background_renderer: BackgroundRenderer::init(archive),
+            //scene_renderer: SceneRenderer::init(archive),
             frame_buffer: Framebuffer::new(width, height, msaa),
-            postprocess_renderer: PostprocessRenderer::init(archive),
-            gui_renderer: GuiRenderer::init(archive),
+            generic_renderer: GenericRenderer::init(),
+            //postprocess_renderer: PostprocessRenderer::init(archive),
+            //gui_renderer: GuiRenderer::init(archive),
         }
     }
 
-    pub fn load_scene(&mut self, scene: &Scene, aspect_ratio: f32) {
-        let (_camera, (camera_component,)) = scene
-            .get_world()
-            .query::<(&CameraComponent,)>()
-            .next()
-            .expect("No camera found in the scene");
+    pub fn load_scene(&mut self, camera_component: &CameraComponent, aspect_ratio: f32) {
         let matrix_uniform_buffer_content = MatrixUniformBuffer {
             projection_matrix: camera_component.get_projection_matrix(aspect_ratio),
             view_matrix: camera_component.get_view_matrix(),
@@ -86,11 +85,11 @@ impl Renderer {
             self.matrix_uniform_buffer
                 .set_data(matrix_uniform_buffer_content);
         }
-        let foreground = scene
+        /*let foreground = scene
             .get_world()
             .get_resource::<Arc<Mutex<Foreground>>>()
             .expect("No foreground found");
-        self.postprocess_renderer.load_scene(foreground);
+        self.postprocess_renderer.load_scene(foreground);*/
     }
 
     unsafe fn clean_up(&self) {
@@ -121,13 +120,13 @@ impl Renderer {
                         .set_view_matrix(camera_component.get_view_matrix());
                 },
                 Updatable::FocalRadius => {
-                    let foreground = scene
+                    /*let foreground = scene
                         .get_world()
                         .expect_resource::<Arc<Mutex<Foreground>>>()
                         .lock()
                         .unwrap();
                     self.postprocess_renderer
-                        .update_focal_radius(foreground.get_focal_radius());
+                        .update_focal_radius(foreground.get_focal_radius());*/ // TODO
                 }
             }
         }
@@ -162,23 +161,60 @@ impl Renderer {
         }
     }
 
-    pub fn render(&mut self, scene: &mut Scene, gui_manager: &GuiManager) {
+    pub fn render(
+        &mut self,
+        render_packet: RenderPacket,
+        /*gui_manager: &GuiManager,
+        camera_component: &CameraComponent,
+        background: &Background,
+        foreground: &Foreground,*/
+    ) {
         unsafe {
+            self.refresh_buffers(&render_packet);
             self.clean_up(); // Clean up without framebuffer
-            self.frame_buffer.bind();
+                             //self.frame_buffer.bind();
             self.clean_up(); // Clean up with framebuffer
             gl::Enable(gl::DEPTH_TEST);
             self.matrix_uniform_buffer.bind_base();
-            self.background_renderer.render(scene);
-            self.scene_renderer.render(scene);
-            self.frame_buffer.blit();
-            self.frame_buffer.unbind();
+            self.generic_renderer.render(render_packet);
+            //self.background_renderer.render(background);
+            //self.scene_renderer.render(render_packet);
+            //self.frame_buffer.blit();
+            //self.frame_buffer.unbind();
             // Post-processing
-            self.postprocess_renderer.render(scene, &self.frame_buffer);
+            //self.postprocess_renderer.render(camera_component, foreground, &self.frame_buffer);
             gl::Disable(gl::DEPTH_TEST);
             self.matrix_uniform_buffer.unbind_base();
-            self.gui_renderer
-                .render(gui_manager, self.frame_buffer.get_aspect_ratio());
+            //self.gui_renderer.render(gui_manager, self.frame_buffer.get_aspect_ratio());
+        };
+    }
+
+    fn refresh_buffers(&mut self, render_packet: &RenderPacket) {
+        if let Some((width, height)) = render_packet.window_resize {
+            self.on_resize(
+                width,
+                height,
+                render_packet
+                    .camera_component
+                    .as_ref()
+                    .expect("Camera component must be present for resize"),
+            );
+        }
+        if let Some(camera_component) = &render_packet.camera_component {
+            unsafe {
+                self.matrix_uniform_buffer
+                    .set_view_matrix(camera_component.get_view_matrix());
+            }
+        }
+    }
+
+    fn on_resize(&mut self, width: i32, height: i32, camera_component: &CameraComponent) {
+        self.frame_buffer.resize(width, height);
+        unsafe {
+            gl::Viewport(0, 0, width as i32, height as i32);
+            self.matrix_uniform_buffer.set_projection_matrix(
+                camera_component.get_projection_matrix(width as f32 / height as f32),
+            );
         };
     }
 }

@@ -1,6 +1,6 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
-use crate::{render::renderable::MeshLoadState};
+use crate::render::render_entity::MeshLoadState;
 
 pub struct CreateMeshManager {
     next_id: u64,

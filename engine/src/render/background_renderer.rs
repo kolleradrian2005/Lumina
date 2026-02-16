@@ -2,8 +2,8 @@ use include_assets::NamedArchive;
 
 use crate::{
     math::transformation,
-    scene::{background::Background, scene::Scene},
-    shader::{background_shader::BackgroundShader, shader_program::ShaderProgram},
+    scene::background::Background,
+    shader::{background_shader::BackgroundShader, shader_program_old::ShaderProgram},
     texture::texture::Texture,
 };
 
@@ -20,11 +20,11 @@ impl BackgroundRenderer {
         }
     }
 
-    pub unsafe fn render(&self, scene: &Scene) {
+    pub unsafe fn render(&self, background: &Background) {
         self.shader.start();
 
-        let background = scene.get_world().expect_resource::<Background>();
         let layers = &background.layers;
+        // TODO: set up in render system
         for i in 0..layers.len() {
             let model = layers.get(i).unwrap();
             let mesh = model.get_mesh();
@@ -49,7 +49,7 @@ impl BackgroundRenderer {
                 }
             }
             self.shader.set_has_texture(texture.has_texture());
-            self.shader.set_flipped(model.is_flipped());
+            //self.shader.set_flipped(model.is_flipped()); // TODO: refactor background and postprocess renderer
             gl::BindVertexArray(mesh.get_vao());
             gl::EnableVertexAttribArray(0);
             gl::EnableVertexAttribArray(1);

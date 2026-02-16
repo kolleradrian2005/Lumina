@@ -5,7 +5,6 @@ mod world_test {
     use lumina_engine::scene::world::component::model_component::ModelComponent;
     use lumina_engine::scene::world::entity::entity::Entity;
     use lumina_engine::scene::world::world::World;
-    use lumina_engine::texture::font_texture::FontTexture;
     use lumina_engine::texture::resource_provider::ResourceProvider;
     use lumina_engine::texture::texture::Texture;
     use mockall::mock;
@@ -14,10 +13,8 @@ mod world_test {
         pub ResourceProvider {}
         impl ResourceProvider for ResourceProvider {
             fn load_default_models(&mut self);
-            fn load_fonts(&mut self);
             fn save_model(&mut self, name: &str, model: Model);
             fn get_model(&self, name: &str) -> Model;
-            fn get_font(&self, name: &str) -> FontTexture;
             fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
             fn load_animated_texture<'a>(
                 &mut self,
@@ -45,7 +42,7 @@ mod world_test {
         assert_eq!(Entity(0), *null_entity_opt.unwrap());
         assert_eq!(0, world.components.len());
         assert_eq!(0, world.particle_pool.len());
-        assert_eq!(0, world.renderables.len());
+        assert_eq!(0, world.render_packet.entities.len());
     }
 
     #[test]

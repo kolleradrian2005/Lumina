@@ -3,6 +3,8 @@ use std::ffi::CString;
 use gl::types::GLuint;
 use include_assets::NamedArchive;
 
+use crate::shader::parameter_schema::ParameterSchema;
+
 use super::{shader::Shader, shader_handler, shader_program::ShaderProgram};
 
 pub struct TerrainShader {
@@ -59,10 +61,31 @@ impl ShaderProgram for TerrainShader {
     fn get_id(&self) -> GLuint {
         self.id
     }
+
     unsafe fn start(&self) {
         shader_handler::start_program(self)
     }
+
     unsafe fn stop(&self) {
         shader_handler::stop_program()
+    }
+
+    fn get_parameter_schema(&self) -> ParameterSchema {
+        super::parameter_schema::ParameterSchema {
+            required_params: vec![
+                (
+                    "uModelMatrix".to_string(),
+                    super::shader_parameter_type::ShaderParameterType::Mat4,
+                ),
+                (
+                    "uIsUphill".to_string(),
+                    super::shader_parameter_type::ShaderParameterType::Bool,
+                ),
+                (
+                    "uHeight".to_string(),
+                    super::shader_parameter_type::ShaderParameterType::Float,
+                ),
+            ],
+        }
     }
 }

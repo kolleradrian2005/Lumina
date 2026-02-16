@@ -10,15 +10,13 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(archive: &NamedArchive, shader_name: &str, shader_type: GLenum) -> Self {
+    pub fn new(archive: &NamedArchive, shader_name: &str, shader_type: GLenum) -> Option<Self> {
         unsafe {
             let path = Path::new(references::SHADERS_PATH).join(shader_name.replace("/", "\\"));
             let binding = path.to_string_lossy().replace("/", "\\");
             let path_str = binding.as_str();
 
-            let mut asset = archive
-                .get(path_str)
-                .expect(format!("Failed to load shader {:?}", path_str).as_str());
+            let mut asset = archive.get(path_str)?;
 
             let mut contents = String::new();
 
@@ -65,7 +63,7 @@ impl Shader {
                 let log = String::from_utf8(error_log).unwrap();
                 println!("Error compiling {}: {:?}", path_str, log);
             }
-            shader
+            Some(shader)
         }
     }
 }
