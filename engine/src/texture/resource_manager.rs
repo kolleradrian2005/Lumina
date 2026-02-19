@@ -88,6 +88,7 @@ impl ResourceProvider for ResourceManager {
             tess_control_shader_name: None,
             parameter_schema: model_shader_parameter_schema.clone(),
         };
+        // Tesselation shaders are not supported on gles 3, which is used on android, so only include them for other platforms
         let shader_with_tesselation_configuration = cfg!(not(target_os = "android")).then(|| {
             model_shader_parameter_schema
                 .required_params
@@ -141,16 +142,6 @@ impl ResourceProvider for ResourceManager {
     */
 
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture> {
-        /*for archive in self.archives.iter().rev() {
-            if let Some(texture) = self
-                .texture_handler
-                .load_static_texture(archive, texture_name)
-            {
-                return Some(texture);
-            }
-        }
-        println!("Failed to load static texture: {:?}", texture_name);
-        None*/
         let (tx, rx) = flume::bounded(1);
         self.send_resource_command(ResourceCommand::LoadStaticTexture {
             texture_name: texture_name.to_string(),
@@ -171,16 +162,6 @@ impl ResourceProvider for ResourceManager {
         texture_names: &[&str],
         animation_time: u128,
     ) -> Option<Texture> {
-        /*for archive in self.archives.iter().rev() {
-            if let Some(texture) =
-                self.texture_handler
-                    .load_animated_texture(archive, texture_names, animation_time)
-            {
-                return Some(texture);
-            }
-        }
-        println!("Failed to load animated texture: {:?}", texture_names);
-        None*/
         let (tx, rx) = flume::bounded(1);
         self.send_resource_command(ResourceCommand::LoadAnimatedTexture {
             texture_names: texture_names.iter().map(|s| s.to_string()).collect(),

@@ -102,6 +102,7 @@ pub mod input {
     pub mod input_state;
 }
 pub mod collider;
+pub mod focus_point;
 pub mod logic;
 pub mod references;
 pub mod transformable;
@@ -230,46 +231,6 @@ pub async fn start(
         scene.get_world_mut().insert_resource(resource_manager);
         runtime.block_on(run_logic_loop(input_rx, render_tx, scene));
     });
-    /*
-    let main_loop = tokio::spawn(async move {
-        tokio::time::sleep(TARGET_INTERVAL).await;
-        let rng: StdRng = SeedableRng::from_entropy();
-        let mut delta_time: Duration;
-        let mut last: Instant = Instant::now();
-
-        loop {
-            if let Some(render_ctx) = loop_render_context_clone.lock().unwrap().as_ref() {
-                if let Ok(scene) = &mut render_ctx.scene.lock() {
-                    let world = scene.get_world_mut();
-                    world.insert_resource(render_ctx.resource_handle.get_inner());
-                    world.insert_resource(loop_input_state_clone.clone());
-                    world.insert_resource(updatables_clone.clone());
-                    world.insert_resource(drop_mesh_requests_clone.clone());
-                    world.insert_resource(create_mesh_manager_clone.clone());
-                    world.insert_resource(rng);
-                }
-                break;
-            }
-        }
-
-        while *is_running_clone.lock().unwrap() {
-            // Calculate delta time
-            delta_time = last.elapsed();
-            if delta_time < TARGET_INTERVAL {
-                time::sleep(TARGET_INTERVAL - delta_time).await;
-            }
-            delta_time = Duration::max(delta_time, TARGET_INTERVAL);
-            last = Instant::now();
-
-            if let Some(render_ctx) = loop_render_context_clone.lock().unwrap().as_ref() {
-                // Update the scene
-                if let Ok(scene) = &mut render_ctx.scene.lock() {
-                    scene.update(delta_time.as_secs_f32());
-                }
-            }
-        }
-    });
-    */
 
     let mut renderer: Option<Renderer> = None;
     let mut resource_loader: Option<ResourceLoader> = None;
@@ -305,18 +266,8 @@ pub async fn start(
                     ) {
                         println!("Error setting vsync: {res:?}");
                     }
-                    /*let mut render_ctx = RenderContext::init(&gl_display, width, height);
-                    on_render_ctx_init(&mut render_ctx);
-                    render_context.get_or_insert_with(|| render_ctx.clone());
-                    loop_render_context
-                        .lock()
-                        .unwrap()
-                        .get_or_insert_with(|| render_ctx);*/
                     renderer = Renderer::init(&gl_display, width, height).into();
                     resource_loader = ResourceLoader::new(resource_rx.clone()).into();
-                    //resource_loader.load_default_models();
-                    //resource_loader.load_fonts();
-
                     state.replace((gl_context, gl_surface, window));
                 }
                 Event::Suspended => {
@@ -357,38 +308,6 @@ pub async fn start(
                         {
                             resource_loader.run();
                             if let Ok(packet) = render_rx.try_recv() {
-                                // Handle ui logic
-                                /*if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                    if let Ok(resource_provider) = render_ctx.resource_handle.lock() {
-                                        gui_manager.update(
-                                            &*resource_provider,
-                                            loop_input_state.lock().unwrap().borrow_mut(),
-                                        );
-                                    }
-                                }*/
-
-                                // Update buffers based on scene
-                                /*if let Ok(updatables) = &mut updatables.lock() {
-                                                                renderer.update_buffers(updatables, scene);
-                                                            }
-                                                            //if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                                            let drop_mesh_requests = &mut drop_mesh_requests.lock().unwrap();
-                                                            let create_mesh_manager = &mut create_mesh_manager.lock().unwrap();
-                                                            renderer.handle_mesh_requests(drop_mesh_requests, create_mesh_manager);
-                                                            let background =
-                                                                scene.get_world_mut().expect_resource_ptr::<Background>();
-                                                            let foreground_lock = &scene
-                                                                .get_world()
-                                                                .expect_resource::<Arc<Mutex<Foreground>>>()
-                                                                .clone();
-                                                            let foreground = foreground_lock.lock().unwrap();
-                                                            let (_camera, (camera_component,)) = scene
-                                                                .get_world()
-                                                                .query::<(&CameraComponent,)>()
-                                                                .next()
-                                                                .expect("No camera found in the scene")
-                                                                .clone();
-                                */
                                 renderer.render(packet);
 
                                 if let Some((_, _, window)) = &state {

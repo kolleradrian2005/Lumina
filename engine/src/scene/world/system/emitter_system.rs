@@ -1,8 +1,13 @@
-use std::sync::{Arc, Mutex};
-
 use rand::rngs::StdRng;
 
-use crate::scene::world::world::World;
+use crate::{
+    focus_point::FocusPoint,
+    scene::world::{
+        component::{emitter_component::EmitterComponent, model_component::ModelComponent},
+        entity::particle_entity::ParticleEntity,
+        world::World,
+    },
+};
 
 use super::system::System;
 
@@ -10,10 +15,8 @@ pub struct EmitterSystem;
 
 impl System for EmitterSystem {
     fn run(&self, world: &mut World, delta_time: f32) {
-        // TODO: fix this
-        /*let mut removeables = vec![];
+        let mut removeables = vec![];
         let rng: *mut StdRng = world.expect_resource_ptr::<StdRng>();
-        let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         for (entity, (emitter, model)) in
             world.query_mut::<(&mut EmitterComponent, &mut ModelComponent)>()
         {
@@ -24,11 +27,16 @@ impl System for EmitterSystem {
                 None => true,
             };
             let mut has_loaded = should_spawn;
+            let focus_point = world.get_resource::<FocusPoint>();
             emitter.particles.retain_mut(|particle| {
                 particle.update(delta_time);
-                if let Ok(terrain) = &mut terrain.lock() {
-                    if !has_loaded && terrain.is_loaded(particle.position) {
-                        has_loaded = true;
+                if !has_loaded {
+                    if let Some(focus_point) = focus_point {
+                        if particle.position.distance(focus_point.0)
+                            <= emitter.cull_radius.unwrap_or(f32::INFINITY)
+                        {
+                            has_loaded = true;
+                        }
                     }
                 }
                 particle.alive
@@ -65,6 +73,6 @@ impl System for EmitterSystem {
         }
         for entity in removeables {
             world.delete_entity(entity);
-        }*/
+        }
     }
 }

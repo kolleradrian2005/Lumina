@@ -26,6 +26,7 @@ pub struct EmitterComponent {
     pub cycle_time: f32,
     pub now: f32,
     pub timeout: Option<TimeOut>,
+    pub cull_radius: Option<f32>, // None = never cull
 }
 
 impl EmitterComponent {
@@ -33,8 +34,7 @@ impl EmitterComponent {
         Self {
             particles: Vec::new(),
             spawn_position,
-            interval: Duration::from_secs_f32(0.1),
-            //interval: Duration::from_secs_f32(0.25),
+            interval: Duration::from_secs_f32(0.25),
             lifespan: None,
             particle_lifespan: particle_type.default_lifespan(),
             particle_velocity: 1.0,
@@ -43,6 +43,7 @@ impl EmitterComponent {
             now: 0.0,
             timeout: None,
             emitter_type: particle_type,
+            cull_radius: Some(4.0),
         }
     }
 }

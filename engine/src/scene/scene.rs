@@ -1,10 +1,12 @@
 use winit::event::MouseButton;
 
+use crate::focus_point::FocusPoint;
 use crate::input::input_event::InputEvent;
 use crate::input::input_state::InputState;
 use crate::math::vec2::Vec2;
 use crate::math::vec3::Vec3;
 use crate::scene::world::system::collision_system::CollisionSystem;
+use crate::scene::world::system::emitter_system::EmitterSystem;
 
 use super::world::component::camera_component::CameraComponent;
 use super::world::system::movement_system::MovementSystem;
@@ -22,6 +24,7 @@ impl Scene {
     pub fn new() -> Self {
         let mut world = World::load();
         world.insert_resource(InputState::init());
+        world.insert_resource(FocusPoint(Vec3::new(0.0, 0.0, 0.0)));
         let camera = world.create_entity();
 
         world.add_component(
@@ -40,7 +43,7 @@ impl Scene {
         let systems: Vec<Box<dyn System>> = vec![
             Box::new(MovementSystem),
             Box::new(ParticleSystem),
-            //Box::new(EmitterSystem),
+            Box::new(EmitterSystem),
             Box::new(CollisionSystem),
             Box::new(RenderSystem),
         ];

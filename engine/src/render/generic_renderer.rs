@@ -17,10 +17,6 @@ pub struct GenericRenderer {
 
 impl GenericRenderer {
     pub fn init() -> Self {
-        // Tesselation shaders are not supported on gles 3
-        /*let shader_with_tesselation =
-        cfg!(not(target_os = "android")).then(|| ModelShader::new(archive, true));*/
-
         GenericRenderer {
             uniform_cache: RefCell::new(HashMap::new()),
         }

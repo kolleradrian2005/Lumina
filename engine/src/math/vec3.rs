@@ -53,6 +53,9 @@ impl Vec3 {
         }
         Vec3::new(self.x / length, self.y / length, self.z / length)
     }
+    pub fn distance(&self, other: Vec3) -> f32 {
+        (*self - other).length()
+    }
 }
 
 impl Add<Vec3> for Vec3 {

@@ -55,10 +55,8 @@ use lumina_engine::{
 use winit::event_loop::EventLoop;
 
 pub fn initialize(event_loop: EventLoop<()>) {
-    // TODO: Move scene out of render context?
     lumina_engine::start(event_loop, |scene, resource_manager| {
         load_resources(resource_manager);
-        //let mut scene = render_ctx.scene.lock().expect("Failed to lock scene");
         init_world(scene.get_world_mut(), resource_manager);
         scene.register_system(Box::new(InputSystem));
         scene.register_system(Box::new(PlayerMovementSystem));

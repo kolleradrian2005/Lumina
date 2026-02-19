@@ -17,7 +17,6 @@ use crate::{
 pub struct RenderContext {
     pub renderer: Arc<Mutex<Renderer>>,
     pub resource_handle: ResourceProviderHandle,
-    //pub scene: Arc<Mutex<Scene>>,
     pub gui_manager: Arc<Mutex<GuiManager>>,
 }
 
@@ -37,7 +36,6 @@ impl RenderContext {
         Self {
             renderer: Arc::new(Mutex::new(renderer)),
             resource_handle: ResourceProviderHandle::new(resource_provider),
-            //scene: Arc::new(Mutex::new(scene)),
             gui_manager: Arc::new(Mutex::new(gui_manager)),
         }
     }

@@ -18,6 +18,14 @@ pub struct RenderSystem;
 
 impl System for RenderSystem {
     fn run(&self, world: &mut World, _: f32) {
+        for (entity, (model, transform)) in
+            world.query_mut::<(&mut ModelComponent, &mut TransformComponent)>()
+        {
+            let parent_component = world.get_component::<ParentComponent>(entity).cloned();
+            if let None = world.get_component::<EmitterComponent>(entity) {
+                Self::prepare_entity(world, entity, parent_component, transform.clone(), model);
+            }
+        }
         for (entity, (emitter, model, transform)) in world.query_mut::<(
             &mut EmitterComponent,
             &mut ModelComponent,
@@ -36,14 +44,6 @@ impl System for RenderSystem {
                     },
                     model,
                 );
-            }
-        }
-        for (entity, (model, transform)) in
-            world.query_mut::<(&mut ModelComponent, &mut TransformComponent)>()
-        {
-            let parent_component = world.get_component::<ParentComponent>(entity).cloned();
-            if let None = world.get_component::<EmitterComponent>(entity) {
-                Self::prepare_entity(world, entity, parent_component, transform.clone(), model);
             }
         }
     }
