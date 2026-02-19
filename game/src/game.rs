@@ -1,6 +1,7 @@
 use std::{
     f32::consts::PI,
     sync::{Arc, Mutex},
+    vec,
 };
 
 use crate::{
@@ -16,30 +17,38 @@ use crate::{
         animation_system::AnimationSystem, camera_system::CameraSystem,
         current_system::CurrentSystem, follow_system::FollowSystem, input_system::InputSystem,
         player_movement_system::PlayerMovementSystem,
+        terrain_collision_system::TerrainCollisionSystem, terrain_system::TerrainSystem,
     },
+    terrain::{terrain::Terrain, water::Water},
 };
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
     collider::Collider,
     math::{vec2::Vec2, vec3::Vec3},
     model::model::Model,
-    scene::{
-        terrain::Terrain,
-        world::{
-            component::{
-                camera_component::CameraComponent, collider_component::ColliderComponent,
-                emitter_component::EmitterComponent, model_component::ModelComponent,
-                movement_component::MovementComponent, parent_component::ParentComponent,
-                texture_component::TextureComponent, transform_component::TransformComponent,
-            },
-            entity::{entity::Entity, particle_entity::ParticleEntityType},
-            world::World,
+    scene::world::{
+        component::{
+            camera_component::CameraComponent,
+            collider_component::ColliderComponent,
+            emitter_component::EmitterComponent,
+            force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
+            material_component::MaterialComponent,
+            model_component::ModelComponent,
+            movement_component::MovementComponent,
+            parent_component::ParentComponent,
+            transform_component::TransformComponent,
         },
+        entity::{entity::Entity, particle_entity::ParticleEntityType},
+        world::World,
+    },
+    shader::{
+        parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
+        shader_parameter_type::ShaderParameterType,
     },
     texture::{
         resource_manager::ResourceManager,
         resource_provider::ResourceProvider,
-        texture::{StaticColor, Texture},
+        texture::{GradientTexture, StaticColor, Texture},
     },
     transformable::Transformable,
 };
@@ -54,10 +63,11 @@ pub fn initialize(event_loop: EventLoop<()>) {
         scene.register_system(Box::new(InputSystem));
         scene.register_system(Box::new(PlayerMovementSystem));
         scene.register_system(Box::new(CurrentSystem));
-        //scene.register_system(Box::new(TerrainSystem));
+        scene.register_system(Box::new(TerrainSystem));
         scene.register_system(Box::new(FollowSystem));
         scene.register_system(Box::new(CameraSystem));
         scene.register_system(Box::new(AnimationSystem));
+        scene.register_system(Box::new(TerrainCollisionSystem));
         //scene.register_system(Box::new(UpdateFocalRadiusSystem));
         //scene.register_system(Box::new(UpdateGodRaysSystem));
     });
@@ -65,6 +75,26 @@ pub fn initialize(event_loop: EventLoop<()>) {
 
 fn load_resources(resource_manager: &mut ResourceManager) {
     resource_manager.attach_archive(NamedArchive::load(include_dir!("assets")));
+    resource_manager
+        .load_shader(
+            "background",
+            ShaderConfiguration {
+                fragment_shader_name: "background.frag".to_string(),
+                vertex_shader_name: "background.vert".to_string(),
+                tess_evaluation_shader_name: None,
+                tess_control_shader_name: None,
+                parameter_schema: ParameterSchema {
+                    required_params: vec![
+                        ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
+                        ("uFlipped".to_string(), ShaderParameterType::Bool),
+                        ("uColor1".to_string(), ShaderParameterType::Vec3),
+                        ("uColor2".to_string(), ShaderParameterType::Vec3),
+                        ("uLayerIndex".to_string(), ShaderParameterType::Float),
+                    ],
+                },
+            },
+        )
+        .expect("Failed to load background shader");
     let mut square = resource_manager.get_model("square");
     square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
     let mut bubble = square.clone();
@@ -93,8 +123,13 @@ fn load_resources(resource_manager: &mut ResourceManager) {
 }
 
 fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
+    init_background(world, resource_manager); // TODO: fix this hack where background is initialized after other entities, causing it to render "on top of them"
+    const WORLD_SEED: u32 = 696969;
     let terrain = Terrain::generate(world, 6969, resource_manager);
     world.insert_resource(Arc::new(Mutex::new(terrain)));
+    let water = Water::create((WORLD_SEED ^ 0x5EAF00D).wrapping_mul(69696969));
+    world.insert_resource(water);
+    let shader = resource_manager.get_shader("model").clone();
 
     let model_scale = 0.15;
     let initial_position = Vec3::new(0.0, 0.25, 0.0);
@@ -119,6 +154,13 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     );
     world.add_component(player, PlayerStateComponent::Idle);
     world.add_component(player, MovementComponent::default());
+    let mut force_component = ForceComponent::new(1.0);
+    force_component.apply_force(AppliedForce {
+        id: "water_resistance".to_string(),
+        effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
+        mode: ForceMode::Continuous,
+    });
+    world.add_component(player, force_component);
     world.add_component(
         player,
         TransformComponent {
@@ -173,14 +215,38 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         .unwrap();
     let moving_head_texture = head_texture.clone();
 
-    world.add_component::<TextureComponent>(left_hand_model, left_hand_texture.into());
-    world.add_component::<TextureComponent>(legs_model, legs_texture.into());
-    world.add_component::<TextureComponent>(torso_model, torso_texture.into());
-    world.add_component::<TextureComponent>(right_hand_model, right_hand_texture.into());
-    world.add_component::<TextureComponent>(tank_model, tank_texture.into());
-    world.add_component::<TextureComponent>(head_model, head_texture.into());
-    world.add_component::<TextureComponent>(moving_legs_model, moving_legs_texture.into());
-    world.add_component::<TextureComponent>(moving_head_model, moving_head_texture.into());
+    world.add_component(
+        left_hand_model,
+        MaterialComponent::new(left_hand_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        legs_model,
+        MaterialComponent::new(legs_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        torso_model,
+        MaterialComponent::new(torso_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        right_hand_model,
+        MaterialComponent::new(right_hand_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        tank_model,
+        MaterialComponent::new(tank_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        head_model,
+        MaterialComponent::new(head_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        moving_legs_model,
+        MaterialComponent::new(moving_legs_texture.into(), shader.clone()),
+    );
+    world.add_component(
+        moving_head_model,
+        MaterialComponent::new(moving_head_texture.into(), shader.clone()),
+    );
 
     let initial_scales = vec![
         0.31640625, 0.4375, 0.23828125, 0.32421875, 0.25, 0.23828125, 0.4375, 0.23828125,
@@ -214,6 +280,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     ];
 
     world.add_component(left_hand_model, PlayerPartComponent::LeftHand);
+
     world.add_component(legs_model, PlayerPartComponent::Legs);
     world.add_component(torso_model, PlayerPartComponent::Torso);
     world.add_component(right_hand_model, PlayerPartComponent::RightHand);
@@ -298,9 +365,9 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         },
     );
     world.add_component::<ModelComponent>(bubble_emitter, bubble_model.get_mesh().clone().into());
-    world.add_component::<TextureComponent>(
+    world.add_component(
         bubble_emitter,
-        bubble_model.get_texture().clone().into(),
+        MaterialComponent::new(bubble_model.get_texture().clone().into(), shader.clone()),
     );
 
     world.add_component::<MultiConditionalParentComponent>(
@@ -318,4 +385,28 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         .into(),
     );
     world.add_component::<ParentComponent>(bubble_emitter, head_model.into());
+}
+
+fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
+    let background = world.create_entity();
+    world.add_component(
+        background,
+        TransformComponent {
+            position: (0.0, 0.0, -7.5).into(),
+            rotation: 0.0,
+            scale: Vec2::uniform(2.0),
+            is_flipped: false,
+        },
+    );
+    world.add_component(
+        background,
+        MaterialComponent::new(
+            GradientTexture::new((0.0, 0.29, 0.43).into(), (0.0, 0.5, 0.5).into()).into(),
+            resource_manager.get_shader("background").clone(),
+        )
+        .with_param("uColor1", Vec3::new(0.0, 0.29, 0.43))
+        .with_param("uColor2", Vec3::new(0.0, 0.5, 0.5)),
+    );
+    let pattern_model = resource_manager.get_model("square");
+    world.add_component::<ModelComponent>(background, pattern_model.get_mesh().clone().into());
 }

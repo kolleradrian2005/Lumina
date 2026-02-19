@@ -1,8 +1,7 @@
 use std::time::Instant;
 
+use lumina_engine::math::vec3::Vec3;
 use noise::{NoiseFn, Perlin};
-
-use crate::math::vec3::Vec3;
 
 pub struct Water {
     resistance: f32,
@@ -18,9 +17,11 @@ impl Water {
             current_start: Instant::now(),
         }
     }
+
     pub fn get_resistance(&self) -> f32 {
         self.resistance
     }
+
     pub fn get_current(&self, pos: &Vec3) -> f32 {
         let speed = 0.5;
         let time = Instant::now()

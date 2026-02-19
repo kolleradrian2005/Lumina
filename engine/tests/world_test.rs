@@ -5,14 +5,18 @@ mod world_test {
     use lumina_engine::scene::world::component::model_component::ModelComponent;
     use lumina_engine::scene::world::entity::entity::Entity;
     use lumina_engine::scene::world::world::World;
+    use lumina_engine::shader::shader_configuration::ShaderConfiguration;
+    use lumina_engine::shader::shader_program::ShaderProgram;
     use lumina_engine::texture::resource_provider::ResourceProvider;
     use lumina_engine::texture::texture::Texture;
     use mockall::mock;
+    use std::sync::Arc;
 
     mock! {
         pub ResourceProvider {}
         impl ResourceProvider for ResourceProvider {
             fn load_default_models(&mut self);
+            fn load_default_shaders(&mut self);
             fn save_model(&mut self, name: &str, model: Model);
             fn get_model(&self, name: &str) -> Model;
             fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
@@ -22,6 +26,12 @@ mod world_test {
                 animation_time: u128,
             ) -> Option<Texture>;
             fn attach_archive(&mut self, archive: include_assets::NamedArchive);
+            fn get_shader(&self, shader_name: &str) -> Arc<ShaderProgram>;
+            fn load_shader(
+                &mut self,
+                shader_name: &str,
+                shader_configuration: ShaderConfiguration,
+            ) -> Option<Arc<ShaderProgram>>;
         }
     }
 

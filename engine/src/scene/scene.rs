@@ -1,10 +1,10 @@
-
 use winit::event::MouseButton;
 
 use crate::input::input_event::InputEvent;
 use crate::input::input_state::InputState;
 use crate::math::vec2::Vec2;
 use crate::math::vec3::Vec3;
+use crate::scene::world::system::collision_system::CollisionSystem;
 
 use super::world::component::camera_component::CameraComponent;
 use super::world::system::movement_system::MovementSystem;
@@ -12,22 +12,16 @@ use super::world::system::particle_system::ParticleSystem;
 use super::world::system::render_system::RenderSystem;
 use super::world::system::system::System;
 use super::world::world::World;
-use crate::scene::water::Water;
 
 pub struct Scene {
     pub systems: Vec<Box<dyn System>>,
     world: World,
 }
 
-const WORLD_SEED: u32 = 696969;
-
 impl Scene {
     pub fn new() -> Self {
         let mut world = World::load();
-        let water = Water::create((WORLD_SEED ^ 0x5EAF00D).wrapping_mul(69696969));
-        world.insert_resource(water);
         world.insert_resource(InputState::init());
-        //world.insert_resource(Background::construct(resource_provider));
         let camera = world.create_entity();
 
         world.add_component(
@@ -47,7 +41,7 @@ impl Scene {
             Box::new(MovementSystem),
             Box::new(ParticleSystem),
             //Box::new(EmitterSystem),
-            //Box::new(ColliderSystem),
+            Box::new(CollisionSystem),
             Box::new(RenderSystem),
         ];
         Scene { systems, world }

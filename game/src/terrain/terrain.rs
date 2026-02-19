@@ -1,15 +1,16 @@
 use std::{collections::VecDeque, f32::consts::PI};
 
-use noise::{NoiseFn, Perlin};
-
-use crate::{
+use lumina_engine::{
     math::vec3::Vec3,
-    scene::{tile::Tile, world::world::World},
+    scene::world::world::World,
     texture::{
         resource_manager::ResourceManager,
         texture::{StaticColor, Texture},
     },
 };
+use noise::{NoiseFn, Perlin};
+
+use crate::terrain::tile::Tile;
 
 pub struct Terrain {
     pub noise: Perlin,

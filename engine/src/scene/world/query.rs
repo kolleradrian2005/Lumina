@@ -25,6 +25,7 @@ macro_rules! impl_query {
             entities: Vec<Entity>,
             $( $var: Option<*const ComponentStorage<$Comp>>, ) +
             index: usize,
+            #[allow(unused_parens)]
             _marker: PhantomData<&'a ( $($Comp),+ )>,
         }
 
@@ -46,6 +47,7 @@ macro_rules! impl_query {
             type Item = (Entity, ( $(&'a $Comp),+, ));
 
             fn next(&mut self) -> Option<Self::Item> {
+                #[allow(unused_parens)]
                 if let ( $( Some($var) ),+ ) = ( $( self.$var ),+ ) {
                     while self.index < self.entities.len() {
                         let entity = self.entities[self.index];
@@ -74,6 +76,7 @@ macro_rules! impl_query_mut {
             entities: Vec<Entity>,
             $( $var: Option<*mut ComponentStorage<$Comp>>, ) +
             index: usize,
+            #[allow(unused_parens)]
             _marker: PhantomData<&'a ( $($Comp),+ )>,
         }
 
@@ -95,6 +98,7 @@ macro_rules! impl_query_mut {
             type Item = (Entity, ( $(&'a mut $Comp),+, ));
 
             fn next(&mut self) -> Option<Self::Item> {
+                #[allow(unused_parens)]
                 if let ( $( Some($var) ),+ ) = ( $( self.$var ),+ ) {
                     while self.index < self.entities.len() {
                         let entity = self.entities[self.index];

@@ -16,8 +16,12 @@ impl Shader {
             let binding = path.to_string_lossy().replace("/", "\\");
             let path_str = binding.as_str();
 
-            let mut asset = archive.get(path_str)?;
-
+            let mut asset = archive.get(path_str);
+            if asset.is_none() {
+                println!("Unable to find shader: {}", path_str);
+                return None;
+            }
+            let asset = asset.as_mut().unwrap();
             let mut contents = String::new();
 
             if let Err(err) = &asset.read_to_string(&mut contents) {

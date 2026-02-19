@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use flume::Receiver;
 use include_assets::NamedArchive;
 
 use crate::{
     model::mesh::Mesh,
-    shader::shader_program::{self, ShaderProgram},
+    shader::shader_program::ShaderProgram,
     texture::{
         resource_command::ResourceCommand, texture::Texture, texture_handler::TextureHandler,
     },

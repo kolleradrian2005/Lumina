@@ -5,7 +5,6 @@ use crate::{
         component::{
             emitter_component::EmitterComponent, material_component::MaterialComponent,
             model_component::ModelComponent, parent_component::ParentComponent,
-            shader_params_component::ShaderParamsComponent, texture_component::TextureComponent,
             transform_component::TransformComponent,
         },
         entity::entity::Entity,
@@ -43,7 +42,9 @@ impl System for RenderSystem {
             world.query_mut::<(&mut ModelComponent, &mut TransformComponent)>()
         {
             let parent_component = world.get_component::<ParentComponent>(entity).cloned();
-            Self::prepare_entity(world, entity, parent_component, transform.clone(), model);
+            if let None = world.get_component::<EmitterComponent>(entity) {
+                Self::prepare_entity(world, entity, parent_component, transform.clone(), model);
+            }
         }
     }
 }
@@ -54,7 +55,6 @@ impl RenderSystem {
         entity: Entity,
         parent: Option<ParentComponent>,
         transform: TransformComponent,
-        material_component: MaterialComponent,
         model: &mut ModelComponent,
     ) {
         if let Some(parent) = parent.clone() {
@@ -67,10 +67,13 @@ impl RenderSystem {
             .unwrap_or(None);
         let transform_matrix =
             transformation::create_transform_matrix(&transform, parent_transform);
-        let texture = world
-            .get_component::<TextureComponent>(entity)
-            .cloned()
-            .unwrap_or(TextureComponent::default());
+        let material = world.get_component::<MaterialComponent>(entity).cloned();
+        if material.is_none() {
+            return;
+        }
+        let material = material.unwrap();
+        // TODO: default material
+        //.unwrap_or(MaterialComponent::default());
         /*let create_mesh_manager = world.expect_resource::<Arc<Mutex<CreateMeshManager>>>();
         if let Ok(create_mesh_manager) = &mut create_mesh_manager.lock() {
             match model.mesh {
@@ -101,7 +104,7 @@ impl RenderSystem {
             transform_matrix,
             //object_type: model.object_type,
             //shader_params: world.get_component::<ShaderParamsComponent>(entity).cloned(),
-            material: material_component,
+            material: material,
         });
     }
 }

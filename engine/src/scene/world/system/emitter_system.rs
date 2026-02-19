@@ -2,18 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use rand::rngs::StdRng;
 
-use crate::{
-    scene::{
-        terrain::Terrain,
-        world::{
-            component::{
-                emitter_component::EmitterComponent, model_component::ModelComponent,
-            },
-            entity::particle_entity::{ParticleEntity},
-            world::World,
-        },
-    },
-};
+use crate::scene::world::world::World;
 
 use super::system::System;
 
@@ -21,7 +10,8 @@ pub struct EmitterSystem;
 
 impl System for EmitterSystem {
     fn run(&self, world: &mut World, delta_time: f32) {
-        let mut removeables = vec![];
+        // TODO: fix this
+        /*let mut removeables = vec![];
         let rng: *mut StdRng = world.expect_resource_ptr::<StdRng>();
         let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         for (entity, (emitter, model)) in
@@ -75,6 +65,6 @@ impl System for EmitterSystem {
         }
         for entity in removeables {
             world.delete_entity(entity);
-        }
+        }*/
     }
 }

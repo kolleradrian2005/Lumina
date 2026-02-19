@@ -2,7 +2,7 @@ extern crate gl;
 extern crate glutin;
 extern crate glutin_winit;
 
-/*
+/* For later implementation when gui is added back in
 pub mod gui {
     pub mod elements {
         pub mod align;
@@ -33,14 +33,10 @@ pub mod model {
     pub mod sprite;
 }
 pub mod render {
-    //pub mod background_renderer;
-    //pub mod gui_renderer;
-    //pub mod postprocess_renderer;
     pub mod generic_renderer;
     pub mod render_entity;
     pub mod render_packet;
     pub mod renderer;
-    //pub mod scene_renderer;
     pub mod uniformbuffer;
     pub mod updatable;
 }
@@ -56,17 +52,17 @@ pub mod scene {
             pub mod component;
             pub mod current_component;
             pub mod emitter_component;
+            pub mod force_component;
             pub mod material_component;
             pub mod model_component;
             pub mod movement_component;
             pub mod movement_stats_component;
             pub mod parent_component;
             pub mod shader_params_component;
-            pub mod texture_component;
             pub mod transform_component;
         }
         pub mod system {
-            pub mod collider_system;
+            pub mod collision_system;
             pub mod emitter_system;
             pub mod movement_system;
             pub mod particle_system;
@@ -79,27 +75,17 @@ pub mod scene {
         pub mod query;
         pub mod world;
     }
-    pub mod background;
     pub mod foreground;
     pub mod scene;
-    pub mod terrain;
-    pub mod tile;
-    pub mod water;
 }
 pub mod shader {
-    //pub mod background_shader;
-    pub mod shader_program;
-    //pub mod gui_shader;
     pub mod material_parameter;
-    //pub mod model_shader;
     pub mod parameter_schema;
-    //pub mod postprocess_shader;
     pub mod shader;
     pub mod shader_configuration;
     pub mod shader_handler;
     pub mod shader_parameter_type;
-    //pub mod shader_program_old;
-    //pub mod terrain_shader;
+    pub mod shader_program;
 }
 pub mod texture {
     //pub mod font_texture;
@@ -123,7 +109,6 @@ pub mod transformable;
 use flume::Sender;
 use include_assets::{include_dir, NamedArchive};
 use math::vec2::Vec2;
-use render::updatable::Updatable;
 
 use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
@@ -134,10 +119,8 @@ use glutin::display::{GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface, SwapInterval, WindowSurface};
 use glutin_winit::{DisplayBuilder, GlWindow};
 use raw_window_handle::HasRawWindowHandle;
-use std::collections::VecDeque;
 
 use std::num::NonZeroU32;
-use std::sync::{Arc, Mutex};
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
     DeviceEvent, ElementState, Event, KeyEvent, MouseButton, TouchPhase, WindowEvent,
@@ -150,8 +133,6 @@ use crate::input::input_event::InputEvent;
 use crate::logic::run_logic_loop;
 use crate::render::renderer::Renderer;
 use crate::scene::scene::Scene;
-use crate::scene::world::create_mesh_manager::CreateMeshManager;
-use crate::scene::world::drop_mesh_request::DropMeshRequest;
 use crate::texture::resource_loader::ResourceLoader;
 use crate::texture::resource_manager::ResourceManager;
 use crate::texture::resource_provider::ResourceProvider;
@@ -235,27 +216,7 @@ pub async fn start(
     });
 
     let mut state: Option<(PossiblyCurrentContext, Surface<WindowSurface>, Window)> = None;
-    let updatables: Arc<Mutex<VecDeque<Updatable>>> = Arc::new(Mutex::new(VecDeque::new()));
-    let drop_mesh_requests: Arc<Mutex<VecDeque<DropMeshRequest>>> =
-        Arc::new(Mutex::new(VecDeque::new()));
-    let create_mesh_manager: Arc<Mutex<CreateMeshManager>> =
-        Arc::new(Mutex::new(CreateMeshManager::new()));
 
-    let is_running = Arc::new(Mutex::new(true));
-
-    // Two instances of the same render context for more efficent concurrency
-
-    /*let mut render_context: Option<RenderContext> = None;
-        let loop_render_context: Arc<Mutex<Option<RenderContext>>> = Arc::new(Mutex::new(None));
-        let loop_render_context_clone: Arc<Mutex<Option<RenderContext>>> =
-            Arc::clone(&loop_render_context);
-
-        let updatables_clone: Arc<Mutex<VecDeque<Updatable>>> = Arc::clone(&updatables);
-        let drop_mesh_requests_clone: Arc<Mutex<VecDeque<DropMeshRequest>>> =
-            Arc::clone(&drop_mesh_requests);
-        let create_mesh_manager_clone: Arc<Mutex<CreateMeshManager>> = Arc::clone(&create_mesh_manager);
-        let is_running_clone = Arc::clone(&is_running);
-    */
     let (input_tx, input_rx) = flume::unbounded();
     let (render_tx, render_rx) = flume::bounded(2);
     let (resource_tx, resource_rx) = flume::bounded(2);
@@ -264,6 +225,7 @@ pub async fn start(
         let mut resource_manager = ResourceManager::new(resource_tx.clone());
         resource_manager.attach_archive(NamedArchive::load(include_dir!("assets")));
         resource_manager.load_default_models();
+        resource_manager.load_default_shaders();
         on_init(&mut scene, &mut resource_manager);
         scene.get_world_mut().insert_resource(resource_manager);
         runtime.block_on(run_logic_loop(input_rx, render_tx, scene));
@@ -350,8 +312,7 @@ pub async fn start(
                         .lock()
                         .unwrap()
                         .get_or_insert_with(|| render_ctx);*/
-                    let archive = NamedArchive::load(include_dir!("assets"));
-                    renderer = Renderer::init(&gl_display, width, height, &archive).into();
+                    renderer = Renderer::init(&gl_display, width, height).into();
                     resource_loader = ResourceLoader::new(resource_rx.clone()).into();
                     //resource_loader.load_default_models();
                     //resource_loader.load_fonts();
@@ -428,15 +389,8 @@ pub async fn start(
                                                                 .expect("No camera found in the scene")
                                                                 .clone();
                                 */
-                                // Render stuff
-                                renderer.render(
-                                    packet,
-                                    /*gui_manager,
-                                    camera_component,
-                                    unsafe { &*background },
-                                    &foreground,*/
-                                );
-                                //}
+                                renderer.render(packet);
+
                                 if let Some((_, _, window)) = &state {
                                     window.pre_present_notify();
                                 }
@@ -461,25 +415,15 @@ pub async fn start(
                                 );
                                 let width = size.width as i32;
                                 let height = size.height as i32;
-                                /*updatables
-                                .lock()
-                                .unwrap()
-                                .push_back(Updatable::Projection { width, height });*/
                                 let _ = input_tx.send(InputEvent::WindowResize { width, height });
 
-                                /*if let Some(render_ctx) = &render_context {
-                                    if let Ok(gui_manager) = &mut render_ctx.gui_manager.lock() {
-                                        gui_manager.resize((width, height));
-                                        if let Ok(resource_provider) =
-                                            &render_ctx.resource_handle.lock()
-                                        {
-                                            gui_manager.build(
-                                                &**resource_provider,
-                                                width as f32 / height as f32,
-                                            )
-                                        }
-                                    }
-                                }*/
+                                /* For later implementation when gui is added back in
+                                    gui_manager.resize((width, height);
+                                    gui_manager.build(
+                                        &**resource_provider,
+                                        width as f32 / height as f32,
+                                    );
+                                */
                             }
                         }
                     }
@@ -534,11 +478,6 @@ pub async fn start(
             }
         })
         .expect("Error running event loop!");
-    //*is_running.lock().unwrap() = false;
-    /*if let Err(err) = main_loop.await {
-        panic!("An error occured running main loop! {err}");
-    }
-    runtime.shutdown_background();*/
 }
 
 fn handle_cursor_movement(input_tx: &Sender<InputEvent>, pos: PhysicalPosition<f64>) {

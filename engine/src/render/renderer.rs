@@ -3,7 +3,6 @@ use std::ffi::CString;
 use std::sync::Arc;
 
 use glutin::display::{Display, GlDisplay};
-use include_assets::NamedArchive;
 
 use crate::model::mesh::Mesh;
 
@@ -30,7 +29,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn init(gl_display: &Display, width: i32, height: i32, archive: &NamedArchive) -> Self {
+    pub fn init(gl_display: &Display, width: i32, height: i32) -> Self {
         gl::load_with(|name| {
             let symbol = CString::new(name).unwrap();
             gl_display.get_proc_address(symbol.as_c_str()).cast()
@@ -173,7 +172,7 @@ impl Renderer {
             self.refresh_buffers(&render_packet);
             self.clean_up(); // Clean up without framebuffer
                              //self.frame_buffer.bind();
-            self.clean_up(); // Clean up with framebuffer
+                             //self.clean_up(); // Clean up with framebuffer
             gl::Enable(gl::DEPTH_TEST);
             self.matrix_uniform_buffer.bind_base();
             self.generic_renderer.render(render_packet);

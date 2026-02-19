@@ -1,16 +1,11 @@
-use noise::Perlin;
-
-use crate::{
+use lumina_engine::{
     math::{vec2::Vec2, vec3::Vec3},
     model::sprite,
-    render::scene_renderer::ObjectType,
     scene::world::{
         component::{
             current_component::CurrentComponent,
-            material_component::MaterialComponent,
+            material_component::{MaterialComponent, ObjectType},
             model_component::ModelComponent,
-            shader_params_component::{ShaderParam, ShaderParamsComponent},
-            texture_component::TextureComponent,
             transform_component::TransformComponent,
         },
         entity::entity::Entity,
@@ -21,6 +16,7 @@ use crate::{
     },
     transformable::Transformable,
 };
+use noise::Perlin;
 
 use super::terrain::Terrain;
 
@@ -108,13 +104,18 @@ impl Tile {
                     seaweed,
                     ModelComponent {
                         mesh: seaweed_model.get_mesh().clone(),
-                        object_type: ObjectType::SeaGrass,
+                        //object_type: ObjectType::SeaGrass,
                     },
                 );
-                world.add_component(
-                    seaweed,
-                    MaterialComponent::new(seaweed_model.get_texture().clone(), shader),
-                );
+                let shader = resource_manager.get_shader("model_with_tesselation");
+                let use_tesselation = shader.get_handle().has_tesselation;
+                let mut material =
+                    MaterialComponent::new(seaweed_model.get_texture().clone(), shader)
+                        .with_param("uObjectType", ObjectType::SeaGrass as i32);
+                if use_tesselation {
+                    material.set_param("uCurrent", 0f32);
+                }
+                world.add_component(seaweed, material);
                 /*world.add_component::<TextureComponent>(
                     seaweed,
                     seaweed_model.get_texture().clone().into(),
@@ -149,10 +150,16 @@ impl Tile {
             tile,
             ModelComponent {
                 mesh: mesh.into(),
-                object_type: ObjectType::Terrain,
+                //object_type: ObjectType::Terrain,
             },
         );
-        world.add_component::<TextureComponent>(tile, texture.clone().into());
+        let shader = resource_manager.get_shader("model");
+        let material = MaterialComponent::new(texture.clone(), shader)
+            .with_param("uObjectType", ObjectType::Terrain as i32)
+            .with_param("uTerrainIsUphill", uphill)
+            .with_param("uTerrainHeight", top - bot);
+
+        world.add_component(tile, material);
         world.add_component(
             tile,
             TransformComponent {
@@ -162,7 +169,7 @@ impl Tile {
                 is_flipped: false,
             },
         );
-        world.add_component(
+        /*world.add_component(
             tile,
             ShaderParamsComponent {
                 params: vec![
@@ -171,7 +178,7 @@ impl Tile {
                 ]
                 .into(),
             },
-        );
+        );*/
         Tile {
             entity: tile,
             uphill,

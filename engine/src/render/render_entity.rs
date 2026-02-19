@@ -1,12 +1,6 @@
 use std::sync::Arc;
 
-use crate::{
-    model::mesh::Mesh,
-    scene::world::component::{
-        material_component::MaterialComponent, shader_params_component::ShaderParamsComponent,
-    },
-    texture::texture::Texture,
-};
+use crate::{model::mesh::Mesh, scene::world::component::material_component::MaterialComponent};
 
 #[derive(Clone, Debug)]
 pub struct RenderEntity {

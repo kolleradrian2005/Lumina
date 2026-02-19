@@ -5,6 +5,7 @@ pub mod systems {
     pub mod follow_system;
     pub mod input_system;
     pub mod player_movement_system;
+    pub mod terrain_collision_system;
     pub mod terrain_system;
     pub mod update_focal_radius_system;
     pub mod update_god_rays_system;
@@ -15,6 +16,11 @@ pub mod components {
     pub mod multi_conditional_parent_component;
     pub mod player_part_component;
     pub mod player_state_component;
+}
+pub mod terrain {
+    pub mod terrain;
+    pub mod tile;
+    pub mod water;
 }
 pub mod game;
 pub mod player_state;

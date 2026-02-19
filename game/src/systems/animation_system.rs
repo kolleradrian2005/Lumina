@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use lumina_engine::{
     scene::world::{
         component::{
-            parent_component::ParentComponent, texture_component::TextureComponent,
+            material_component::MaterialComponent, parent_component::ParentComponent,
             transform_component::TransformComponent,
         },
         system::system::System,
@@ -73,10 +73,10 @@ impl AnimationSystem {
             }
         }
 
-        for (_, (player_part, texture_component)) in
-            world.query_mut::<(&mut PlayerPartComponent, &mut TextureComponent)>()
+        for (_, (player_part, material_component)) in
+            world.query_mut::<(&mut PlayerPartComponent, &mut MaterialComponent)>()
         {
-            if let Texture::AnimatedTexture(texture) = &mut texture_component.texture {
+            if let Texture::AnimatedTexture(texture) = &mut material_component.texture {
                 if let PlayerPartComponent::Legs = player_part {
                     texture.animation_time = player_state.legs_animation_time();
                 }

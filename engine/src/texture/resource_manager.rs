@@ -7,7 +7,7 @@ use crate::{
     math::vec3::Vec3,
     model::{mesh::Mesh, model::Model, sprite},
     shader::{
-        self, parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
+        parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
         shader_parameter_type::ShaderParameterType, shader_program::ShaderProgram,
     },
     texture::{resource_command::ResourceCommand, texture::StaticTexture},
@@ -41,48 +41,15 @@ impl ResourceManager {
             .expect("Render thread died!");
         let default_mesh = rx
             .recv()
-            .ok()
-            .flatten()
+            .expect("Render thread died!")
             .expect("Failed to load default mesh");
-        let default_shader_configuration = ShaderConfiguration {
-            vertex_shader_name: "model.vert".to_string(),
-            fragment_shader_name: "model.frag".to_string(),
-            tess_evaluation_shader_name: None,
-            tess_control_shader_name: None,
-            parameter_schema: ParameterSchema {
-                required_params: vec![
-                    ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
-                    ("uObjectType".to_string(), ShaderParameterType::Int),
-                    ("uTextureType".to_string(), ShaderParameterType::Int),
-                    ("uColor".to_string(), ShaderParameterType::Vec3),
-                    ("uFlipped".to_string(), ShaderParameterType::Bool),
-                    ("uTerrainIsUphill".to_string(), ShaderParameterType::Bool),
-                    ("uTerrainHeight".to_string(), ShaderParameterType::Float),
-                    ("uCurrent".to_string(), ShaderParameterType::Float),
-                ],
-            },
-        };
-        let (tx, rx) = flume::bounded(1);
-        loader_tx
-            .send(ResourceCommand::LoadShader {
-                shader_configuration: default_shader_configuration,
-                response_tx: tx,
-            })
-            .expect("Render thread died!");
-        let default_shader = rx
-            .recv()
-            .ok()
-            .flatten()
-            .expect("Failed to load default shader");
-        let mut shader_programs = HashMap::new();
-        shader_programs.insert("default".to_string(), Arc::new(default_shader));
         ResourceManager {
             place_holder_model: Model::new(default_mesh),
             //place_holder_font: FontTexture::new(),
             models: HashMap::new(),
             //fonts: HashMap::new(),
             loader_tx,
-            shader_programs,
+            shader_programs: HashMap::new(),
         }
     }
 
@@ -100,6 +67,48 @@ impl ResourceProvider for ResourceManager {
         let mut square = Model::new(square_mesh);
         square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
         self.save_model("square", square);
+    }
+
+    fn load_default_shaders(&mut self) {
+        let mut model_shader_parameter_schema = ParameterSchema {
+            required_params: vec![
+                ("uModelMatrix".to_string(), ShaderParameterType::Mat4),
+                ("uObjectType".to_string(), ShaderParameterType::Int),
+                ("uTextureType".to_string(), ShaderParameterType::Int),
+                ("uColor".to_string(), ShaderParameterType::Vec3),
+                ("uFlipped".to_string(), ShaderParameterType::Bool),
+                ("uTerrainIsUphill".to_string(), ShaderParameterType::Bool),
+                ("uTerrainHeight".to_string(), ShaderParameterType::Float),
+            ],
+        };
+        let model_shader_configuration = ShaderConfiguration {
+            fragment_shader_name: "model.frag".into(),
+            vertex_shader_name: "model.vert".into(),
+            tess_evaluation_shader_name: None,
+            tess_control_shader_name: None,
+            parameter_schema: model_shader_parameter_schema.clone(),
+        };
+        let shader_with_tesselation_configuration = cfg!(not(target_os = "android")).then(|| {
+            model_shader_parameter_schema
+                .required_params
+                .push(("uCurrent".to_string(), ShaderParameterType::Float));
+            ShaderConfiguration {
+                fragment_shader_name: "model.frag".into(),
+                vertex_shader_name: "model.vert".into(),
+                tess_evaluation_shader_name: Some("model.tese".into()),
+                tess_control_shader_name: Some("model.tesc".into()),
+                parameter_schema: model_shader_parameter_schema,
+            }
+        });
+
+        self.load_shader("model", model_shader_configuration.clone())
+            .expect("Failed to load model shader");
+
+        self.load_shader(
+            "model_with_tesselation",
+            shader_with_tesselation_configuration.unwrap_or(model_shader_configuration),
+        )
+        .expect("Failed to load model_with_tesselation shader");
     }
 
     /*fn load_fonts(&mut self) {
@@ -189,7 +198,6 @@ impl ResourceProvider for ResourceManager {
     }
 
     fn attach_archive(&mut self, archive: NamedArchive) {
-        //self.archives.push(archive);
         self.loader_tx
             .send(ResourceCommand::AttachArchive { archive })
             .expect("Render thread died!");
@@ -220,11 +228,12 @@ impl ResourceProvider for ResourceManager {
             }
         };
         if let Some(shader) = shader_program {
+            let shader = Arc::new(shader);
             self.shader_programs
-                .insert(shader_name.to_string(), Arc::new(shader).clone())
-        } else {
-            None
+                .insert(shader_name.to_string(), shader.clone());
+            return Some(shader);
         }
+        None
     }
 }
 

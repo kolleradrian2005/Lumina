@@ -1,20 +1,16 @@
 use std::sync::{Arc, Mutex};
 
-use crate::scene::{
-    terrain::Terrain,
-    world::{
-        component::{
-            collider_component::ColliderComponent, transform_component::TransformComponent,
-        },
-        world::World,
-    },
+use lumina_engine::scene::world::{
+    component::{collider_component::ColliderComponent, transform_component::TransformComponent},
+    system::system::System,
+    world::World,
 };
 
-use super::system::System;
+use crate::terrain::terrain::Terrain;
 
-pub struct ColliderSystem;
+pub struct TerrainCollisionSystem;
 
-impl System for ColliderSystem {
+impl System for TerrainCollisionSystem {
     fn run(&self, world: &mut World, _: f32) {
         let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         for (_, (collider_component, transform)) in

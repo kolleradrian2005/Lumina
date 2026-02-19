@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 lumina_engine = { path = "../engine" }
+noise = "0.9.0"
 winit = { version = "0.29.15", default-features = false, features = ["rwh_05"] }
 include_assets = "1.0.0"
 

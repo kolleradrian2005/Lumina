@@ -1,6 +1,6 @@
 use crate::shader::parameter_schema::ParameterSchema;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ShaderConfiguration {
     pub fragment_shader_name: String,
     pub vertex_shader_name: String,

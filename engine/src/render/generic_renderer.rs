@@ -1,28 +1,18 @@
-use core::panic;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CString;
 
-use gl::types::GLint;
+use gl::types::{GLint, GLuint};
 
 use crate::render::render_packet::RenderPacket;
 
 use crate::shader::material_parameter::MaterialParameter;
 use crate::shader::shader_program::ShaderHandle;
-use crate::shader::{self, shader_handler};
 use crate::texture::texture::Texture;
 
 use super::render_entity::RenderEntity;
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ObjectType {
-    Default,
-    Terrain,
-    SeaGrass,
-}
-
 pub struct GenericRenderer {
-    uniform_cache: RefCell<HashMap<ShaderHandle, HashMap<String, GLint>>>,
+    uniform_cache: RefCell<HashMap<GLuint, HashMap<String, GLint>>>,
 }
 
 impl GenericRenderer {
@@ -35,10 +25,15 @@ impl GenericRenderer {
             uniform_cache: RefCell::new(HashMap::new()),
         }
     }
-    fn expect_uniform_location(&self, shader_handle: ShaderHandle, uniform_name: &str) -> GLint {
+
+    fn get_uniform_location(
+        &self,
+        shader_handle: ShaderHandle,
+        uniform_name: &str,
+    ) -> Option<GLint> {
         let mut cache = self.uniform_cache.borrow_mut();
 
-        let shader_cache = cache.entry(shader_handle).or_insert_with(HashMap::new);
+        let shader_cache = cache.entry(shader_handle.id).or_insert_with(HashMap::new);
         let uniform_location =
             *shader_cache
                 .entry(uniform_name.to_string())
@@ -49,12 +44,17 @@ impl GenericRenderer {
                     )
                 });
         if uniform_location == -1 {
-            panic!(
+            return None;
+        }
+        Some(uniform_location)
+    }
+
+    fn expect_uniform_location(&self, shader_handle: ShaderHandle, uniform_name: &str) -> GLint {
+        self.get_uniform_location(shader_handle, uniform_name)
+            .expect(&format!(
                 "Uniform {} not found in shader with id {}",
                 uniform_name, shader_handle.id
-            );
-        }
-        uniform_location
+            ))
     }
 
     pub unsafe fn render(&self, render_packet: RenderPacket) {
@@ -70,7 +70,6 @@ impl GenericRenderer {
         // TODO: optimize by sorting by shader and texture
         let shader_handle = renderable.material.shader;
         gl::UseProgram(shader_handle.id);
-
         for (name, value) in renderable.material.parameters.iter() {
             let location = self.expect_uniform_location(shader_handle, name);
             match value {
@@ -88,20 +87,25 @@ impl GenericRenderer {
                     gl::Uniform2fv(location, vec2s.len() as i32, vec2s.as_ptr() as *const f32)
                 }
             }
+        }
 
-            let model_matrix_location: i32 =
-                self.expect_uniform_location(shader_handle, "uModelMatrix");
-            gl::UniformMatrix4fv(
-                model_matrix_location,
-                1,
-                gl::FALSE,
-                renderable.transform_matrix.as_ptr() as *const f32,
-            );
-            let is_flipped_location: i32 = self.expect_uniform_location(shader_handle, "uFlipped");
-            gl::Uniform1i(is_flipped_location, renderable.is_flipped as i32);
-            gl::BindVertexArray(renderable.mesh.get_vao());
-            gl::EnableVertexAttribArray(0);
-            gl::EnableVertexAttribArray(1);
+        let model_matrix_location: i32 =
+            self.expect_uniform_location(shader_handle, "uModelMatrix");
+        gl::UniformMatrix4fv(
+            model_matrix_location,
+            1,
+            gl::FALSE,
+            renderable.transform_matrix.as_ptr() as *const f32,
+        );
+        let is_flipped_location: i32 = self.expect_uniform_location(shader_handle, "uFlipped");
+        gl::Uniform1i(is_flipped_location, renderable.is_flipped as i32);
+        gl::BindVertexArray(renderable.mesh.get_vao());
+        gl::EnableVertexAttribArray(0);
+        gl::EnableVertexAttribArray(1);
+        // TODO: handle texture types better e.g. passing array of textures and shader params alongside
+        if let Some(texture_type_location) =
+            self.get_uniform_location(shader_handle, "uTextureType")
+        {
             match &renderable.material.texture {
                 Texture::StaticColor(static_color) => {
                     let color_location: i32 = self.expect_uniform_location(shader_handle, "uColor");
@@ -122,8 +126,7 @@ impl GenericRenderer {
                 }
                 Texture::GradientTexture(_) => {} // Not implemented
             }
-            let texture_type_location: i32 =
-                self.expect_uniform_location(shader_handle, "uTextureType");
+            self.get_uniform_location(shader_handle, "uTextureType");
             let value = match renderable.material.texture {
                 Texture::StaticColor(_) => 0,
                 Texture::StaticTexture(_) => 1,
@@ -131,17 +134,17 @@ impl GenericRenderer {
                 Texture::GradientTexture(_) => 2,
             };
             gl::Uniform1i(texture_type_location, value);
-            gl::DrawElements(
-                match renderable.material.shader.has_tesselation {
-                    true => gl::PATCHES,
-                    false => gl::TRIANGLES,
-                },
-                renderable.mesh.get_vertex_count(),
-                gl::UNSIGNED_INT,
-                0 as *const _,
-            );
-            gl::DisableVertexAttribArray(0);
-            gl::DisableVertexAttribArray(1);
         }
+        gl::DrawElements(
+            match renderable.material.shader.has_tesselation {
+                true => gl::PATCHES,
+                false => gl::TRIANGLES,
+            },
+            renderable.mesh.get_vertex_count(),
+            gl::UNSIGNED_INT,
+            0 as *const _,
+        );
+        gl::DisableVertexAttribArray(0);
+        gl::DisableVertexAttribArray(1);
     }
 }

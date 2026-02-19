@@ -35,7 +35,6 @@ float interpolate(float a, float b, float blend) {
 }
 
 void main(void) {
-
     if (uObjectType == TERRAIN) {
         float a = uTerrainIsUphill ? 0.0 : 1.0;
         float b = 1.0 - a;
@@ -44,15 +43,14 @@ void main(void) {
 
     switch (uTextureType) {
         case TEXTURE:
-            FragColor = texture(textureSampler, pass_uvs);
-            break;
+        FragColor = texture(textureSampler, pass_uvs);
+        break;
         case COLOR:
-            FragColor = vec4(uColor, 1.0);
-            break;
+        FragColor = vec4(uColor, 1.0);
+        break;
         case GRADIENT:
-            FragColor = vec4(0.0);
-            break;
+        FragColor = vec4(0.0);
+        break;
     }
     if (FragColor.a == 0.0) discard; // Because of depth-testing
-
 }

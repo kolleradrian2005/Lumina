@@ -1,27 +1,25 @@
-use lumina_engine::scene::{
-    water::Water,
-    world::{
-        component::{
-            movement_component::MovementComponent,
-            shader_params_component::{ShaderParam, ShaderParamsComponent},
-            transform_component::TransformComponent,
-        },
-        system::system::System,
-        world::World,
+use lumina_engine::scene::world::{
+    component::{
+        material_component::MaterialComponent, movement_component::MovementComponent,
+        transform_component::TransformComponent,
     },
+    system::system::System,
+    world::World,
 };
+
+use crate::terrain::water::Water;
 
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {
     fn run(&self, world: &mut World, _: f32) {
-        for (_, (shader_params_component, transform_component)) in
-            world.query_mut::<(&mut ShaderParamsComponent, &mut TransformComponent)>()
+        for (_, (material_component, transform_component)) in
+            world.query_mut::<(&mut MaterialComponent, &mut TransformComponent)>()
         {
-            if shader_params_component.params.is_empty() {
+            if material_component.parameters.is_empty() {
                 continue;
             }
-            if let Some(ShaderParam::Current(current)) = shader_params_component.params.get_mut(0) {
+            if material_component.get_param("uCurrent").is_some() {
                 let object_position = transform_component.position;
                 let mut water_current = world
                     .expect_resource::<Water>()
@@ -38,7 +36,7 @@ impl System for CurrentSystem {
                             water_current += influence * movement_component.velocity.x;
                         }
                     });
-                *current = water_current;
+                material_component.set_param("uCurrent", water_current);
             }
         }
     }

@@ -1186,6 +1186,7 @@ dependencies = [
  "include_assets",
  "log",
  "lumina_engine",
+ "noise",
  "winit",
 ]
 

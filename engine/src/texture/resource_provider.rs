@@ -45,6 +45,7 @@ impl Deref for ResourceProviderHandle {
 
 pub trait ResourceProvider: Send + Sync {
     fn load_default_models(&mut self);
+    fn load_default_shaders(&mut self);
     fn save_model(&mut self, name: &str, model: Model);
     fn get_model(&self, name: &str) -> Model;
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
