@@ -4,7 +4,7 @@ use lumina_engine::{
     scene::world::{
         component::{
             current_component::CurrentComponent,
-            material_component::{MaterialComponent, ObjectType},
+            material_component::{DrawMode, MaterialComponent, ObjectType},
             model_component::ModelComponent,
             transform_component::TransformComponent,
         },
@@ -154,10 +154,14 @@ impl Tile {
             },
         );
         let shader = resource_manager.get_shader("model");
-        let material = MaterialComponent::new(texture.clone(), shader)
+        let material = MaterialComponent::new(texture.clone(), shader.clone())
             .with_param("uObjectType", ObjectType::Terrain as i32)
             .with_param("uTerrainIsUphill", uphill)
-            .with_param("uTerrainHeight", top - bot);
+            .with_param("uTerrainHeight", top - bot)
+            .with_draw_mode(match shader.get_handle().has_tesselation {
+                true => DrawMode::Patches,
+                false => DrawMode::Triangles,
+            });
 
         world.add_component(tile, material);
         world.add_component(

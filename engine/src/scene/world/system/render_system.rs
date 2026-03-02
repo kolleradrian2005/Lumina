@@ -17,7 +17,7 @@ use super::system::System;
 pub struct RenderSystem;
 
 impl System for RenderSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         for (entity, (model, transform)) in
             world.query_mut::<(&mut ModelComponent, &mut TransformComponent)>()
         {

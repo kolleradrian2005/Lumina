@@ -1,4 +1,3 @@
-
 use lumina_engine::{
     math::vec3::Vec3,
     scene::world::{
@@ -15,7 +14,7 @@ use crate::components::{
 pub struct FollowSystem;
 
 impl System for FollowSystem {
-    fn run(&self, world: &mut World, delta_time: f32) {
+    fn run(&mut self, world: &mut World, delta_time: f32) {
         /*let updatables = world
         .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
         .clone();*/

@@ -6,6 +6,7 @@ use gl::types::{GLint, GLuint};
 
 use crate::render::render_packet::RenderPacket;
 
+use crate::scene::world::component::material_component::DrawMode;
 use crate::shader::material_parameter::MaterialParameter;
 use crate::shader::shader_program::ShaderHandle;
 use crate::texture::texture::Texture;
@@ -93,16 +94,20 @@ impl GenericRenderer {
             gl::FALSE,
             renderable.transform_matrix.as_ptr() as *const f32,
         );
-        let is_flipped_location: i32 = self.expect_uniform_location(shader_handle, "uFlipped");
-        gl::Uniform1i(is_flipped_location, renderable.is_flipped as i32);
+        if let Some(is_flipped_location) = self.get_uniform_location(shader_handle, "uFlipped") {
+            gl::Uniform1i(is_flipped_location, renderable.is_flipped as i32);
+        }
         gl::BindVertexArray(renderable.mesh.get_vao());
         gl::EnableVertexAttribArray(0);
-        gl::EnableVertexAttribArray(1);
+        if renderable.mesh.get_uvs_vbo().is_some() {
+            gl::EnableVertexAttribArray(1);
+        }
         // TODO: handle texture types better e.g. passing array of textures and shader params alongside
         if let Some(texture_type_location) =
             self.get_uniform_location(shader_handle, "uTextureType")
         {
             match &renderable.material.texture {
+                Texture::None => {}
                 Texture::StaticColor(static_color) => {
                     let color_location: i32 = self.expect_uniform_location(shader_handle, "uColor");
                     gl::Uniform3f(
@@ -120,7 +125,7 @@ impl GenericRenderer {
                     gl::ActiveTexture(gl::TEXTURE0);
                     gl::BindTexture(gl::TEXTURE_2D, animated_texture.current_texture().get_id());
                 }
-                Texture::GradientTexture(_) => {} // Not implemented
+                Texture::GradientTexture(_) => {}
             }
             self.get_uniform_location(shader_handle, "uTextureType");
             let value = match renderable.material.texture {
@@ -128,19 +133,23 @@ impl GenericRenderer {
                 Texture::StaticTexture(_) => 1,
                 Texture::AnimatedTexture(_) => 1,
                 Texture::GradientTexture(_) => 2,
+                Texture::None => 3,
             };
             gl::Uniform1i(texture_type_location, value);
         }
         gl::DrawElements(
-            match renderable.material.shader.has_tesselation {
-                true => gl::PATCHES,
-                false => gl::TRIANGLES,
+            match renderable.material.draw_mode {
+                DrawMode::Triangles => gl::TRIANGLES,
+                DrawMode::Lines => gl::LINES,
+                DrawMode::Patches => gl::PATCHES,
             },
             renderable.mesh.get_vertex_count(),
             gl::UNSIGNED_INT,
             0 as *const _,
         );
         gl::DisableVertexAttribArray(0);
-        gl::DisableVertexAttribArray(1);
+        if renderable.mesh.get_uvs_vbo().is_some() {
+            gl::DisableVertexAttribArray(1);
+        }
     }
 }

@@ -9,7 +9,7 @@ use crate::components::player_state_component::PlayerStateComponent;
 pub struct PlayerMovementSystem;
 
 impl System for PlayerMovementSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         for (_, (player_state, force)) in
             world.query_mut::<(&mut PlayerStateComponent, &mut ForceComponent)>()
         {

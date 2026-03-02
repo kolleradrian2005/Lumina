@@ -6,6 +6,7 @@ use crate::input::input_state::InputState;
 use crate::math::vec2::Vec2;
 use crate::math::vec3::Vec3;
 use crate::scene::world::system::collision_system::CollisionSystem;
+use crate::scene::world::system::debug_collider_system::DebugColliderSystem;
 use crate::scene::world::system::emitter_system::EmitterSystem;
 
 use super::world::component::camera_component::CameraComponent;
@@ -46,6 +47,7 @@ impl Scene {
             Box::new(EmitterSystem),
             Box::new(CollisionSystem),
             Box::new(RenderSystem),
+            Box::new(DebugColliderSystem::new()),
         ];
         Scene { systems, world }
     }

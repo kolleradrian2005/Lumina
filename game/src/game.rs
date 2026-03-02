@@ -23,13 +23,12 @@ use crate::{
 };
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
-    collider::Collider,
     math::{vec2::Vec2, vec3::Vec3},
     model::model::Model,
     scene::world::{
         component::{
             camera_component::CameraComponent,
-            collider_component::ColliderComponent,
+            collider_component::{ColliderComponent, ColliderShape},
             emitter_component::EmitterComponent,
             force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
             material_component::MaterialComponent,
@@ -48,7 +47,7 @@ use lumina_engine::{
     texture::{
         resource_manager::ResourceManager,
         resource_provider::ResourceProvider,
-        texture::{GradientTexture, StaticColor, Texture},
+        texture::{StaticColor, Texture},
     },
     transformable::Transformable,
 };
@@ -132,6 +131,50 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let model_scale = 0.15;
     let initial_position = Vec3::new(0.0, 0.25, 0.0);
 
+    let dummy = world.create_entity();
+    world.add_component(
+        dummy,
+        TransformComponent {
+            position: (0.0, 0.0, 0.0).into(),
+            rotation: 0.0,
+            scale: Vec2::uniform(0.5),
+            is_flipped: false,
+        },
+    );
+    world.add_component(
+        dummy,
+        MaterialComponent::new(
+            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
+            shader.clone(),
+        ),
+    );
+    world.add_component::<ModelComponent>(
+        dummy,
+        resource_manager
+            .get_model("square")
+            .get_mesh()
+            .clone()
+            .into(),
+    );
+    world.add_component(
+        dummy,
+        ColliderComponent {
+            shape: ColliderShape::Capsule2D {
+                width: 0.5,
+                height: 1.0,
+            },
+            offset: (0.0, 0.25).into(),
+        },
+    );
+    let mut force_component = ForceComponent::new(1.0);
+    force_component.apply_force(AppliedForce {
+        id: "water_resistance".to_string(),
+        effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
+        mode: ForceMode::Continuous,
+    });
+    world.add_component(dummy, force_component);
+    world.add_component(dummy, MovementComponent::default());
+
     let player = world.create_entity();
     let (camera, _) = world
         .query::<(&CameraComponent,)>()
@@ -146,13 +189,24 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         },
     );
 
-    world.add_component::<ColliderComponent>(
+    /*world.add_component::<ColliderComponent>(
         player,
         Collider::rect(0.4, 1.4, (-0.05, -0.05).into()).into(),
+    );*/
+    world.add_component::<ColliderComponent>(
+        player,
+        ColliderComponent {
+            shape: ColliderShape::Rect {
+                width: 0.4,
+                height: 1.4,
+            },
+            //offset: (-0.05, -0.05).into(),
+            offset: (0.0, 0.0).into(),
+        },
     );
     world.add_component(player, PlayerStateComponent::Idle);
     world.add_component(player, MovementComponent::default());
-    let mut force_component = ForceComponent::new(1.0);
+    let mut force_component = ForceComponent::new(10.0);
     force_component.apply_force(AppliedForce {
         id: "water_resistance".to_string(),
         effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
@@ -399,7 +453,7 @@ fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
     world.add_component(
         background,
         MaterialComponent::new(
-            GradientTexture::new((0.0, 0.29, 0.43).into(), (0.0, 0.5, 0.5).into()).into(),
+            Texture::None,
             resource_manager.get_shader("background").clone(),
         )
         .with_param("uColor1", Vec3::new(0.0, 0.29, 0.43))

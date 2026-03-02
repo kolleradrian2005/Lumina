@@ -15,10 +15,7 @@ use crate::components::player_state_component::PlayerStateComponent;
 pub struct UpdateFocalRadiusSystem;
 
 impl System for UpdateFocalRadiusSystem {
-    fn run(&self, world: &mut World, delta_time: f32) {
-        /*let updatables = world
-        .expect_resource::<Arc<Mutex<VecDeque<Updatable>>>>()
-        .clone();*/
+    fn run(&mut self, world: &mut World, delta_time: f32) {
         let mut player_position: Option<Vec3> = None;
         let mut light_level: Option<f32> = None;
 

@@ -14,7 +14,7 @@ use super::system::System;
 pub struct MovementSystem;
 
 impl System for MovementSystem {
-    fn run(&self, world: &mut World, delta_time: f32) {
+    fn run(&mut self, world: &mut World, delta_time: f32) {
         for (_, (movement, force, transform)) in world.query_mut::<(
             &mut MovementComponent,
             &mut ForceComponent,

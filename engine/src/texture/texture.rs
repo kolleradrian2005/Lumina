@@ -4,6 +4,7 @@ use crate::math::vec3::Vec3;
 
 #[derive(Clone, Debug)]
 pub enum Texture {
+    None,
     StaticColor(StaticColor),
     StaticTexture(StaticTexture),
     AnimatedTexture(AnimatedTexture),
@@ -37,6 +38,7 @@ impl From<GradientTexture> for Texture {
 impl Texture {
     pub const fn has_texture(&self) -> bool {
         match self {
+            Texture::None => false,
             Texture::StaticColor(_) => false,
             Texture::StaticTexture(_) => true,
             Texture::AnimatedTexture(_) => true,

@@ -167,12 +167,12 @@ impl Framebuffer {
             gl::DeleteRenderbuffers(1, &self.rbo);
             gl::DeleteTextures(1, &self.texture);
             gl::DeleteTextures(1, &self.post_processing_texture);
-            self.fbo = 0;
-            self.post_processing_fbo = 0;
-            self.texture = 0;
-            self.post_processing_texture = 0;
-            self.rbo = 0;
         }
+        self.fbo = 0;
+        self.post_processing_fbo = 0;
+        self.texture = 0;
+        self.post_processing_texture = 0;
+        self.rbo = 0;
     }
 
     pub fn resize(&mut self, width: i32, height: i32) {

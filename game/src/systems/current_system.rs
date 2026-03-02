@@ -12,7 +12,7 @@ use crate::terrain::water::Water;
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         for (_, (material_component, transform_component)) in
             world.query_mut::<(&mut MaterialComponent, &mut TransformComponent)>()
         {

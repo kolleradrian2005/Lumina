@@ -31,6 +31,7 @@ pub mod model {
     pub mod mesh;
     pub mod model;
     pub mod sprite;
+    pub mod wireframe;
 }
 pub mod render {
     pub mod generic_renderer;
@@ -63,12 +64,14 @@ pub mod scene {
         }
         pub mod system {
             pub mod collision_system;
+            pub mod debug_collider_system;
             pub mod emitter_system;
             pub mod movement_system;
             pub mod particle_system;
             pub mod render_system;
             pub mod system;
         }
+        pub mod collision_result;
         pub mod component_storage;
         pub mod create_mesh_manager;
         pub mod drop_mesh_request;

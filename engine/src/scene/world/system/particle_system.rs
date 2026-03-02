@@ -1,5 +1,3 @@
-
-
 use crate::{
     math::{transformation::calc_intherited_transform, vec3::Vec3},
     scene::world::{
@@ -17,7 +15,7 @@ use super::system::System;
 pub struct ParticleSystem;
 
 impl System for ParticleSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         let transform_storage = world.get_storage_ptr_mut::<TransformComponent>();
         let parent_storage = world.get_storage_ptr_mut::<ParentComponent>();
         for (_, (emitter_component, parent_component)) in

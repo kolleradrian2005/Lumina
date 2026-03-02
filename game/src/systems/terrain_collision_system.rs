@@ -1,18 +1,10 @@
-use std::sync::{Arc, Mutex};
-
-use lumina_engine::scene::world::{
-    component::{collider_component::ColliderComponent, transform_component::TransformComponent},
-    system::system::System,
-    world::World,
-};
-
-use crate::terrain::terrain::Terrain;
+use lumina_engine::scene::world::{system::system::System, world::World};
 
 pub struct TerrainCollisionSystem;
 
 impl System for TerrainCollisionSystem {
-    fn run(&self, world: &mut World, _: f32) {
-        let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
+    fn run(&mut self, world: &mut World, _: f32) {
+        /*let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         for (_, (collider_component, transform)) in
             world.query_mut::<(&mut ColliderComponent, &mut TransformComponent)>()
         {
@@ -27,6 +19,7 @@ impl System for TerrainCollisionSystem {
                 }
                 transform.position.y += y_offset;
             }
-        }
+        }*/
+        // TODO: create custom colliders
     }
 }

@@ -15,7 +15,7 @@ use crate::{
 pub struct TerrainSystem;
 
 impl System for TerrainSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         let resource_manager = world.expect_resource_ptr::<ResourceManager>();
         for (_, (_, transform)) in

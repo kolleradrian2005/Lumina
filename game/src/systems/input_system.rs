@@ -1,4 +1,3 @@
-
 use lumina_engine::{
     input::input_state::InputState,
     math::vec3::Vec3,
@@ -11,7 +10,7 @@ use crate::components::player_state_component::PlayerStateComponent;
 pub struct InputSystem;
 
 impl System for InputSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         let mut direction = Vec3::new(0.0, 0.0, 0.0);
         let mut fast_pressed = false;
         if let Some(input_state) = world.get_resource::<InputState>() {

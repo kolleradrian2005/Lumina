@@ -17,11 +17,20 @@ pub enum ObjectType {
     SeaGrass,
 }
 
+#[derive(Clone, Debug)]
+pub enum DrawMode {
+    Triangles,
+    Lines,
+    Patches,
+}
+
 #[derive(Component, Clone, Debug)]
 pub struct MaterialComponent {
     pub texture: Texture,
     pub shader: ShaderHandle,
     pub parameters: HashMap<String, MaterialParameter>,
+    pub draw_mode: DrawMode,
+    //pub uniform_buffers: HashMap<u32, Vec<u8>>,
 }
 
 impl MaterialComponent {
@@ -37,25 +46,17 @@ impl MaterialComponent {
             texture,
             shader: shader.get_handle(),
             parameters,
+            draw_mode: DrawMode::Triangles,
         }
+    }
+
+    pub fn with_draw_mode(mut self, draw_mode: DrawMode) -> Self {
+        self.draw_mode = draw_mode;
+        self
     }
 
     pub fn with_param<P: Into<MaterialParameter>>(mut self, name: &str, value: P) -> Self {
         let param = value.into();
-        /*let schema = self.shader.get_parameter_schema();
-        if let Some((_, expected_type)) = schema.required_params.iter().find(|(n, _)| n == name) {
-            {
-                let actual_type = Self::type_of(&param);
-                assert_eq!(
-                    actual_type, *expected_type,
-                    "Parameter {} type mismatch: expected {:?}, got {:?}",
-                    name, expected_type, actual_type
-                );
-            }
-            self.parameters.insert(name.to_string(), param);
-        } else {
-            panic!("Parameter {} not defined in shader", name);
-        }*/
         self.parameters.insert(name.to_string(), param);
         self
     }

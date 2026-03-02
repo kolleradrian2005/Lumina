@@ -17,7 +17,7 @@ use lumina_engine::{
 pub struct UpdateGodRaysSystem;
 
 impl System for UpdateGodRaysSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         let player_position: Option<Vec3> = world
             .query_mut::<(&mut CameraComponent, &mut TransformComponent)>()
             .last()

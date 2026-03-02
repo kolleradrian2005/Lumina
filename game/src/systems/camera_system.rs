@@ -12,7 +12,7 @@ use crate::components::follow_component::FollowComponent;
 pub struct CameraSystem;
 
 impl System for CameraSystem {
-    fn run(&self, world: &mut World, _: f32) {
+    fn run(&mut self, world: &mut World, _: f32) {
         for (_, (camera, follow_component)) in
             world.query_mut::<(&mut CameraComponent, &mut FollowComponent)>()
         {

@@ -14,7 +14,7 @@ use super::system::System;
 pub struct EmitterSystem;
 
 impl System for EmitterSystem {
-    fn run(&self, world: &mut World, delta_time: f32) {
+    fn run(&mut self, world: &mut World, delta_time: f32) {
         let mut removeables = vec![];
         let rng: *mut StdRng = world.expect_resource_ptr::<StdRng>();
         for (entity, (emitter, model)) in

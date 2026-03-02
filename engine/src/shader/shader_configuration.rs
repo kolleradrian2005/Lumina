@@ -1,4 +1,12 @@
-use crate::shader::parameter_schema::ParameterSchema;
+use crate::shader::{
+    parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType,
+};
+
+#[derive(Clone, Debug)]
+pub struct UniformBufferBinding {
+    pub binding_index: u32,
+    pub fields: Vec<(String, ShaderParameterType)>,
+}
 
 #[derive(Clone, Debug)]
 pub struct ShaderConfiguration {
@@ -7,20 +15,5 @@ pub struct ShaderConfiguration {
     pub tess_evaluation_shader_name: Option<String>,
     pub tess_control_shader_name: Option<String>,
     pub parameter_schema: ParameterSchema,
-}
-
-impl ShaderConfiguration {
-    pub fn new(
-        fragment_shader: &str,
-        vertex_shader: &str,
-        parameter_schema: ParameterSchema,
-    ) -> Self {
-        Self {
-            fragment_shader_name: fragment_shader.to_string(),
-            vertex_shader_name: vertex_shader.to_string(),
-            tess_evaluation_shader_name: None,
-            tess_control_shader_name: None,
-            parameter_schema,
-        }
-    }
+    //pub uniform_buffers: Vec<UniformBufferBinding>,
 }

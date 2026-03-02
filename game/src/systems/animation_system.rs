@@ -22,7 +22,7 @@ use crate::components::{
 pub struct AnimationSystem;
 
 impl System for AnimationSystem {
-    fn run(&self, world: &mut World, delta_time: f32) {
+    fn run(&mut self, world: &mut World, delta_time: f32) {
         world
             .query_mut::<(&mut PlayerStateComponent, &mut TransformComponent)>()
             .last()
