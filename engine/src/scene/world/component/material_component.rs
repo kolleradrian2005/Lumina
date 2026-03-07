@@ -17,7 +17,7 @@ pub enum ObjectType {
     SeaGrass,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum DrawMode {
     Triangles,
     Lines,

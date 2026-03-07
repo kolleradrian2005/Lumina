@@ -21,6 +21,12 @@ pub mod gui {
     pub mod ui_model;
     pub mod ui_model_group;
 }*/
+pub mod extract {
+    pub mod debug_extractor;
+    pub mod extractor;
+    pub mod model_extractor;
+    pub mod particle_extractor;
+}
 pub mod math {
     pub mod rect;
     pub mod transformation;
@@ -34,12 +40,13 @@ pub mod model {
     pub mod wireframe;
 }
 pub mod render {
+    pub mod extracted_frame;
     pub mod generic_renderer;
     pub mod render_entity;
-    pub mod render_packet;
     pub mod renderer;
     pub mod uniformbuffer;
     pub mod updatable;
+    pub mod window_size;
 }
 pub mod scene {
     pub mod world {
@@ -64,11 +71,10 @@ pub mod scene {
         }
         pub mod system {
             pub mod collision_system;
-            pub mod debug_collider_system;
+            pub mod debug_system;
             pub mod emitter_system;
             pub mod movement_system;
             pub mod particle_system;
-            pub mod render_system;
             pub mod system;
         }
         pub mod collision_result;
@@ -310,7 +316,8 @@ pub async fn start(
                             (&mut renderer, &mut resource_loader)
                         {
                             resource_loader.run();
-                            if let Ok(packet) = render_rx.try_recv() {
+                            if let Ok(mut packet) = render_rx.try_recv() {
+                                renderer.prepare_frame(&mut packet);
                                 renderer.render(packet);
 
                                 if let Some((_, _, window)) = &state {

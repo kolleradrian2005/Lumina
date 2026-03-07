@@ -1,39 +1,52 @@
 use crate::{
+    extract::extractor::Extractor,
     math::transformation,
-    render::render_entity::RenderEntity,
+    render::{
+        extracted_frame::ExtractedFrame, render_entity::RenderEntity, window_size::WindowSize,
+    },
     scene::world::{
         component::{
-            emitter_component::EmitterComponent, material_component::MaterialComponent,
-            model_component::ModelComponent, parent_component::ParentComponent,
-            transform_component::TransformComponent,
+            camera_component::CameraComponent, emitter_component::EmitterComponent,
+            material_component::MaterialComponent, model_component::ModelComponent,
+            parent_component::ParentComponent, transform_component::TransformComponent,
         },
         entity::entity::Entity,
         world::World,
     },
 };
 
-use super::system::System;
+pub struct ModelExtractor;
 
-pub struct RenderSystem;
-
-impl System for RenderSystem {
-    fn run(&mut self, world: &mut World, _: f32) {
-        for (entity, (model, transform)) in
-            world.query_mut::<(&mut ModelComponent, &mut TransformComponent)>()
+impl Extractor for ModelExtractor {
+    fn extract(&mut self, world: &World, frame: &mut ExtractedFrame) {
+        let (_camera, (camera_component,)) = world
+            .query::<(&CameraComponent,)>()
+            .next()
+            .expect("No camera found in the scene");
+        frame.camera_component = Some(camera_component.clone());
+        let window_size = world.get_resource::<WindowSize>();
+        frame.window_size = window_size.cloned();
+        for (entity, (model, transform)) in world.query::<(&ModelComponent, &TransformComponent)>()
         {
             let parent_component = world.get_component::<ParentComponent>(entity).cloned();
             if let None = world.get_component::<EmitterComponent>(entity) {
-                Self::prepare_entity(world, entity, parent_component, transform.clone(), model);
+                Self::prepare_entity(
+                    world,
+                    frame,
+                    entity,
+                    parent_component,
+                    transform.clone(),
+                    model,
+                );
             }
         }
-        for (entity, (emitter, model, transform)) in world.query_mut::<(
-            &mut EmitterComponent,
-            &mut ModelComponent,
-            &mut TransformComponent,
-        )>() {
+        for (entity, (emitter, model, transform)) in
+            world.query::<(&EmitterComponent, &ModelComponent, &TransformComponent)>()
+        {
             for particle in emitter.particles.iter() {
                 Self::prepare_entity(
                     world,
+                    frame,
                     entity,
                     None,
                     TransformComponent {
@@ -49,13 +62,14 @@ impl System for RenderSystem {
     }
 }
 
-impl RenderSystem {
+impl ModelExtractor {
     pub fn prepare_entity(
-        world: &mut World,
+        world: &World,
+        frame: &mut ExtractedFrame,
         entity: Entity,
         parent: Option<ParentComponent>,
         transform: TransformComponent,
-        model: &mut ModelComponent,
+        model: &ModelComponent,
     ) {
         if let Some(parent) = parent.clone() {
             if parent.parent.0 == 0 {
@@ -74,29 +88,7 @@ impl RenderSystem {
         let material = material.unwrap();
         // TODO: default material
         //.unwrap_or(MaterialComponent::default());
-        /*let create_mesh_manager = world.expect_resource::<Arc<Mutex<CreateMeshManager>>>();
-        if let Ok(create_mesh_manager) = &mut create_mesh_manager.lock() {
-            match model.mesh {
-                MeshLoadState::CreateRequest { .. } => {
-                    let create_mesh_request =
-                        mem::replace(&mut model.mesh, MeshLoadState::PendingRequest { id: 0 });
-                    if let MeshLoadState::PendingRequest { id } =
-                        create_mesh_manager.request_mesh(create_mesh_request)
-                    {
-                        model.mesh = MeshLoadState::PendingRequest { id };
-                    }
-                    return;
-                }
-                MeshLoadState::PendingRequest { id } => {
-                    if let Some(loaded_mesh) = create_mesh_manager.take_mesh(id) {
-                        model.mesh = loaded_mesh;
-                    }
-                    return;
-                }
-                _ => {}
-            }
-        }*/
-        world.render_packet.entities.push(RenderEntity {
+        frame.entities.push(RenderEntity {
             mesh: model.mesh.clone(),
             is_flipped: transform.is_flipped
                 ^ parent_transform.map(|e| e.is_flipped).unwrap_or(false),
@@ -105,6 +97,7 @@ impl RenderSystem {
             //object_type: model.object_type,
             //shader_params: world.get_component::<ShaderParamsComponent>(entity).cloned(),
             material: material,
+            z_index: transform.position.z + parent_transform.map(|e| e.position.z).unwrap_or(0.0),
         });
     }
 }

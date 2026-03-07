@@ -1,18 +1,13 @@
 use std::collections::VecDeque;
 use std::ffi::CString;
-use std::sync::Arc;
 
 use glutin::display::{Display, GlDisplay};
 
-use crate::model::mesh::Mesh;
-
+use crate::render::extracted_frame::ExtractedFrame;
 use crate::render::generic_renderer::GenericRenderer;
-use crate::render::render_entity::MeshLoadState;
-use crate::render::render_packet::RenderPacket;
+use crate::render::window_size::WindowSize;
 use crate::scene::scene::Scene;
 use crate::scene::world::component::camera_component::CameraComponent;
-use crate::scene::world::create_mesh_manager::CreateMeshManager;
-use crate::scene::world::drop_mesh_request::DropMeshRequest;
 use crate::texture::frame_buffer::Framebuffer;
 
 use super::uniformbuffer::{MatrixUniformBuffer, UniformBuffer};
@@ -20,12 +15,10 @@ use super::updatable::Updatable;
 
 pub struct Renderer {
     matrix_uniform_buffer: UniformBuffer<MatrixUniformBuffer>,
-    //background_renderer: BackgroundRenderer,
-    //scene_renderer: SceneRenderer,
     frame_buffer: Framebuffer,
+    window_size_cache: Option<WindowSize>,
     //postprocess_renderer: PostprocessRenderer,
     generic_renderer: GenericRenderer,
-    //gui_renderer: GuiRenderer,
 }
 
 impl Renderer {
@@ -66,6 +59,7 @@ impl Renderer {
 
         Renderer {
             matrix_uniform_buffer,
+            window_size_cache: None,
             //background_renderer: BackgroundRenderer::init(archive),
             //scene_renderer: SceneRenderer::init(archive),
             frame_buffer: Framebuffer::new(width, height, msaa),
@@ -131,38 +125,9 @@ impl Renderer {
         }
     }
 
-    pub fn handle_mesh_requests(
-        &mut self,
-        drop_mesh_requests: &mut VecDeque<DropMeshRequest>,
-        create_mesh_manager: &mut CreateMeshManager,
-    ) {
-        while let Some(request) = drop_mesh_requests.pop_front() {
-            let mesh = &request.mesh;
-            unsafe {
-                gl::DeleteVertexArrays(1, &mesh.get_vao());
-                gl::DeleteBuffers(1, &mesh.get_vert_vbo());
-                if let Some(uvs_vbo) = mesh.get_uvs_vbo() {
-                    gl::DeleteBuffers(1, &uvs_vbo);
-                }
-                gl::DeleteBuffers(1, &mesh.get_ebo());
-            }
-        }
-        for (_, load_state) in create_mesh_manager.iter_mut() {
-            if let MeshLoadState::CreateRequest {
-                vertices,
-                indices,
-                uvs,
-            } = load_state
-            {
-                let mesh = Arc::new(Mesh::new(vertices, indices, uvs));
-                *load_state = MeshLoadState::Loaded(mesh);
-            }
-        }
-    }
-
     pub fn render(
         &mut self,
-        render_packet: RenderPacket,
+        render_packet: ExtractedFrame,
         /*gui_manager: &GuiManager,
         camera_component: &CameraComponent,
         background: &Background,
@@ -188,23 +153,36 @@ impl Renderer {
         };
     }
 
-    fn refresh_buffers(&mut self, render_packet: &RenderPacket) {
-        if let Some((width, height)) = render_packet.window_resize {
-            self.on_resize(
-                width,
-                height,
-                render_packet
-                    .camera_component
-                    .as_ref()
-                    .expect("Camera component must be present for resize"),
-            );
+    fn refresh_buffers(&mut self, render_packet: &ExtractedFrame) {
+        // If window resize => it has to be camera update too
+        if let Some(new_window_size) = render_packet.window_size.clone() {
+            if self.window_size_cache.is_none()
+                || render_packet.window_size != self.window_size_cache
+            {
+                self.window_size_cache = render_packet.window_size.clone();
+                self.on_resize(
+                    new_window_size.width,
+                    new_window_size.height,
+                    render_packet
+                        .camera_component
+                        .as_ref()
+                        .expect("Camera component must be present for resize"),
+                );
+            }
         }
         if let Some(camera_component) = &render_packet.camera_component {
             unsafe {
                 self.matrix_uniform_buffer
-                    .set_view_matrix(camera_component.get_view_matrix());
+                    .set_view_matrix(camera_component.get_view_matrix()); // TODO: Once implemented, only update when uniform buffer is updated
             }
         }
+    }
+
+    pub fn prepare_frame(&self, frame: &mut ExtractedFrame) {
+        frame
+            .entities
+            .sort_by(|a, b| a.z_index.total_cmp(&b.z_index));
+        // TODO: Sort by shader, texture, material, etc. to minimize state changes and create a PreparedFrame
     }
 
     fn on_resize(&mut self, width: i32, height: i32, camera_component: &CameraComponent) {

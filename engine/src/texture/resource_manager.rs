@@ -6,6 +6,7 @@ use include_assets::NamedArchive;
 use crate::{
     math::vec3::Vec3,
     model::{mesh::Mesh, model::Model, sprite},
+    scene::world::component::collider_component::ColliderShape,
     shader::{
         parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
         shader_parameter_type::ShaderParameterType, shader_program::ShaderProgram,
@@ -18,6 +19,25 @@ use super::{
     texture::{StaticColor, Texture},
 };
 
+#[derive(Hash, PartialEq, Eq, Clone)]
+pub enum ColliderShapeKey {
+    Capsule2D(u32, u32),
+    Rect(u32, u32),
+}
+
+impl ColliderShapeKey {
+    pub fn from_shape(shape: &ColliderShape) -> Self {
+        match shape {
+            ColliderShape::Capsule2D { width, height } => {
+                ColliderShapeKey::Capsule2D((*width * 100.0) as u32, (*height * 100.0) as u32)
+            }
+            ColliderShape::Rect { width, height } => {
+                ColliderShapeKey::Rect((*width * 100.0) as u32, (*height * 100.0) as u32)
+            }
+        }
+    }
+}
+
 pub struct ResourceManager {
     place_holder_model: Model,
     //place_holder_font: FontTexture,
@@ -25,6 +45,7 @@ pub struct ResourceManager {
     //fonts: HashMap<String, FontTexture>,
     shader_programs: HashMap<String, Arc<ShaderProgram>>,
     loader_tx: Sender<ResourceCommand>,
+    collider_meshes: HashMap<ColliderShapeKey, Arc<Mesh>>,
 }
 
 impl ResourceManager {
@@ -50,7 +71,16 @@ impl ResourceManager {
             //fonts: HashMap::new(),
             loader_tx,
             shader_programs: HashMap::new(),
+            collider_meshes: HashMap::new(),
         }
+    }
+
+    pub fn get_collider_mesh(&self, key: ColliderShapeKey) -> Option<&Arc<Mesh>> {
+        self.collider_meshes.get(&key)
+    }
+
+    pub fn save_collider_mesh(&mut self, key: ColliderShapeKey, mesh: Arc<Mesh>) {
+        self.collider_meshes.insert(key, mesh);
     }
 
     fn send_resource_command(&self, command: ResourceCommand) {

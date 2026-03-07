@@ -1,17 +1,12 @@
 use std::{
     any::{type_name, Any, TypeId},
     collections::HashMap,
-    mem,
     sync::Arc,
 };
 
 use crate::{
     model::mesh::Mesh,
-    render::render_packet::RenderPacket,
-    scene::world::{
-        component::model_component::ModelComponent,
-        query::QueryMut,
-    },
+    scene::world::{component::model_component::ModelComponent, query::QueryMut},
     texture::resource_manager::ResourceManager,
 };
 
@@ -29,7 +24,6 @@ pub struct World {
     pub components: HashMap<TypeId, Box<dyn ComponentStorageTrait + Send + Sync>>,
     resources: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
     pub particle_pool: Vec<ParticleEntity>,
-    pub render_packet: RenderPacket,
 }
 
 impl World {
@@ -40,11 +34,6 @@ impl World {
             components: HashMap::new(),
             resources: HashMap::new(),
             particle_pool: Vec::new(),
-            render_packet: RenderPacket {
-                entities: Vec::new(),
-                window_resize: None,
-                camera_component: None,
-            },
         }
     }
 
@@ -175,14 +164,6 @@ impl World {
 
     pub fn query<'a, T: Query<'a>>(&self) -> T::Iterator {
         T::create_query(self)
-    }
-
-    pub fn clear_render_packet(&mut self) {
-        for renderable in mem::take(&mut self.render_packet.entities) {
-            self.mesh_removed(renderable.mesh);
-        }
-        self.render_packet.window_resize = None;
-        self.render_packet.camera_component = None;
     }
 
     fn mesh_removed(&mut self, mesh: Arc<Mesh>) {

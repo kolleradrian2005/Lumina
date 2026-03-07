@@ -4,7 +4,7 @@ use std::ffi::CString;
 
 use gl::types::{GLint, GLuint};
 
-use crate::render::render_packet::RenderPacket;
+use crate::render::extracted_frame::ExtractedFrame;
 
 use crate::scene::world::component::material_component::DrawMode;
 use crate::shader::material_parameter::MaterialParameter;
@@ -54,7 +54,7 @@ impl GenericRenderer {
             ))
     }
 
-    pub unsafe fn render(&self, render_packet: RenderPacket) {
+    pub unsafe fn render(&self, render_packet: ExtractedFrame) {
         for renderable in render_packet.entities.iter() {
             self.render_entity(renderable);
         }

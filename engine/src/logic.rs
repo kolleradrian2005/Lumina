@@ -3,27 +3,19 @@ use std::time::{Duration, Instant};
 use rand::{rngs::StdRng, SeedableRng};
 
 use crate::{
-    input::input_event::InputEvent,
-    render::render_packet::RenderPacket,
-    scene::scene::Scene,
+    input::input_event::InputEvent, render::extracted_frame::ExtractedFrame, scene::scene::Scene,
 };
 
 const TARGET_INTERVAL: Duration = Duration::from_micros(16666);
 
 pub async fn run_logic_loop(
     input_rx: flume::Receiver<InputEvent>,
-    render_tx: flume::Sender<RenderPacket>,
+    render_tx: flume::Sender<ExtractedFrame>,
     mut scene: Scene,
 ) {
     let rng: StdRng = SeedableRng::from_entropy();
     let mut delta_time: Duration;
     let mut last: Instant = Instant::now();
-
-    /*world.insert_resource(render_ctx.resource_handle.get_inner());
-    world.insert_resource(loop_input_state_clone.clone());
-    world.insert_resource(updatables_clone.clone());
-    world.insert_resource(drop_mesh_requests_clone.clone());
-    world.insert_resource(create_mesh_manager_clone.clone());*/
     let world = scene.get_world_mut();
     world.insert_resource(rng);
 
@@ -40,8 +32,7 @@ pub async fn run_logic_loop(
         }
         scene.update(delta_time.as_secs_f32());
 
-        let packet = scene.get_world().render_packet.clone();
-        let _ = render_tx.send(packet);
-        scene.get_world_mut().clear_render_packet();
+        let frame = scene.extract();
+        let _ = render_tx.send(frame);
     }
 }

@@ -52,7 +52,6 @@ mod world_test {
         assert_eq!(Entity(0), *null_entity_opt.unwrap());
         assert_eq!(0, world.components.len());
         assert_eq!(0, world.particle_pool.len());
-        assert_eq!(0, world.render_packet.entities.len());
     }
 
     #[test]

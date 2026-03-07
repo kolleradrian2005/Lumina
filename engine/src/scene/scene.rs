@@ -1,23 +1,28 @@
 use winit::event::MouseButton;
 
+use crate::extract::debug_extractor::DebugExtractor;
+use crate::extract::extractor::Extractor;
+use crate::extract::model_extractor::ModelExtractor;
 use crate::focus_point::FocusPoint;
 use crate::input::input_event::InputEvent;
 use crate::input::input_state::InputState;
 use crate::math::vec2::Vec2;
 use crate::math::vec3::Vec3;
+use crate::render::extracted_frame::ExtractedFrame;
+use crate::render::window_size::WindowSize;
 use crate::scene::world::system::collision_system::CollisionSystem;
-use crate::scene::world::system::debug_collider_system::DebugColliderSystem;
+use crate::scene::world::system::debug_system::DebugSystem;
 use crate::scene::world::system::emitter_system::EmitterSystem;
 
 use super::world::component::camera_component::CameraComponent;
 use super::world::system::movement_system::MovementSystem;
 use super::world::system::particle_system::ParticleSystem;
-use super::world::system::render_system::RenderSystem;
 use super::world::system::system::System;
 use super::world::world::World;
 
 pub struct Scene {
     pub systems: Vec<Box<dyn System>>,
+    pub extractors: Vec<Box<dyn Extractor>>,
     world: World,
 }
 
@@ -26,6 +31,10 @@ impl Scene {
         let mut world = World::load();
         world.insert_resource(InputState::init());
         world.insert_resource(FocusPoint(Vec3::new(0.0, 0.0, 0.0)));
+        world.insert_resource(WindowSize {
+            width: 0,
+            height: 0,
+        });
         let camera = world.create_entity();
 
         world.add_component(
@@ -40,16 +49,22 @@ impl Scene {
             },
         );
 
-        // TODO: Prioritize systems
         let systems: Vec<Box<dyn System>> = vec![
             Box::new(MovementSystem),
             Box::new(ParticleSystem),
             Box::new(EmitterSystem),
             Box::new(CollisionSystem),
-            Box::new(RenderSystem),
-            Box::new(DebugColliderSystem::new()),
+            Box::new(DebugSystem),
         ];
-        Scene { systems, world }
+
+        let extractors: Vec<Box<dyn Extractor>> =
+            vec![Box::new(ModelExtractor), Box::new(DebugExtractor)];
+
+        Scene {
+            systems,
+            world,
+            extractors,
+        }
     }
 
     pub fn register_system(&mut self, system: Box<dyn System>) {
@@ -62,16 +77,24 @@ impl Scene {
         }
     }
 
+    pub fn extract(&mut self) -> ExtractedFrame {
+        let mut frame = ExtractedFrame {
+            camera_component: None,
+            entities: Vec::new(),
+            window_size: None,
+        };
+        for extractor in &mut self.extractors {
+            extractor.extract(&self.world, &mut frame);
+        }
+        frame
+    }
+
     pub fn handle_input_event(&mut self, event: InputEvent) {
         match event {
             InputEvent::WindowResize { width, height } => {
-                let (_camera, (camera_component,)) = self
-                    .world
-                    .query_mut::<(&mut CameraComponent,)>()
-                    .next()
-                    .expect("No camera found in the scene");
-                self.world.render_packet.camera_component = Some(camera_component.clone());
-                self.world.render_packet.window_resize = Some((width, height));
+                let window_size = self.world.expect_resource_mut::<WindowSize>();
+                window_size.width = width;
+                window_size.height = height;
             }
             InputEvent::KeyDown(key) => {
                 self.world

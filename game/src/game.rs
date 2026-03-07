@@ -131,11 +131,13 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let model_scale = 0.15;
     let initial_position = Vec3::new(0.0, 0.25, 0.0);
 
+    // Create dummy
+
     let dummy = world.create_entity();
     world.add_component(
         dummy,
         TransformComponent {
-            position: (0.0, 0.0, 0.0).into(),
+            position: (0.75, 0.0, 0.0).into(),
             rotation: 0.0,
             scale: Vec2::uniform(0.5),
             is_flipped: false,
@@ -174,6 +176,54 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     });
     world.add_component(dummy, force_component);
     world.add_component(dummy, MovementComponent::default());
+
+    // Create dummy 2
+
+    let dummy = world.create_entity();
+    world.add_component(
+        dummy,
+        TransformComponent {
+            position: (-0.75, 0.0, 0.0).into(),
+            rotation: 0.0,
+            scale: Vec2::uniform(0.5),
+            is_flipped: false,
+        },
+    );
+    world.add_component(
+        dummy,
+        MaterialComponent::new(
+            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
+            shader.clone(),
+        ),
+    );
+    world.add_component::<ModelComponent>(
+        dummy,
+        resource_manager
+            .get_model("square")
+            .get_mesh()
+            .clone()
+            .into(),
+    );
+    world.add_component(
+        dummy,
+        ColliderComponent {
+            shape: ColliderShape::Rect {
+                width: 0.5,
+                height: 0.5,
+            },
+            offset: (0.0, 0.0).into(),
+        },
+    );
+    let mut force_component = ForceComponent::new(1.0);
+    force_component.apply_force(AppliedForce {
+        id: "water_resistance".to_string(),
+        effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
+        mode: ForceMode::Continuous,
+    });
+    world.add_component(dummy, force_component);
+    world.add_component(dummy, MovementComponent::default());
+
+    // Create player
 
     let player = world.create_entity();
     let (camera, _) = world
