@@ -6,8 +6,8 @@ use crate::{model::mesh::Mesh, scene::world::component::material_component::Mate
 pub struct RenderEntity {
     pub mesh: Arc<Mesh>,
     pub material: MaterialComponent,
-    pub is_flipped: bool,
-    pub transform_matrix: [[f32; 4]; 4], // TODO: remove it and add it to the material component
+    //pub is_flipped: bool,
+    //pub transform_matrix: [[f32; 4]; 4], // TODO: remove it and add it to the material component
     pub z_index: f32,
     //pub object_type: ObjectType,
     //pub shader_params: Option<ShaderParamsComponent>,

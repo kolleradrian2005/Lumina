@@ -1,11 +1,11 @@
-use std::ptr;
+use std::{ptr, sync::Arc};
 
 use gl::types::*;
 
 use crate::model::{mesh::Mesh, sprite};
 
 pub struct Framebuffer {
-    mesh: Mesh,
+    mesh: Arc<Mesh>,
     fbo: GLuint,
     post_processing_fbo: GLuint,
     texture: GLuint,
@@ -147,7 +147,7 @@ impl Framebuffer {
         }
         let (vertices, indices, uvs) = sprite::square(2.0);
         Framebuffer {
-            mesh: Mesh::new(&vertices, &indices, &uvs),
+            mesh: Mesh::new(&vertices, &indices, &uvs).into(),
             fbo,
             post_processing_fbo,
             texture,
@@ -213,7 +213,15 @@ impl Framebuffer {
         self.post_processing_texture
     }
 
-    pub fn get_mesh(&self) -> &Mesh {
-        &self.mesh
+    pub fn get_mesh(&self) -> Arc<Mesh> {
+        self.mesh.clone()
+    }
+
+    pub fn get_width(&self) -> i32 {
+        self.width
+    }
+
+    pub fn get_height(&self) -> i32 {
+        self.height
     }
 }

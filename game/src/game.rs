@@ -18,6 +18,8 @@ use crate::{
         current_system::CurrentSystem, follow_system::FollowSystem, input_system::InputSystem,
         player_movement_system::PlayerMovementSystem,
         terrain_collision_system::TerrainCollisionSystem, terrain_system::TerrainSystem,
+        update_focal_radius_system::UpdateFocalRadiusSystem,
+        update_god_rays_system::UpdateGodRaysSystem,
     },
     terrain::{terrain::Terrain, water::Water},
 };
@@ -25,20 +27,24 @@ use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
     math::{vec2::Vec2, vec3::Vec3},
     model::model::Model,
-    scene::world::{
-        component::{
-            camera_component::CameraComponent,
-            collider_component::{ColliderComponent, ColliderShape},
-            emitter_component::EmitterComponent,
-            force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
-            material_component::MaterialComponent,
-            model_component::ModelComponent,
-            movement_component::MovementComponent,
-            parent_component::ParentComponent,
-            transform_component::TransformComponent,
+    render::{postprocess_config::PostprocessConfig, uniformbuffer::UniformBufferSource},
+    scene::{
+        foreground::Foreground,
+        world::{
+            component::{
+                camera_component::CameraComponent,
+                collider_component::{ColliderComponent, ColliderShape},
+                emitter_component::EmitterComponent,
+                force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
+                material_component::MaterialComponent,
+                model_component::ModelComponent,
+                movement_component::MovementComponent,
+                parent_component::ParentComponent,
+                transform_component::TransformComponent,
+            },
+            entity::{entity::Entity, particle_entity::ParticleEntityType},
+            world::World,
         },
-        entity::{entity::Entity, particle_entity::ParticleEntityType},
-        world::World,
     },
     shader::{
         parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
@@ -66,8 +72,8 @@ pub fn initialize(event_loop: EventLoop<()>) {
         scene.register_system(Box::new(CameraSystem));
         scene.register_system(Box::new(AnimationSystem));
         scene.register_system(Box::new(TerrainCollisionSystem));
-        //scene.register_system(Box::new(UpdateFocalRadiusSystem));
-        //scene.register_system(Box::new(UpdateGodRaysSystem));
+        scene.register_system(Box::new(UpdateFocalRadiusSystem));
+        scene.register_system(Box::new(UpdateGodRaysSystem));
     });
 }
 
@@ -128,6 +134,38 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let water = Water::create((WORLD_SEED ^ 0x5EAF00D).wrapping_mul(69696969));
     world.insert_resource(water);
     let shader = resource_manager.get_shader("model").clone();
+    let foreground = Foreground::construct();
+    world.insert_resource(UniformBufferSource::new(
+        1,
+        foreground.get_default_uniform_buffer(),
+    ));
+    world.insert_resource(foreground);
+    let postprocess_shader = resource_manager
+        .load_shader(
+            "postprocess",
+            ShaderConfiguration {
+                vertex_shader_name: "postprocess.vert".to_string(),
+                fragment_shader_name: "postprocess.frag".to_string(),
+                tess_control_shader_name: None,
+                tess_evaluation_shader_name: None,
+                parameter_schema: ParameterSchema {
+                    required_params: vec![
+                        ("uFocalOffset".to_string(), ShaderParameterType::Vec2),
+                        ("uAspectRatio".to_string(), ShaderParameterType::Float),
+                        ("uNumLights".to_string(), ShaderParameterType::Int),
+                        (
+                            "uLightPositions".to_string(),
+                            ShaderParameterType::Vec2Array,
+                        ),
+                    ],
+                },
+            },
+        )
+        .expect("Failed to load postprocess shader");
+
+    world.insert_resource(PostprocessConfig {
+        material: MaterialComponent::new(Texture::None, postprocess_shader),
+    });
 
     let model_scale = 0.15;
     let initial_position = Vec3::new(0.0, 0.25, 0.0);

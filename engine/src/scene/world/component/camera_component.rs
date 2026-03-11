@@ -1,5 +1,5 @@
 use crate::{
-    math::{transformation, vec2::Vec2, vec3::Vec3},
+    math::{transformation, vec3::Vec3},
     scene::world::component::component::Component,
 };
 
@@ -10,7 +10,6 @@ pub struct CameraComponent {
     pub zoom_speed: f32,
     pub near: f32,
     pub far: f32,
-    pub focal_offset: Vec2,
 }
 
 impl CameraComponent {

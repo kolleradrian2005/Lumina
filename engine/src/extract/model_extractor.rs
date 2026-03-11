@@ -2,13 +2,16 @@ use crate::{
     extract::extractor::Extractor,
     math::transformation,
     render::{
-        extracted_frame::ExtractedFrame, render_entity::RenderEntity, window_size::WindowSize,
+        extracted_frame::ExtractedFrame,
+        render_entity::RenderEntity,
+        uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
+        window_size::WindowSize,
     },
     scene::world::{
         component::{
-            camera_component::CameraComponent, emitter_component::EmitterComponent,
-            material_component::MaterialComponent, model_component::ModelComponent,
-            parent_component::ParentComponent, transform_component::TransformComponent,
+            emitter_component::EmitterComponent, material_component::MaterialComponent,
+            model_component::ModelComponent, parent_component::ParentComponent,
+            transform_component::TransformComponent,
         },
         entity::entity::Entity,
         world::World,
@@ -19,11 +22,9 @@ pub struct ModelExtractor;
 
 impl Extractor for ModelExtractor {
     fn extract(&mut self, world: &World, frame: &mut ExtractedFrame) {
-        let (_camera, (camera_component,)) = world
-            .query::<(&CameraComponent,)>()
-            .next()
-            .expect("No camera found in the scene");
-        frame.camera_component = Some(camera_component.clone());
+        if let Some(source) = world.get_resource::<UniformBufferSource<MatrixUniformBuffer>>() {
+            frame.uniform_buffers.push(source.extract());
+        }
         let window_size = world.get_resource::<WindowSize>();
         frame.window_size = window_size.cloned();
         for (entity, (model, transform)) in world.query::<(&ModelComponent, &TransformComponent)>()
@@ -85,15 +86,16 @@ impl ModelExtractor {
         if material.is_none() {
             return;
         }
-        let material = material.unwrap();
+        let mut material = material.unwrap();
         // TODO: default material
         //.unwrap_or(MaterialComponent::default());
+        let is_flipped =
+            transform.is_flipped ^ parent_transform.map(|e| e.is_flipped).unwrap_or(false);
+        material.set_param("uModelMatrix", transform_matrix);
+        material.set_param("uFlipped", is_flipped as i32);
         frame.entities.push(RenderEntity {
             mesh: model.mesh.clone(),
-            is_flipped: transform.is_flipped
-                ^ parent_transform.map(|e| e.is_flipped).unwrap_or(false),
             //texture: texture.texture,
-            transform_matrix,
             //object_type: model.object_type,
             //shader_params: world.get_component::<ShaderParamsComponent>(entity).cloned(),
             material: material,

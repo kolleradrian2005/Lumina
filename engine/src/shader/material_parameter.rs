@@ -36,9 +36,21 @@ impl From<f32> for MaterialParameter {
     }
 }
 
+impl From<Vec2> for MaterialParameter {
+    fn from(v: Vec2) -> Self {
+        MaterialParameter::Vec2(v)
+    }
+}
+
 impl From<Vec3> for MaterialParameter {
     fn from(v: Vec3) -> Self {
         MaterialParameter::Vec3(v)
+    }
+}
+
+impl From<Vec<Vec2>> for MaterialParameter {
+    fn from(v: Vec<Vec2>) -> Self {
+        MaterialParameter::Vec2Array(v)
     }
 }
 

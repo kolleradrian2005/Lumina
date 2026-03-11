@@ -26,6 +26,7 @@ pub mod extract {
     pub mod extractor;
     pub mod model_extractor;
     pub mod particle_extractor;
+    pub mod postprocess_extractor;
 }
 pub mod math {
     pub mod rect;
@@ -42,6 +43,7 @@ pub mod model {
 pub mod render {
     pub mod extracted_frame;
     pub mod generic_renderer;
+    pub mod postprocess_config;
     pub mod render_entity;
     pub mod renderer;
     pub mod uniformbuffer;

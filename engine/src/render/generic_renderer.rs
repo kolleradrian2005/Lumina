@@ -4,8 +4,6 @@ use std::ffi::CString;
 
 use gl::types::{GLint, GLuint};
 
-use crate::render::extracted_frame::ExtractedFrame;
-
 use crate::scene::world::component::material_component::DrawMode;
 use crate::shader::material_parameter::MaterialParameter;
 use crate::shader::shader_program::ShaderHandle;
@@ -54,9 +52,9 @@ impl GenericRenderer {
             ))
     }
 
-    pub unsafe fn render(&self, render_packet: ExtractedFrame) {
-        for renderable in render_packet.entities.iter() {
-            self.render_entity(renderable);
+    pub unsafe fn render(&self, entities: Vec<RenderEntity>) {
+        for renderable in entities {
+            self.render_entity(&renderable);
         }
 
         gl::BindVertexArray(0);
@@ -85,49 +83,37 @@ impl GenericRenderer {
                 }
             }
         }
-
-        let model_matrix_location: i32 =
-            self.expect_uniform_location(shader_handle, "uModelMatrix");
-        gl::UniformMatrix4fv(
-            model_matrix_location,
-            1,
-            gl::FALSE,
-            renderable.transform_matrix.as_ptr() as *const f32,
-        );
-        if let Some(is_flipped_location) = self.get_uniform_location(shader_handle, "uFlipped") {
-            gl::Uniform1i(is_flipped_location, renderable.is_flipped as i32);
-        }
         gl::BindVertexArray(renderable.mesh.get_vao());
         gl::EnableVertexAttribArray(0);
         if renderable.mesh.get_uvs_vbo().is_some() {
             gl::EnableVertexAttribArray(1);
         }
         // TODO: handle texture types better e.g. passing array of textures and shader params alongside
+
+        match &renderable.material.texture {
+            Texture::None => {}
+            Texture::StaticColor(static_color) => {
+                let color_location: i32 = self.expect_uniform_location(shader_handle, "uColor");
+                gl::Uniform3f(
+                    color_location,
+                    static_color.color.x,
+                    static_color.color.y,
+                    static_color.color.z,
+                );
+            }
+            Texture::StaticTexture(static_texture) => {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, static_texture.get_id());
+            }
+            Texture::AnimatedTexture(animated_texture) => {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, animated_texture.current_texture().get_id());
+            }
+            Texture::GradientTexture(_) => {}
+        }
         if let Some(texture_type_location) =
             self.get_uniform_location(shader_handle, "uTextureType")
         {
-            match &renderable.material.texture {
-                Texture::None => {}
-                Texture::StaticColor(static_color) => {
-                    let color_location: i32 = self.expect_uniform_location(shader_handle, "uColor");
-                    gl::Uniform3f(
-                        color_location,
-                        static_color.color.x,
-                        static_color.color.y,
-                        static_color.color.z,
-                    );
-                }
-                Texture::StaticTexture(static_texture) => {
-                    gl::ActiveTexture(gl::TEXTURE0);
-                    gl::BindTexture(gl::TEXTURE_2D, static_texture.get_id());
-                }
-                Texture::AnimatedTexture(animated_texture) => {
-                    gl::ActiveTexture(gl::TEXTURE0);
-                    gl::BindTexture(gl::TEXTURE_2D, animated_texture.current_texture().get_id());
-                }
-                Texture::GradientTexture(_) => {}
-            }
-            self.get_uniform_location(shader_handle, "uTextureType");
             let value = match renderable.material.texture {
                 Texture::StaticColor(_) => 0,
                 Texture::StaticTexture(_) => 1,

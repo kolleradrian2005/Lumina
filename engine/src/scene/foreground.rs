@@ -2,10 +2,7 @@ use std::collections::VecDeque;
 
 use noise::{NoiseFn, Perlin};
 
-use crate::{
-    math::vec2::Vec2,
-    render::{uniformbuffer::PostProcessUniformBuffer},
-};
+use crate::{math::vec2::Vec2, render::uniformbuffer::PostProcessUniformBuffer};
 
 pub struct Foreground {
     pub noise: Perlin,
@@ -61,7 +58,7 @@ impl Foreground {
             }
         }
     }
-    pub fn get_light_positions(&self) -> Vec<f32> {
+    pub fn get_light_positions(&self) -> Vec<Vec2> {
         let mut light_positions = Vec::new();
         for i in 1..self.god_rays_max_count as usize - 1 {
             if self.god_rays_noise[i - 1].abs() < self.god_rays_noise[i].abs()
@@ -69,9 +66,10 @@ impl Foreground {
             {
                 //if 0.6 < self.god_rays_noise[i].abs() {
                 let tile_index = self.loaded_noise_index - self.god_rays_max_count / 2 + i as i32;
-                light_positions.push(tile_index as f32 * self.god_rays_min_distance);
-                //light_positions.push(3.0);
-                light_positions.push(0.0);
+                light_positions.push(Vec2::new(
+                    tile_index as f32 * self.god_rays_min_distance,
+                    0.0,
+                ));
             }
         }
         light_positions

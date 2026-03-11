@@ -13,7 +13,7 @@ use crate::{
 use super::{
     component::component::Component,
     component_storage::{ComponentStorage, ComponentStorageTrait},
-    entity::{entity::Entity, particle_entity::ParticleEntity},
+    entity::entity::Entity,
     query::Query,
 };
 
@@ -23,7 +23,6 @@ pub struct World {
     available_ids: Vec<u32>,
     pub components: HashMap<TypeId, Box<dyn ComponentStorageTrait + Send + Sync>>,
     resources: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
-    pub particle_pool: Vec<ParticleEntity>,
 }
 
 impl World {
@@ -33,7 +32,6 @@ impl World {
             available_ids: Vec::new(),
             components: HashMap::new(),
             resources: HashMap::new(),
-            particle_pool: Vec::new(),
         }
     }
 

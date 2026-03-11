@@ -27,18 +27,20 @@ impl Extractor for DebugExtractor {
                 let key = ColliderShapeKey::from_shape(&collider.shape);
                 if let Some(mesh) = resource_manager.get_collider_mesh(key) {
                     let debug_shader = resource_manager.get_shader("debug_shader");
-                    let material = MaterialComponent::new(
+                    let mut material = MaterialComponent::new(
                         Texture::StaticColor(StaticColor::new((1.0, 0.0, 0.0).into())),
                         debug_shader,
                     )
                     .with_draw_mode(DrawMode::Lines);
                     let mut transform = transform.clone();
                     transform.position += Vec3::from_vec2(collider.offset, 0.0);
+                    material.set_param(
+                        "uModelMatrix",
+                        transformation::create_transform_matrix(&transform, None), // TODO: maybe check for parent components in the future
+                    );
                     frame.entities.push(RenderEntity {
                         mesh: mesh.clone(),
                         material,
-                        is_flipped: transform.is_flipped,
-                        transform_matrix: transformation::create_transform_matrix(&transform, None), // TODO: maybe check for parent components in the future
                         z_index: transform.position.z,
                     });
                 }

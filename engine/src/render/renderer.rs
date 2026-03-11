@@ -1,20 +1,23 @@
-use std::collections::VecDeque;
+use std::collections::HashMap;
 use std::ffi::CString;
 
+use gl::types::{GLsizeiptr, GLuint, GLvoid};
 use glutin::display::{Display, GlDisplay};
 
 use crate::render::extracted_frame::ExtractedFrame;
 use crate::render::generic_renderer::GenericRenderer;
+use crate::render::postprocess_config::PostprocessConfig;
+use crate::render::render_entity::RenderEntity;
 use crate::render::window_size::WindowSize;
-use crate::scene::scene::Scene;
 use crate::scene::world::component::camera_component::CameraComponent;
 use crate::texture::frame_buffer::Framebuffer;
+use crate::texture::texture::StaticTexture;
 
 use super::uniformbuffer::{MatrixUniformBuffer, UniformBuffer};
-use super::updatable::Updatable;
 
 pub struct Renderer {
-    matrix_uniform_buffer: UniformBuffer<MatrixUniformBuffer>,
+    //matrix_uniform_buffer: UniformBuffer<MatrixUniformBuffer>,
+    uniform_buffer_pool: HashMap<GLuint, GLuint>,
     frame_buffer: Framebuffer,
     window_size_cache: Option<WindowSize>,
     //postprocess_renderer: PostprocessRenderer,
@@ -58,7 +61,8 @@ impl Renderer {
         };
 
         Renderer {
-            matrix_uniform_buffer,
+            //matrix_uniform_buffer,
+            uniform_buffer_pool: HashMap::new(),
             window_size_cache: None,
             //background_renderer: BackgroundRenderer::init(archive),
             //scene_renderer: SceneRenderer::init(archive),
@@ -70,7 +74,7 @@ impl Renderer {
     }
 
     pub fn load_scene(&mut self, camera_component: &CameraComponent, aspect_ratio: f32) {
-        let matrix_uniform_buffer_content = MatrixUniformBuffer {
+        /*let matrix_uniform_buffer_content = MatrixUniformBuffer {
             projection_matrix: camera_component.get_projection_matrix(aspect_ratio),
             view_matrix: camera_component.get_view_matrix(),
         };
@@ -78,7 +82,7 @@ impl Renderer {
             self.matrix_uniform_buffer
                 .set_data(matrix_uniform_buffer_content);
         }
-        /*let foreground = scene
+        let foreground = scene
             .get_world()
             .get_resource::<Arc<Mutex<Foreground>>>()
             .expect("No foreground found");
@@ -88,43 +92,43 @@ impl Renderer {
     unsafe fn clean_up(&self) {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
+    /*
+        pub fn update_buffers(&mut self, updatables: &mut VecDeque<Updatable>, scene: &mut Scene) {
+            while let Some(updatable) = updatables.pop_front() {
+                match updatable {
+                    Updatable::Projection { width, height } => {
+                        self.frame_buffer.resize(width, height);
 
-    pub fn update_buffers(&mut self, updatables: &mut VecDeque<Updatable>, scene: &mut Scene) {
-        while let Some(updatable) = updatables.pop_front() {
-            match updatable {
-                Updatable::Projection { width, height } => {
-                    self.frame_buffer.resize(width, height);
+                        let (_camera, (camera_component,)) = scene
+                            .get_world_mut()
+                            .query_mut::<(&mut CameraComponent,)>()
+                            .next()
+                            .expect("No camera found in the scene");
 
-                    let (_camera, (camera_component,)) = scene
-                        .get_world_mut()
-                        .query_mut::<(&mut CameraComponent,)>()
-                        .next()
-                        .expect("No camera found in the scene");
-
-                    unsafe {
-                        gl::Viewport(0, 0, width as i32, height as i32);
-                        self.matrix_uniform_buffer.set_projection_matrix(
-                            camera_component.get_projection_matrix(width as f32 / height as f32),
-                        );
-                    };
-                }
-                Updatable::View { camera_component } => unsafe {
-                    self.matrix_uniform_buffer
-                        .set_view_matrix(camera_component.get_view_matrix());
-                },
-                Updatable::FocalRadius => {
-                    /*let foreground = scene
-                        .get_world()
-                        .expect_resource::<Arc<Mutex<Foreground>>>()
-                        .lock()
-                        .unwrap();
-                    self.postprocess_renderer
-                        .update_focal_radius(foreground.get_focal_radius());*/ // TODO
+                        unsafe {
+                            gl::Viewport(0, 0, width as i32, height as i32);
+                            self.matrix_uniform_buffer.set_projection_matrix(
+                                camera_component.get_projection_matrix(width as f32 / height as f32),
+                            );
+                        };
+                    }
+                    Updatable::View { camera_component } => unsafe {
+                        self.matrix_uniform_buffer
+                            .set_view_matrix(camera_component.get_view_matrix());
+                    },
+                    Updatable::FocalRadius => {
+                        /*let foreground = scene
+                            .get_world()
+                            .expect_resource::<Arc<Mutex<Foreground>>>()
+                            .lock()
+                            .unwrap();
+                        self.postprocess_renderer
+                            .update_focal_radius(foreground.get_focal_radius());*/ // TODO
+                    }
                 }
             }
         }
-    }
-
+    */
     pub fn render(
         &mut self,
         render_packet: ExtractedFrame,
@@ -134,22 +138,40 @@ impl Renderer {
         foreground: &Foreground,*/
     ) {
         unsafe {
+            let postprocess_config: Option<PostprocessConfig> =
+                render_packet.postprocess_pass.clone();
             self.refresh_buffers(&render_packet);
+            self.initialize_uniformbuffers(&render_packet);
             self.clean_up(); // Clean up without framebuffer
-                             //self.frame_buffer.bind();
-                             //self.clean_up(); // Clean up with framebuffer
+            if postprocess_config.is_some() {
+                self.frame_buffer.bind();
+                self.clean_up(); // Clean up with framebuffer
+            }
             gl::Enable(gl::DEPTH_TEST);
-            self.matrix_uniform_buffer.bind_base();
-            self.generic_renderer.render(render_packet);
-            //self.background_renderer.render(background);
-            //self.scene_renderer.render(render_packet);
-            //self.frame_buffer.blit();
-            //self.frame_buffer.unbind();
+            self.bind_uniform_buffers();
+            self.generic_renderer.render(render_packet.entities);
+            if postprocess_config.is_some() {
+                self.frame_buffer.blit();
+                self.frame_buffer.unbind();
+            }
             // Post-processing
+            if let Some(postprocess_config) = postprocess_config {
+                let mut material = postprocess_config.material.clone();
+                material.texture = StaticTexture::new(
+                    self.frame_buffer.get_texture() as u32,
+                    self.frame_buffer.get_width() as u32,
+                    self.frame_buffer.get_height() as u32,
+                )
+                .into();
+                self.generic_renderer.render(vec![RenderEntity {
+                    mesh: self.frame_buffer.get_mesh(),
+                    material,
+                    z_index: 0.0,
+                }]);
+            }
             //self.postprocess_renderer.render(camera_component, foreground, &self.frame_buffer);
             gl::Disable(gl::DEPTH_TEST);
-            self.matrix_uniform_buffer.unbind_base();
-            //self.gui_renderer.render(gui_manager, self.frame_buffer.get_aspect_ratio());
+            self.unbind_uniform_buffers();
         };
     }
 
@@ -160,22 +182,32 @@ impl Renderer {
                 || render_packet.window_size != self.window_size_cache
             {
                 self.window_size_cache = render_packet.window_size.clone();
-                self.on_resize(
-                    new_window_size.width,
-                    new_window_size.height,
-                    render_packet
-                        .camera_component
-                        .as_ref()
-                        .expect("Camera component must be present for resize"),
-                );
+                self.frame_buffer
+                    .resize(new_window_size.width, new_window_size.height);
+                /*let camera_component = render_packet
+                .camera_component
+                .as_ref()
+                .expect("Camera component must be present for resize");*/
+                unsafe {
+                    gl::Viewport(
+                        0,
+                        0,
+                        new_window_size.width as i32,
+                        new_window_size.height as i32,
+                    );
+                    /*self.matrix_uniform_buffer.set_projection_matrix(
+                        camera_component.get_projection_matrix(width as f32 / height as f32),
+                    );*/
+                };
             }
         }
+        /*
         if let Some(camera_component) = &render_packet.camera_component {
             unsafe {
                 self.matrix_uniform_buffer
                     .set_view_matrix(camera_component.get_view_matrix()); // TODO: Once implemented, only update when uniform buffer is updated
             }
-        }
+        }*/
     }
 
     pub fn prepare_frame(&self, frame: &mut ExtractedFrame) {
@@ -185,13 +217,57 @@ impl Renderer {
         // TODO: Sort by shader, texture, material, etc. to minimize state changes and create a PreparedFrame
     }
 
-    fn on_resize(&mut self, width: i32, height: i32, camera_component: &CameraComponent) {
-        self.frame_buffer.resize(width, height);
-        unsafe {
-            gl::Viewport(0, 0, width as i32, height as i32);
-            self.matrix_uniform_buffer.set_projection_matrix(
-                camera_component.get_projection_matrix(width as f32 / height as f32),
-            );
-        };
+    fn initialize_uniformbuffers(&mut self, render_packet: &ExtractedFrame) {
+        render_packet
+            .uniform_buffers
+            .iter()
+            .for_each(|uniform_buffer_data| {
+                if let Some(ubo) = self
+                    .uniform_buffer_pool
+                    .get(&uniform_buffer_data.binding_index)
+                {
+                    unsafe {
+                        gl::BindBuffer(gl::UNIFORM_BUFFER, *ubo);
+                        gl::BufferSubData(
+                            gl::UNIFORM_BUFFER,
+                            0,
+                            uniform_buffer_data.data.len() as GLsizeiptr,
+                            uniform_buffer_data.data.as_ptr() as *const GLvoid,
+                        );
+                        gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+                    }
+                } else {
+                    let mut ubo: GLuint = 0;
+                    unsafe {
+                        gl::GenBuffers(1, &mut ubo);
+                        gl::BindBuffer(gl::UNIFORM_BUFFER, ubo);
+                        gl::BufferData(
+                            gl::UNIFORM_BUFFER,
+                            uniform_buffer_data.data.len() as GLsizeiptr,
+                            uniform_buffer_data.data.as_ptr() as *const GLvoid,
+                            gl::DYNAMIC_DRAW,
+                        );
+                        gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+                    };
+                    self.uniform_buffer_pool
+                        .insert(uniform_buffer_data.binding_index, ubo);
+                }
+            });
+    }
+
+    fn bind_uniform_buffers(&self) {
+        for (binding_index, ubo) in self.uniform_buffer_pool.iter() {
+            unsafe {
+                gl::BindBufferBase(gl::UNIFORM_BUFFER, *binding_index, *ubo);
+            }
+        }
+    }
+
+    fn unbind_uniform_buffers(&self) {
+        for (binding_index, _) in self.uniform_buffer_pool.iter() {
+            unsafe {
+                gl::BindBufferBase(gl::UNIFORM_BUFFER, *binding_index, 0);
+            }
+        }
     }
 }

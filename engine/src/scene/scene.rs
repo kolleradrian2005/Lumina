@@ -3,12 +3,13 @@ use winit::event::MouseButton;
 use crate::extract::debug_extractor::DebugExtractor;
 use crate::extract::extractor::Extractor;
 use crate::extract::model_extractor::ModelExtractor;
+use crate::extract::postprocess_extractor::PostprocessExtractor;
 use crate::focus_point::FocusPoint;
 use crate::input::input_event::InputEvent;
 use crate::input::input_state::InputState;
-use crate::math::vec2::Vec2;
 use crate::math::vec3::Vec3;
 use crate::render::extracted_frame::ExtractedFrame;
+use crate::render::uniformbuffer::{MatrixUniformBuffer, UniformBufferSource};
 use crate::render::window_size::WindowSize;
 use crate::scene::world::system::collision_system::CollisionSystem;
 use crate::scene::world::system::debug_system::DebugSystem;
@@ -35,6 +36,13 @@ impl Scene {
             width: 0,
             height: 0,
         });
+        world.insert_resource(UniformBufferSource::new(
+            0,
+            MatrixUniformBuffer {
+                projection_matrix: [[0.0; 4]; 4],
+                view_matrix: [[0.0; 4]; 4],
+            },
+        ));
         let camera = world.create_entity();
 
         world.add_component(
@@ -45,7 +53,6 @@ impl Scene {
                 zoom_speed: 0.1,
                 near: 0.0,
                 far: 10.0,
-                focal_offset: Vec2::new(0.0, 0.0),
             },
         );
 
@@ -57,8 +64,11 @@ impl Scene {
             Box::new(DebugSystem),
         ];
 
-        let extractors: Vec<Box<dyn Extractor>> =
-            vec![Box::new(ModelExtractor), Box::new(DebugExtractor)];
+        let extractors: Vec<Box<dyn Extractor>> = vec![
+            Box::new(ModelExtractor),
+            Box::new(DebugExtractor),
+            Box::new(PostprocessExtractor),
+        ];
 
         Scene {
             systems,
@@ -79,9 +89,11 @@ impl Scene {
 
     pub fn extract(&mut self) -> ExtractedFrame {
         let mut frame = ExtractedFrame {
-            camera_component: None,
+            //camera_component: None,
+            uniform_buffers: Vec::new(),
             entities: Vec::new(),
             window_size: None,
+            postprocess_pass: None,
         };
         for extractor in &mut self.extractors {
             extractor.extract(&self.world, &mut frame);

@@ -1,5 +1,4 @@
-use std::sync::{Arc, Mutex};
-
+use lumina_engine::render::uniformbuffer::{PostProcessUniformBuffer, UniformBufferSource};
 use lumina_engine::scene::world::system::system::System;
 
 use lumina_engine::{
@@ -26,22 +25,22 @@ impl System for UpdateFocalRadiusSystem {
             light_level = player_state_component.light_level().into();
         }
         if let Some(_player_position) = player_position {
-            if let Some(foreground) = world.get_resource::<Arc<Mutex<Foreground>>>() {
-                if let Ok(foreground) = &mut foreground.lock() {
-                    let focal_dest = light_level.unwrap_or(0.5);
-                    let difference = focal_dest - foreground.focal_radius;
-                    if 0.0 < difference.abs() {
-                        /*if let Ok(updatables) = &mut updatables.lock() {
-                            updatables.push_front(Updatable::FocalRadius);
-                        }*/
-                        // TODO: send update to render packet
+            if let Some(foreground) = world.get_resource_ptr::<Foreground>() {
+                let foreground = unsafe { &mut *foreground };
+                let focal_dest = light_level.unwrap_or(0.5);
+                let difference = focal_dest - foreground.focal_radius;
+                if 0.0 < difference.abs() {
+                    if let Some(postprocess_uniformbuffer) =
+                        world.get_resource_mut::<UniformBufferSource<PostProcessUniformBuffer>>()
+                    {
+                        postprocess_uniformbuffer.data.focal_radius = foreground.focal_radius;
                     }
-                    let change = difference.signum() * (delta_time * foreground.focus_speed);
-                    if (focal_dest - foreground.focal_radius).abs() < change {
-                        foreground.focal_radius = focal_dest;
-                    } else {
-                        foreground.focal_radius += change;
-                    }
+                }
+                let change = difference.signum() * (delta_time * foreground.focus_speed);
+                if (focal_dest - foreground.focal_radius).abs() < change {
+                    foreground.focal_radius = focal_dest;
+                } else {
+                    foreground.focal_radius += change;
                 }
             }
         }

@@ -1,10 +1,12 @@
 use gl::types::{GLintptr, GLsizeiptr, GLuint, GLvoid};
 
+#[derive(Debug, Clone, Copy)]
 pub struct MatrixUniformBuffer {
     pub projection_matrix: [[f32; 4]; 4],
     pub view_matrix: [[f32; 4]; 4],
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct PostProcessUniformBuffer {
     pub saturation: f32,
     pub tint_intensity: f32,
@@ -16,7 +18,7 @@ pub struct PostProcessUniformBuffer {
 }
 
 pub struct UniformBuffer<T> {
-    ubo: GLuint,
+    pub ubo: GLuint,
     binding_index: GLuint,
     allocated: GLsizeiptr,
     content: Option<T>,
@@ -102,5 +104,84 @@ impl UniformBuffer<PostProcessUniformBuffer> {
             content.focal_radius = focal_radius;
             self.set_sub_data(offset, &focal_radius);
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct UniformBufferData {
+    pub binding_index: GLuint,
+    pub data: Vec<u8>,
+}
+
+pub struct UniformBufferSource<T: Copy> {
+    binding_index: GLuint,
+    pub data: T,
+}
+
+impl<T: Copy> UniformBufferSource<T> {
+    pub fn new(binding_index: GLuint, data: T) -> Self {
+        Self {
+            binding_index,
+            data,
+        }
+    }
+
+    pub fn update(&mut self, new_data: T) {
+        self.data = new_data;
+    }
+
+    pub fn extract(&self) -> UniformBufferData {
+        let data_bytes = unsafe {
+            std::slice::from_raw_parts(
+                &self.data as *const T as *const u8,
+                std::mem::size_of::<T>(),
+            )
+        };
+        UniformBufferData {
+            binding_index: self.binding_index,
+            data: data_bytes.to_vec(),
+        }
+    }
+}
+
+impl UniformBufferData {
+    fn bind(&self) {
+        unsafe { gl::BindBuffer(gl::UNIFORM_BUFFER, self.binding_index) };
+    }
+
+    fn unbind(&self) {
+        unsafe { gl::BindBuffer(gl::UNIFORM_BUFFER, 0) };
+    }
+
+    pub fn generate_buffer(&self) -> GLuint {
+        let mut ubo: GLuint = 0;
+        unsafe { gl::GenBuffers(1, &mut ubo) };
+        ubo
+    }
+
+    pub fn initialize_buffer_data(&self) {
+        self.bind();
+        unsafe {
+            gl::BufferData(
+                gl::UNIFORM_BUFFER,
+                self.data.len() as GLsizeiptr,
+                &self.data as *const _ as *const GLvoid,
+                gl::DYNAMIC_DRAW,
+            );
+        }
+        self.unbind();
+    }
+
+    pub fn refresh_buffer_data(&self) {
+        self.bind();
+        unsafe {
+            gl::BufferSubData(
+                gl::UNIFORM_BUFFER,
+                0,
+                self.data.len() as GLsizeiptr,
+                &self.data as *const _ as *const GLvoid,
+            );
+        }
+        self.unbind();
     }
 }
