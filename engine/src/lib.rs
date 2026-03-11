@@ -413,3 +413,14 @@ fn handle_cursor_movement(input_tx: &Sender<InputEvent>, pos: PhysicalPosition<f
     let vec = Vec2::new(pos.x as f32, pos.y as f32);
     let _ = input_tx.send(InputEvent::MouseMove(vec));
 }
+
+#[macro_export]
+macro_rules! spawn_entity {
+    ($world:expr, $($component:expr),* $(,)?) => {{
+        let entity = $world.create_entity();
+        $(
+            $world.add_component(entity, $component);
+        )*
+        entity
+    }};
+}

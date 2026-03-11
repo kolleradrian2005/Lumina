@@ -44,6 +44,7 @@ use lumina_engine::{
         parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
         shader_parameter_type::ShaderParameterType,
     },
+    spawn_entity,
     texture::{
         resource_manager::ResourceManager,
         resource_provider::ResourceProvider,
@@ -132,7 +133,37 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let initial_position = Vec3::new(0.0, 0.25, 0.0);
 
     // Create dummy
-
+    spawn_entity!(
+        world,
+        TransformComponent {
+            position: (0.75, 0.0, 0.0).into(),
+            rotation: 0.0,
+            scale: Vec2::uniform(0.5),
+            is_flipped: false,
+        },
+        MaterialComponent::new(
+            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
+            shader.clone(),
+        ),
+        ModelComponent::from(resource_manager.get_model("square").get_mesh().clone()),
+        ColliderComponent {
+            shape: ColliderShape::Capsule2D {
+                width: 0.5,
+                height: 1.0,
+            },
+            offset: (0.0, 0.25).into(),
+        },
+        {
+            let mut force_component = ForceComponent::new(1.0);
+            force_component.apply_force(AppliedForce {
+                id: "water_resistance".to_string(),
+                effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
+                mode: ForceMode::Continuous,
+            });
+            force_component
+        },
+        MovementComponent::default()
+    );
     let dummy = world.create_entity();
     world.add_component(
         dummy,
