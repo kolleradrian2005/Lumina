@@ -5,10 +5,9 @@ use include_assets::NamedArchive;
 
 use crate::{
     logic::scene::ecs::component::collider_component::ColliderShape,
-    math::vec3::Vec3,
     render::{
         mesh::Mesh,
-        model::{model::Model, sprite},
+        model::sprite,
         resource::{resource_command::ResourceCommand, texture::StaticTexture},
         shader::{
             parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
@@ -17,10 +16,7 @@ use crate::{
     },
 };
 
-use super::{
-    resource_provider::ResourceProvider,
-    texture::{StaticColor, Texture},
-};
+use super::{resource_provider::ResourceProvider, texture::Texture};
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub enum ColliderShapeKey {
@@ -42,9 +38,9 @@ impl ColliderShapeKey {
 }
 
 pub struct ResourceManager {
-    place_holder_model: Model,
+    place_holder_mesh: Arc<Mesh>,
     //place_holder_font: FontTexture,
-    models: HashMap<String, Model>,
+    meshes: HashMap<String, Arc<Mesh>>,
     //fonts: HashMap<String, FontTexture>,
     shader_programs: HashMap<String, Arc<ShaderProgram>>,
     loader_tx: Sender<ResourceCommand>,
@@ -68,9 +64,9 @@ impl ResourceManager {
             .expect("Render thread died!")
             .expect("Failed to load default mesh");
         ResourceManager {
-            place_holder_model: Model::new(default_mesh),
+            place_holder_mesh: Arc::new(default_mesh),
             //place_holder_font: FontTexture::new(),
-            models: HashMap::new(),
+            meshes: HashMap::new(),
             //fonts: HashMap::new(),
             loader_tx,
             shader_programs: HashMap::new(),
@@ -92,14 +88,14 @@ impl ResourceManager {
 }
 
 impl ResourceProvider for ResourceManager {
-    fn load_default_models(&mut self) {
+    fn load_default_meshes(&mut self) {
         let (vertices, indices, uvs) = sprite::square(1.0);
         let square_mesh = self
             .load_mesh(vertices, indices, uvs)
             .expect("Could not load default model");
-        let mut square = Model::new(square_mesh);
-        square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
-        self.save_model("square", square);
+        //let mut square = Model::new(square_mesh);
+        //square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
+        self.save_mesh("square", square_mesh);
     }
 
     fn load_default_shaders(&mut self) {
@@ -171,14 +167,14 @@ impl ResourceProvider for ResourceManager {
         }
     */
 
-    fn save_model(&mut self, name: &str, model: Model) {
-        self.models.insert(name.to_string(), model);
+    fn save_mesh(&mut self, name: &str, mesh: Mesh) {
+        self.meshes.insert(name.to_string(), Arc::new(mesh));
     }
 
-    fn get_model(&self, name: &str) -> Model {
-        match self.models.get(name) {
+    fn get_mesh(&self, name: &str) -> Arc<Mesh> {
+        match self.meshes.get(name) {
             Some(model) => model,
-            None => &self.place_holder_model,
+            None => &self.place_holder_mesh,
         }
         .clone()
     }

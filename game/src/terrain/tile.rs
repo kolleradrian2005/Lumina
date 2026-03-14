@@ -99,44 +99,37 @@ impl Tile {
                     z_index,
                 );
                 position.z = z_index;
+                // TODO: use prefab
                 let seaweed = world.create_entity();
-                let seaweed_model = resource_manager.get_model("seagrass");
-                if let Texture::StaticTexture(texture) = seaweed_model.get_texture() {
-                    position.y +=
-                        seaweed_model.get_scale().y * texture.get_normalized_dimensions().1 / 2.0;
+                let seaweed_mesh = resource_manager.get_mesh("seagrass");
+                let shader = resource_manager.get_shader("model_with_tesselation");
+                let use_tesselation = shader.get_handle().has_tesselation;
+                if let Some(Texture::StaticTexture(texture)) =
+                    resource_manager.load_static_texture("seagrass0.png")
+                {
+                    position.y += 0.08 * texture.get_normalized_dimensions().1 / 2.0;
+                    let mut material =
+                        MaterialComponent::new(Texture::StaticTexture(texture), shader)
+                            .with_param("uObjectType", ObjectType::SeaGrass as i32);
+                    if use_tesselation {
+                        material.set_param("uCurrent", 0f32);
+                    }
+                    world.add_component(seaweed, material);
                 }
                 world.add_component::<CurrentComponent>(seaweed, CurrentComponent::default());
                 world.add_component::<ModelComponent>(
                     seaweed,
                     ModelComponent {
-                        mesh: seaweed_model.get_mesh().clone(),
+                        mesh: seaweed_mesh,
                         //object_type: ObjectType::SeaGrass,
                     },
                 );
-                let shader = resource_manager.get_shader("model_with_tesselation");
-                let use_tesselation = shader.get_handle().has_tesselation;
-                let mut material =
-                    MaterialComponent::new(seaweed_model.get_texture().clone(), shader)
-                        .with_param("uObjectType", ObjectType::SeaGrass as i32);
-                if use_tesselation {
-                    material.set_param("uCurrent", 0f32);
-                }
-                world.add_component(seaweed, material);
-                /*world.add_component::<TextureComponent>(
-                    seaweed,
-                    seaweed_model.get_texture().clone().into(),
-                );
-                world.add_component(
-                    seaweed,
-                    ShaderParamsComponent {
-                        params: vec![ShaderParam::Current(0f32)].into(),
-                    },
-                );*/
+
                 world.add_component(
                     seaweed,
                     TransformComponent {
                         position: position,
-                        scale: seaweed_model.get_scale(),
+                        scale: Vec2::uniform(0.08),
                         rotation: 0.0,
                         is_flipped: false,
                     },

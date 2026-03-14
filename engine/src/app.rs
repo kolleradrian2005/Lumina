@@ -120,7 +120,7 @@ pub async fn start(
         let mut scene = Scene::new();
         let mut resource_manager = ResourceManager::new(resource_tx.clone());
         resource_manager.attach_archive(NamedArchive::load(include_dir!("assets")));
-        resource_manager.load_default_models();
+        resource_manager.load_default_meshes();
         resource_manager.load_default_shaders();
         on_init(&mut scene, &mut resource_manager);
         scene.get_world_mut().insert_resource(resource_manager);

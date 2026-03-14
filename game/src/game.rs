@@ -45,7 +45,6 @@ use lumina_engine::{
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
-        model::model::Model,
         resource::{
             resource_manager::ResourceManager,
             resource_provider::ResourceProvider,
@@ -101,31 +100,23 @@ fn load_resources(resource_manager: &mut ResourceManager) {
             },
         )
         .expect("Failed to load background shader");
-    let mut square = resource_manager.get_model("square");
-    square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
-    let mut bubble = square.clone();
-    bubble.set_scale(Vec2::uniform(0.01));
+    /*let mut square_mesh = resource_manager.get_mesh("square");
+    let mut bubble_mesh = square_mesh.clone();
+    /*bubble.set_scale(Vec2::uniform(0.01));
     if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
         bubble.set_texture(texture);
-    }
-    if let Some(Texture::StaticTexture(texture)) =
-        resource_manager.load_static_texture("seagrass0.png")
-    {
-        let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
-        let mut seagrass = Model::new(seagrass_mesh);
-        seagrass.set_texture(texture.into());
-        seagrass.set_scale(Vec2::uniform(0.08));
-        resource_manager.save_model("seagrass", seagrass);
-    }
+    }*/
+    let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
+    resource_manager.save_mesh("seagrass", seagrass);*/
 
-    let mut fish = square.clone();
+    /*let mut fish = square.clone();
     if let Some(texture) = resource_manager.load_static_texture("fish.png") {
         fish.set_texture(texture);
     }
     fish.set_scale(Vec2::uniform(0.04));
-
-    resource_manager.save_model("bubble", bubble);
-    resource_manager.save_model("fish", fish);
+    */
+    //resource_manager.save_mesh("bubble", bubble_mesh);
+    //resource_manager.save_mesh("fish", fish);
 }
 
 fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
@@ -185,7 +176,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
             shader.clone(),
         ),
-        ModelComponent::from(resource_manager.get_model("square").get_mesh().clone()),
+        ModelComponent::from(resource_manager.get_mesh("square")),
         ColliderComponent {
             shape: ColliderShape::Capsule2D {
                 width: 0.5,
@@ -221,14 +212,8 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             shader.clone(),
         ),
     );
-    world.add_component::<ModelComponent>(
-        dummy,
-        resource_manager
-            .get_model("square")
-            .get_mesh()
-            .clone()
-            .into(),
-    );
+    world
+        .add_component::<ModelComponent>(dummy, resource_manager.get_mesh("square").clone().into());
     world.add_component(
         dummy,
         ColliderComponent {
@@ -267,14 +252,8 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             shader.clone(),
         ),
     );
-    world.add_component::<ModelComponent>(
-        dummy,
-        resource_manager
-            .get_model("square")
-            .get_mesh()
-            .clone()
-            .into(),
-    );
+    world
+        .add_component::<ModelComponent>(dummy, resource_manager.get_mesh("square").clone().into());
     world.add_component(
         dummy,
         ColliderComponent {
@@ -439,7 +418,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         ),
     ];
 
-    let pattern_model = resource_manager.get_model("square");
+    let pattern_mesh = resource_manager.get_mesh("square");
 
     let children = vec![
         left_hand_model,
@@ -475,7 +454,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 is_flipped: false,
             },
         );
-        world.add_component::<ModelComponent>(*child, pattern_model.get_mesh().clone().into());
+        world.add_component::<ModelComponent>(*child, pattern_mesh.clone().into());
         match idx {
             1 | 6 => {
                 let condition = if idx == 1 {
@@ -525,23 +504,26 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         }
     }
 
-    let bubble_model = resource_manager.get_model("bubble");
+    let bubble_mesh = resource_manager.get_mesh("square");
     let bubble_emitter = world.create_entity();
     world.add_component::<EmitterComponent>(bubble_emitter, ParticleEntityType::Bubble.into());
     world.add_component::<TransformComponent>(
         bubble_emitter,
         TransformComponent {
             position: (0.025, -0.025, 0.0001).into(),
-            rotation: bubble_model.get_rotation(),
-            scale: bubble_model.get_scale(),
+            rotation: 0.0,
+            scale: Vec2::uniform(0.01),
             is_flipped: false,
         },
     );
-    world.add_component::<ModelComponent>(bubble_emitter, bubble_model.get_mesh().clone().into());
-    world.add_component(
-        bubble_emitter,
-        MaterialComponent::new(bubble_model.get_texture().clone().into(), shader.clone()),
-    );
+    // TODO: use prefab for bubble emitter
+    world.add_component::<ModelComponent>(bubble_emitter, bubble_mesh.into());
+    if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
+        world.add_component(
+            bubble_emitter,
+            MaterialComponent::new(texture.into(), shader.clone()),
+        );
+    }
 
     world.add_component::<MultiConditionalParentComponent>(
         bubble_emitter,
@@ -580,6 +562,6 @@ fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
         .with_param("uColor1", Vec3::new(0.0, 0.29, 0.43))
         .with_param("uColor2", Vec3::new(0.0, 0.5, 0.5)),
     );
-    let pattern_model = resource_manager.get_model("square");
-    world.add_component::<ModelComponent>(background, pattern_model.get_mesh().clone().into());
+    let pattern_mesh = resource_manager.get_mesh("square");
+    world.add_component::<ModelComponent>(background, pattern_mesh.clone().into());
 }

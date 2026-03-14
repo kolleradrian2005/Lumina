@@ -4,7 +4,7 @@ mod world_test {
     use lumina_engine::logic::scene::ecs::component::model_component::ModelComponent;
     use lumina_engine::logic::scene::ecs::entity::entity::Entity;
     use lumina_engine::logic::scene::world::World;
-    use lumina_engine::render::model::model::Model;
+    use lumina_engine::render::mesh::Mesh;
     use lumina_engine::render::resource::resource_provider::ResourceProvider;
     use lumina_engine::render::resource::texture::Texture;
     use lumina_engine::render::shader::shader_configuration::ShaderConfiguration;
@@ -15,10 +15,10 @@ mod world_test {
     mock! {
         pub ResourceProvider {}
         impl ResourceProvider for ResourceProvider {
-            fn load_default_models(&mut self);
+            fn load_default_meshes(&mut self);
             fn load_default_shaders(&mut self);
-            fn save_model(&mut self, name: &str, model: Model);
-            fn get_model(&self, name: &str) -> Model;
+            fn save_mesh(&mut self, name: &str, mesh: Mesh);
+            fn get_mesh(&self, name: &str) -> Arc<Mesh>;
             fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
             fn load_animated_texture<'a>(
                 &mut self,

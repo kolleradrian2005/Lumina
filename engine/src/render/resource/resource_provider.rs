@@ -6,7 +6,7 @@ use std::{
 use include_assets::NamedArchive;
 
 use crate::render::{
-    model::model::Model,
+    mesh::Mesh,
     shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
 };
 
@@ -44,10 +44,10 @@ impl Deref for ResourceProviderHandle {
 }
 
 pub trait ResourceProvider: Send + Sync {
-    fn load_default_models(&mut self);
+    fn load_default_meshes(&mut self);
     fn load_default_shaders(&mut self);
-    fn save_model(&mut self, name: &str, model: Model);
-    fn get_model(&self, name: &str) -> Model;
+    fn save_mesh(&mut self, name: &str, mesh: Mesh);
+    fn get_mesh(&self, name: &str) -> Arc<Mesh>;
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture>;
     fn load_animated_texture<'a>(
         &mut self,
