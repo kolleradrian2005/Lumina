@@ -1,4 +1,4 @@
-use lumina_engine::{math::vec3::Vec3, scene::world::component::component::Component};
+use lumina_engine::{logic::scene::ecs::component::component::Component, math::vec3::Vec3};
 
 #[derive(Component, Clone)]
 pub enum PlayerStateComponent {

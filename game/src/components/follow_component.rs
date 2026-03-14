@@ -1,4 +1,4 @@
-use lumina_engine::scene::world::{component::component::Component, entity::entity::Entity};
+use lumina_engine::logic::scene::ecs::{component::component::Component, entity::entity::Entity};
 
 #[derive(Component)]
 pub struct FollowComponent {

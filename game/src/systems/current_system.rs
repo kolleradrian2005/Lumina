@@ -1,14 +1,14 @@
-use lumina_engine::scene::world::{
-    component::{
-        material_component::MaterialComponent, movement_component::MovementComponent,
-        transform_component::TransformComponent,
+use crate::terrain::water::Water;
+use lumina_engine::logic::scene::{
+    ecs::{
+        component::{
+            material_component::MaterialComponent, movement_component::MovementComponent,
+            transform_component::TransformComponent,
+        },
+        system::system::System,
     },
-    system::system::System,
     world::World,
 };
-
-use crate::terrain::water::Water;
-
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {

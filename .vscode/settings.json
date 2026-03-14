@@ -4,5 +4,7 @@
         ".\\Cargo.toml"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,
+    "rust-analyzer.imports.granularity.group": "crate",
+    "rust-analyzer.completion.autoimport.enable": true
     //"rust-analyzer.cargo.features": "all"
 }

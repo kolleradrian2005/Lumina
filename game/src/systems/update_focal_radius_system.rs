@@ -1,15 +1,11 @@
+use lumina_engine::logic::scene::ecs::component::transform_component::TransformComponent;
+use lumina_engine::logic::scene::ecs::system::system::System;
+use lumina_engine::logic::scene::world::World;
+use lumina_engine::math::vec3::Vec3;
 use lumina_engine::render::uniformbuffer::{PostProcessUniformBuffer, UniformBufferSource};
-use lumina_engine::scene::world::system::system::System;
-
-use lumina_engine::{
-    math::vec3::Vec3,
-    scene::{
-        foreground::Foreground,
-        world::{component::transform_component::TransformComponent, world::World},
-    },
-};
 
 use crate::components::player_state_component::PlayerStateComponent;
+use crate::foreground::Foreground;
 
 pub struct UpdateFocalRadiusSystem;
 

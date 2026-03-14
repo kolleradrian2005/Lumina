@@ -12,6 +12,7 @@ pub mod systems {
 }
 pub mod components {
     pub mod conditional_parent_component;
+    pub mod current_component;
     pub mod follow_component;
     pub mod multi_conditional_parent_component;
     pub mod player_part_component;
@@ -22,7 +23,9 @@ pub mod terrain {
     pub mod tile;
     pub mod water;
 }
+pub mod foreground;
 pub mod game;
+pub mod object_type;
 pub mod player_state;
 
 use winit::event_loop::EventLoopBuilder;

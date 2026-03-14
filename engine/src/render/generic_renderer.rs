@@ -4,12 +4,15 @@ use std::ffi::CString;
 
 use gl::types::{GLint, GLuint};
 
-use crate::scene::world::component::material_component::DrawMode;
-use crate::shader::material_parameter::MaterialParameter;
-use crate::shader::shader_program::ShaderHandle;
-use crate::texture::texture::Texture;
+use crate::{
+    logic::scene::ecs::component::material_component::DrawMode,
+    render::{
+        resource::texture::Texture,
+        shader::{material_parameter::MaterialParameter, shader_program::ShaderHandle},
+    },
+    shared::render_entity::RenderEntity,
+};
 
-use super::render_entity::RenderEntity;
 pub struct GenericRenderer {
     uniform_cache: RefCell<HashMap<GLuint, HashMap<String, GLint>>>,
 }

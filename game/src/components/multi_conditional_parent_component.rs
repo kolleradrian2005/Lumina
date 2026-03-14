@@ -1,4 +1,4 @@
-use lumina_engine::scene::world::component::component::Component;
+use lumina_engine::logic::scene::ecs::component::component::Component;
 
 use super::conditional_parent_component::ConditionalParentComponent;
 

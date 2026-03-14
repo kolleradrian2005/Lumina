@@ -1,18 +1,21 @@
+use crate::components::follow_component::FollowComponent;
 use lumina_engine::{
-    focus_point::FocusPoint,
+    logic::scene::{
+        ecs::{
+            component::{
+                camera_component::CameraComponent, transform_component::TransformComponent,
+            },
+            system::system::System,
+        },
+        focus_point::FocusPoint,
+        world::World,
+    },
     render::{
-        postprocess_config::PostprocessConfig,
         uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
         window_size::WindowSize,
     },
-    scene::world::{
-        component::{camera_component::CameraComponent, transform_component::TransformComponent},
-        system::system::System,
-        world::World,
-    },
+    shared::postprocess_config::PostprocessConfig,
 };
-
-use crate::components::follow_component::FollowComponent;
 
 pub struct CameraSystem;
 

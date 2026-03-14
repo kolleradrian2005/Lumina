@@ -1,7 +1,7 @@
 use lumina_engine::{
-    input::input_state::InputState,
+    logic::scene::{ecs::system::system::System, world::World},
     math::vec3::Vec3,
-    scene::world::{system::system::System, world::World},
+    shared::input::input_state::InputState,
 };
 use winit::keyboard::{Key, NamedKey};
 

@@ -1,12 +1,13 @@
-use lumina_engine::render::postprocess_config::PostprocessConfig;
-use lumina_engine::scene::world::system::system::System;
 use lumina_engine::{
-    math::vec3::Vec3,
-    scene::{
-        foreground::Foreground,
-        world::{component::camera_component::CameraComponent, world::World},
+    logic::scene::{
+        ecs::{component::camera_component::CameraComponent, system::system::System},
+        world::World,
     },
+    math::vec3::Vec3,
+    shared::postprocess_config::PostprocessConfig,
 };
+
+use crate::foreground::Foreground;
 
 pub struct UpdateGodRaysSystem;
 

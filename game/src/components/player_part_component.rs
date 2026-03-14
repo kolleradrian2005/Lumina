@@ -1,4 +1,4 @@
-use lumina_engine::scene::world::component::component::Component;
+use lumina_engine::logic::scene::ecs::component::component::Component;
 
 #[derive(Component)]
 pub enum PlayerPartComponent {

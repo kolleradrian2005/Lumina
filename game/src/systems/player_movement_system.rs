@@ -1,6 +1,8 @@
-use lumina_engine::scene::world::{
-    component::force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
-    system::system::System,
+use lumina_engine::logic::scene::{
+    ecs::{
+        component::force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
+        system::system::System,
+    },
     world::World,
 };
 

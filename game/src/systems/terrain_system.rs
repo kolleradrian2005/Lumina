@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 
 use lumina_engine::{
-    scene::world::{
-        component::transform_component::TransformComponent, system::system::System, world::World,
+    logic::scene::{
+        ecs::{component::transform_component::TransformComponent, system::system::System},
+        world::World,
     },
-    texture::resource_manager::ResourceManager,
+    render::resource::resource_manager::ResourceManager,
 };
 
 use crate::{

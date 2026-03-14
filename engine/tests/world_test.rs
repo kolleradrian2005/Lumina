@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod world_test {
-    use lumina_engine::model::model::Model;
-    use lumina_engine::scene::world::component::component::Component;
-    use lumina_engine::scene::world::component::model_component::ModelComponent;
-    use lumina_engine::scene::world::entity::entity::Entity;
-    use lumina_engine::scene::world::world::World;
-    use lumina_engine::shader::shader_configuration::ShaderConfiguration;
-    use lumina_engine::shader::shader_program::ShaderProgram;
-    use lumina_engine::texture::resource_provider::ResourceProvider;
-    use lumina_engine::texture::texture::Texture;
+    use lumina_engine::logic::scene::ecs::component::component::Component;
+    use lumina_engine::logic::scene::ecs::component::model_component::ModelComponent;
+    use lumina_engine::logic::scene::ecs::entity::entity::Entity;
+    use lumina_engine::logic::scene::world::World;
+    use lumina_engine::render::model::model::Model;
+    use lumina_engine::render::resource::resource_provider::ResourceProvider;
+    use lumina_engine::render::resource::texture::Texture;
+    use lumina_engine::render::shader::shader_configuration::ShaderConfiguration;
+    use lumina_engine::render::shader::shader_program::ShaderProgram;
     use mockall::mock;
     use std::sync::Arc;
 

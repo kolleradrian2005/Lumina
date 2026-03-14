@@ -1,14 +1,17 @@
-use lumina_engine::{
-    math::vec3::Vec3,
-    scene::world::{
-        component::{camera_component::CameraComponent, transform_component::TransformComponent},
-        system::system::System,
-        world::World,
-    },
-};
-
 use crate::components::{
     follow_component::FollowComponent, player_state_component::PlayerStateComponent,
+};
+use lumina_engine::{
+    logic::scene::{
+        ecs::{
+            component::{
+                camera_component::CameraComponent, transform_component::TransformComponent,
+            },
+            system::system::System,
+        },
+        world::World,
+    },
+    math::vec3::Vec3,
 };
 
 pub struct FollowSystem;

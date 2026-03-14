@@ -1,9 +1,9 @@
 use std::{collections::VecDeque, f32::consts::PI};
 
 use lumina_engine::{
+    logic::scene::world::World,
     math::vec3::Vec3,
-    scene::world::world::World,
-    texture::{
+    render::resource::{
         resource_manager::ResourceManager,
         texture::{StaticColor, Texture},
     },

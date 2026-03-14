@@ -1,15 +1,17 @@
 use std::f32::consts::PI;
 
 use lumina_engine::{
-    scene::world::{
-        component::{
-            material_component::MaterialComponent, parent_component::ParentComponent,
-            transform_component::TransformComponent,
+    logic::scene::{
+        ecs::{
+            component::{
+                material_component::MaterialComponent, parent_component::ParentComponent,
+                transform_component::TransformComponent,
+            },
+            system::system::System,
         },
-        system::system::System,
         world::World,
     },
-    texture::texture::Texture,
+    render::resource::texture::Texture,
 };
 
 use crate::components::{

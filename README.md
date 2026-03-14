@@ -17,7 +17,7 @@ A minimal 2D rendering engine with:
 ### Core Systems
 
 - **ECS (Entity Component System)** — Flexible entity/component/system architecture with priority-based execution
-- **Rendering** — OpenGL-based renderer with post-processing, GUI, and scene management
+- **Rendering** — OpenGL-based renderer with post-processing, and scene management
 - **Math** — Vector types (Vec2, Vec3), transformations, collision geometry
 - **Input Handling** — Keyboard, mouse, and touch input abstraction
 - **Resource Management** — Texture, model, font, and shader asset loading

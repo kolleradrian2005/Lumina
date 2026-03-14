@@ -12,6 +12,7 @@ use crate::{
         player_part_component::PlayerPartComponent,
         player_state_component::PlayerStateComponent,
     },
+    foreground::Foreground,
     player_state::PlayerState,
     systems::{
         animation_system::AnimationSystem, camera_system::CameraSystem,
@@ -25,12 +26,8 @@ use crate::{
 };
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
-    math::{vec2::Vec2, vec3::Vec3},
-    model::model::Model,
-    render::{postprocess_config::PostprocessConfig, uniformbuffer::UniformBufferSource},
-    scene::{
-        foreground::Foreground,
-        world::{
+    logic::scene::{
+        ecs::{
             component::{
                 camera_component::CameraComponent,
                 collider_component::{ColliderComponent, ColliderShape},
@@ -43,25 +40,30 @@ use lumina_engine::{
                 transform_component::TransformComponent,
             },
             entity::{entity::Entity, particle_entity::ParticleEntityType},
-            world::World,
         },
+        world::World,
     },
-    shader::{
-        parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
-        shader_parameter_type::ShaderParameterType,
+    math::{vec2::Vec2, vec3::Vec3},
+    render::{
+        model::model::Model,
+        resource::{
+            resource_manager::ResourceManager,
+            resource_provider::ResourceProvider,
+            texture::{StaticColor, Texture},
+        },
+        shader::{
+            parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
+            shader_parameter_type::ShaderParameterType,
+        },
+        uniformbuffer::UniformBufferSource,
     },
+    shared::postprocess_config::PostprocessConfig,
     spawn_entity,
-    texture::{
-        resource_manager::ResourceManager,
-        resource_provider::ResourceProvider,
-        texture::{StaticColor, Texture},
-    },
-    transformable::Transformable,
 };
 use winit::event_loop::EventLoop;
 
 pub fn initialize(event_loop: EventLoop<()>) {
-    lumina_engine::start(event_loop, |scene, resource_manager| {
+    lumina_engine::app::start(event_loop, |scene, resource_manager| {
         load_resources(resource_manager);
         init_world(scene.get_world_mut(), resource_manager);
         scene.register_system(Box::new(InputSystem));

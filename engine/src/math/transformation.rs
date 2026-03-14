@@ -1,6 +1,6 @@
 use crate::{
-    model::model::Model, scene::world::component::transform_component::TransformComponent,
-    transformable::Transformable,
+    logic::scene::ecs::component::transform_component::TransformComponent,
+    render::model::model::Model,
 };
 
 use super::{vec2::Vec2, vec3::Vec3};

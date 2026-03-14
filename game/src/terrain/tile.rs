@@ -1,22 +1,28 @@
 use lumina_engine::{
-    math::{vec2::Vec2, vec3::Vec3},
-    model::sprite,
-    scene::world::{
-        component::{
-            current_component::CurrentComponent,
-            material_component::{DrawMode, MaterialComponent, ObjectType},
-            model_component::ModelComponent,
-            transform_component::TransformComponent,
+    logic::scene::{
+        ecs::{
+            component::{
+                material_component::{DrawMode, MaterialComponent},
+                model_component::ModelComponent,
+                transform_component::TransformComponent,
+            },
+            entity::entity::Entity,
         },
-        entity::entity::Entity,
         world::World,
     },
-    texture::{
-        resource_manager::ResourceManager, resource_provider::ResourceProvider, texture::Texture,
+    math::{vec2::Vec2, vec3::Vec3},
+    render::{
+        model::sprite,
+        resource::{
+            resource_manager::ResourceManager, resource_provider::ResourceProvider,
+            texture::Texture,
+        },
     },
-    transformable::Transformable,
 };
 use noise::Perlin;
+
+use crate::components::current_component::CurrentComponent;
+use crate::object_type::ObjectType;
 
 use super::terrain::Terrain;
 
