@@ -39,9 +39,7 @@ impl ColliderShapeKey {
 
 pub struct ResourceManager {
     place_holder_mesh: Arc<Mesh>,
-    //place_holder_font: FontTexture,
     meshes: HashMap<String, Arc<Mesh>>,
-    //fonts: HashMap<String, FontTexture>,
     shader_programs: HashMap<String, Arc<ShaderProgram>>,
     loader_tx: Sender<ResourceCommand>,
     collider_meshes: HashMap<ColliderShapeKey, Arc<Mesh>>,
@@ -65,9 +63,7 @@ impl ResourceManager {
             .expect("Failed to load default mesh");
         ResourceManager {
             place_holder_mesh: Arc::new(default_mesh),
-            //place_holder_font: FontTexture::new(),
             meshes: HashMap::new(),
-            //fonts: HashMap::new(),
             loader_tx,
             shader_programs: HashMap::new(),
             collider_meshes: HashMap::new(),
@@ -160,13 +156,6 @@ impl ResourceProvider for ResourceManager {
         .expect("Failed to load model_with_tesselation shader");
     }
 
-    /*fn load_fonts(&mut self) {
-            if let Some(default_font) = self.load_font("Raleway-Regular.ttf") {
-                self.save_font("default", default_font);
-            }
-        }
-    */
-
     fn save_mesh(&mut self, name: &str, mesh: Mesh) {
         self.meshes.insert(name.to_string(), Arc::new(mesh));
     }
@@ -178,16 +167,6 @@ impl ResourceProvider for ResourceManager {
         }
         .clone()
     }
-
-    /*
-        fn get_font(&self, name: &str) -> FontTexture {
-            if let Some(font) = self.fonts.get(name) {
-                font.clone()
-            } else {
-                self.place_holder_font.clone()
-            }
-        }
-    */
 
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture> {
         let (tx, rx) = flume::bounded(1);
@@ -267,25 +246,6 @@ impl ResourceProvider for ResourceManager {
 }
 
 impl ResourceManager {
-    /*fn save_font(&mut self, name: &str, font: FontTexture) {
-            self.fonts.insert(name.to_string(), font);
-        }
-
-        fn load_font(&mut self, font_name: &str) -> Option<FontTexture> {
-            let (tx, rx) = flume::bounded(1);
-            self.send_resource_command(ResourceCommand::LoadFont {
-                    font_name: font_name.to_string(),
-                    response_tx: tx,
-                });
-            match rx.recv() {
-                Ok(texture) => texture,
-                Err(_) => {
-                    println!("Failed to load font: {:?}", font_name);
-                    None
-                }
-            }
-        }
-    */
     pub fn load_mesh(
         &mut self,
         vertices: Vec<f32>,

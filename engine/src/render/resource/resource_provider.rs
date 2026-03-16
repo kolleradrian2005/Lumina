@@ -61,6 +61,4 @@ pub trait ResourceProvider: Send + Sync {
         shader_name: &str,
         shader_configuration: ShaderConfiguration,
     ) -> Option<Arc<ShaderProgram>>;
-    //fn load_fonts(&mut self);
-    //fn get_font(&self, name: &str) -> FontTexture;
 }

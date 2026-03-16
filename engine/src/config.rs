@@ -5,7 +5,6 @@ pub const INITIAL_WINDOW_HEIGHT: i32 = 800;
 
 // Assets
 pub const TEXTURES_PATH: &str = "textures";
-pub const FONTS_PATH: &str = "fonts";
 //#[cfg(target_os = "android")]
 //pub const SHADERS_PATH: &str = "es_shaders";
 //#[cfg(not(target_os = "android"))]

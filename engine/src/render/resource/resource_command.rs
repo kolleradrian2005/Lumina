@@ -11,10 +11,6 @@ pub enum ResourceCommand {
     AttachArchive {
         archive: NamedArchive,
     },
-    /*LoadFont {
-        font_name: String,
-        response_tx: Sender<Option<FontTexture>>,
-    },*/
     LoadStaticTexture {
         texture_name: String,
         response_tx: Sender<Option<Texture>>,

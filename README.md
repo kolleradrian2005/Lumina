@@ -20,7 +20,7 @@ A minimal 2D rendering engine with:
 - **Rendering** — OpenGL-based renderer with post-processing, and scene management
 - **Math** — Vector types (Vec2, Vec3), transformations, collision geometry
 - **Input Handling** — Keyboard, mouse, and touch input abstraction
-- **Resource Management** — Texture, model, font, and shader asset loading
+- **Resource Management** — Texture, model, and shader asset loading
 
 ### Architecture Highlights
 
@@ -61,7 +61,7 @@ An aquatic exploration game demonstrating engine usage:
 
 ### Assets
 
-- Embedded asset archives (textures, shaders, fonts) per crate
+- Embedded asset archives (textures, shaders) per crate
 - Modular resource loading (engine defaults + game-specific assets)
 
 ## Architecture
