@@ -1,4 +1,4 @@
-use crate::render::shader::shader_parameter_type::ShaderParameterType;
+use crate::render::resource::shader::shader_parameter_type::ShaderParameterType;
 
 #[derive(Debug, Clone)]
 pub struct ParameterSchema {

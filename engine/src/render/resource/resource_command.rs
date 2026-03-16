@@ -3,8 +3,8 @@ use include_assets::NamedArchive;
 
 use crate::render::{
     mesh::Mesh,
-    resource::texture::Texture,
-    shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
+    resource::shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
+    resource::texture::texture::Texture,
 };
 
 pub enum ResourceCommand {

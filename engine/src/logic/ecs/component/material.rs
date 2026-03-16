@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::render::{
-    resource::texture::Texture,
-    shader::{
+    resource::shader::{
         material_parameter::MaterialParameter,
-        shader_program::{ShaderHandle, ShaderProgram},
+        shader_program::{ShaderProgram, ShaderProgramHandle},
     },
+    resource::texture::texture::Texture,
 };
 
 use super::component::Component;
@@ -20,7 +20,7 @@ pub enum DrawMode {
 #[derive(Component, Clone, Debug)]
 pub struct Material {
     pub texture: Texture,
-    pub shader: ShaderHandle,
+    pub shader: ShaderProgramHandle,
     pub parameters: HashMap<String, MaterialParameter>,
     pub draw_mode: DrawMode,
     //pub uniform_buffers: HashMap<u32, Vec<u8>>,

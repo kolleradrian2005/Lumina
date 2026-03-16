@@ -1,10 +1,10 @@
 use gl::types::*;
 
-use crate::render::shader::shader_program::{ShaderHandle, ShaderProgram};
+use crate::render::resource::shader::shader_program::{ShaderProgram, ShaderProgramHandle};
 
-use super::shader::Shader;
+use super::shader_handle::ShaderHandle;
 
-pub fn load_program(shaders: &[Shader]) -> GLuint {
+pub fn load_program(shaders: &[ShaderHandle]) -> GLuint {
     unsafe {
         let id = gl::CreateProgram();
         for shader in shaders {
@@ -43,7 +43,7 @@ pub unsafe fn bind_attributes_to_program(
     );
 }
 
-pub unsafe fn start_program(shader_handle: &ShaderHandle) {
+pub unsafe fn start_program(shader_handle: &ShaderProgramHandle) {
     gl::UseProgram(shader_handle.id);
 }
 

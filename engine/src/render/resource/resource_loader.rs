@@ -3,14 +3,17 @@ use include_assets::NamedArchive;
 
 use crate::render::{
     mesh::Mesh,
-    resource::{resource_command::ResourceCommand, texture::Texture},
-    shader::shader_program::ShaderProgram,
-    texture_loader::TextureLoader,
+    resource::{
+        resource_command::ResourceCommand,
+        shader::{shader_loader::ShaderLoader, shader_program::ShaderProgram},
+        texture::{texture::Texture, texture_loader::TextureLoader},
+    },
 };
 
 pub struct ResourceLoader {
     loader_rx: Receiver<ResourceCommand>,
-    texture_loader: TextureLoader, // TODO: shader loader
+    texture_loader: TextureLoader,
+    shader_loader: ShaderLoader,
     archives: Vec<NamedArchive>,
 }
 
@@ -19,6 +22,7 @@ impl ResourceLoader {
         ResourceLoader {
             loader_rx,
             texture_loader: TextureLoader::new(),
+            shader_loader: ShaderLoader::new(),
             archives: Vec::new(),
         }
     }
@@ -79,10 +83,10 @@ impl ResourceLoader {
                 } => {
                     let mut shader_program: Option<ShaderProgram> = None;
                     for archive in self.archives.iter().rev() {
-                        if let Some(shad) = ShaderProgram::load_from_configuration(
-                            archive,
-                            shader_configuration.clone(),
-                        ) {
+                        if let Some(shad) = self
+                            .shader_loader
+                            .load_shader_program(archive, shader_configuration.clone())
+                        {
                             shader_program = Some(shad);
                             break;
                         }

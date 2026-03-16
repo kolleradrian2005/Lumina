@@ -5,7 +5,7 @@ use lumina_engine::{
     math::vec3::Vec3,
     render::resource::{
         resource_manager::ResourceManager,
-        texture::{StaticColor, Texture},
+        texture::texture::{StaticColor, Texture},
     },
 };
 use noise::{NoiseFn, Perlin};

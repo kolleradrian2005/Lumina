@@ -15,7 +15,7 @@ use lumina_engine::{
         model::sprite,
         resource::{
             resource_manager::ResourceManager, resource_provider::ResourceProvider,
-            texture::Texture,
+            texture::texture::Texture,
         },
     },
 };

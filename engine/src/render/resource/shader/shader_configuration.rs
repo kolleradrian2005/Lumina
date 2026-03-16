@@ -1,4 +1,4 @@
-use crate::render::shader::{
+use crate::render::resource::shader::{
     parameter_schema::ParameterSchema, shader_parameter_type::ShaderParameterType,
 };
 

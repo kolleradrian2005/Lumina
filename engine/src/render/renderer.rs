@@ -4,7 +4,7 @@ use std::ffi::CString;
 use gl::types::{GLsizeiptr, GLuint, GLvoid};
 use glutin::display::{Display, GlDisplay};
 
-use crate::render::resource::texture::StaticTexture;
+use crate::render::resource::texture::texture::StaticTexture;
 use crate::render::window_size::WindowSize;
 use crate::render::{frame_buffer::Framebuffer, generic_renderer::GenericRenderer};
 use crate::shared::extracted_frame::ExtractedFrame;

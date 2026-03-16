@@ -7,8 +7,10 @@ use gl::types::{GLint, GLuint};
 use crate::{
     logic::ecs::component::material::DrawMode,
     render::{
-        resource::texture::Texture,
-        shader::{material_parameter::MaterialParameter, shader_program::ShaderHandle},
+        resource::shader::{
+            material_parameter::MaterialParameter, shader_program::ShaderProgramHandle,
+        },
+        resource::texture::texture::Texture,
     },
     shared::render_entity::RenderEntity,
 };
@@ -26,7 +28,7 @@ impl GenericRenderer {
 
     fn get_uniform_location(
         &self,
-        shader_handle: ShaderHandle,
+        shader_handle: ShaderProgramHandle,
         uniform_name: &str,
     ) -> Option<GLint> {
         let mut cache = self.uniform_cache.borrow_mut();
@@ -47,7 +49,11 @@ impl GenericRenderer {
         Some(uniform_location)
     }
 
-    fn expect_uniform_location(&self, shader_handle: ShaderHandle, uniform_name: &str) -> GLint {
+    fn expect_uniform_location(
+        &self,
+        shader_handle: ShaderProgramHandle,
+        uniform_name: &str,
+    ) -> GLint {
         self.get_uniform_location(shader_handle, uniform_name)
             .expect(&format!(
                 "Uniform {} not found in shader with id {}",

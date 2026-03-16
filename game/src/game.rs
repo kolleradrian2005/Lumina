@@ -45,14 +45,14 @@ use lumina_engine::{
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
+        resource::shader::{
+            parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
+            shader_parameter_type::ShaderParameterType,
+        },
         resource::{
             resource_manager::ResourceManager,
             resource_provider::ResourceProvider,
-            texture::{StaticColor, Texture},
-        },
-        shader::{
-            parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
-            shader_parameter_type::ShaderParameterType,
+            texture::texture::{StaticColor, Texture},
         },
         uniformbuffer::UniformBufferSource,
     },

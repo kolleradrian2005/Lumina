@@ -8,15 +8,15 @@ use crate::{
     render::{
         mesh::Mesh,
         model::sprite,
-        resource::{resource_command::ResourceCommand, texture::StaticTexture},
-        shader::{
+        resource::shader::{
             parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
             shader_parameter_type::ShaderParameterType, shader_program::ShaderProgram,
         },
+        resource::{resource_command::ResourceCommand, texture::texture::StaticTexture},
     },
 };
 
-use super::{resource_provider::ResourceProvider, texture::Texture};
+use super::{resource_provider::ResourceProvider, texture::texture::Texture};
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub enum ColliderShapeKey {

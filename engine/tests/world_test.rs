@@ -6,9 +6,9 @@ mod world_test {
     use lumina_engine::logic::scene::world::World;
     use lumina_engine::render::mesh::Mesh;
     use lumina_engine::render::resource::resource_provider::ResourceProvider;
-    use lumina_engine::render::resource::texture::Texture;
-    use lumina_engine::render::shader::shader_configuration::ShaderConfiguration;
-    use lumina_engine::render::shader::shader_program::ShaderProgram;
+    use lumina_engine::render::resource::shader::shader_configuration::ShaderConfiguration;
+    use lumina_engine::render::resource::shader::shader_program::ShaderProgram;
+    use lumina_engine::render::resource::texture::texture::Texture;
     use mockall::mock;
     use std::sync::Arc;
 

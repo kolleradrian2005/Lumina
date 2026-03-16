@@ -1,6 +1,6 @@
 use crate::{
     math::{vec2::Vec2, vec3::Vec3},
-    render::shader::shader_parameter_type::ShaderParameterType,
+    render::resource::shader::shader_parameter_type::ShaderParameterType,
 };
 
 #[derive(Debug, Clone)]

@@ -8,7 +8,7 @@ use lumina_engine::{
         },
         scene::world::World,
     },
-    render::resource::texture::Texture,
+    render::resource::texture::texture::Texture,
 };
 
 use crate::components::{

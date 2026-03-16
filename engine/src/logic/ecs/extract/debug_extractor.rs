@@ -14,7 +14,7 @@ use crate::{
     render::resource::{
         resource_manager::{ColliderShapeKey, ResourceManager},
         resource_provider::ResourceProvider,
-        texture::{StaticColor, Texture},
+        texture::texture::{StaticColor, Texture},
     },
     shared::{extracted_frame::ExtractedFrame, render_entity::RenderEntity},
 };

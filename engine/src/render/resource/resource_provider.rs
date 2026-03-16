@@ -7,10 +7,10 @@ use include_assets::NamedArchive;
 
 use crate::render::{
     mesh::Mesh,
-    shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
+    resource::shader::{shader_configuration::ShaderConfiguration, shader_program::ShaderProgram},
 };
 
-use super::texture::Texture;
+use super::texture::texture::Texture;
 
 #[derive(Clone)]
 pub struct ResourceProviderHandle {

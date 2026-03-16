@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     config,
-    render::resource::texture::{AnimatedTexture, StaticTexture, Texture},
+    render::resource::texture::texture::{AnimatedTexture, StaticTexture, Texture},
 };
 
 pub struct TextureLoader {

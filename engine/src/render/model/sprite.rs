@@ -1,4 +1,4 @@
-use crate::render::resource::texture::StaticTexture;
+use crate::render::resource::texture::texture::StaticTexture;
 
 pub static Z_DEFAULT: f32 = 0.0;
 
