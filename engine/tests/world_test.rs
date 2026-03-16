@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod world_test {
-    use lumina_engine::logic::scene::ecs::component::component::Component;
-    use lumina_engine::logic::scene::ecs::component::model_component::ModelComponent;
-    use lumina_engine::logic::scene::ecs::entity::entity::Entity;
+    use lumina_engine::logic::ecs::component::component::Component;
+    use lumina_engine::logic::ecs::component::model::Model;
+    use lumina_engine::logic::ecs::entity::entity::Entity;
     use lumina_engine::logic::scene::world::World;
     use lumina_engine::render::mesh::Mesh;
     use lumina_engine::render::resource::resource_provider::ResourceProvider;
@@ -92,8 +92,8 @@ mod world_test {
         assert!(world.get_component::<MockComponent>(entity).is_some());
         assert!(world.get_component_mut::<MockComponent>(entity).is_some());
 
-        assert!(world.get_component::<ModelComponent>(entity).is_none());
-        assert!(world.get_component_mut::<ModelComponent>(entity).is_none());
+        assert!(world.get_component::<Model>(entity).is_none());
+        assert!(world.get_component_mut::<Model>(entity).is_none());
     }
 
     #[test]

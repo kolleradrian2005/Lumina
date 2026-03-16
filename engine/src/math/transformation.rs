@@ -1,25 +1,6 @@
-use crate::{
-    logic::scene::ecs::component::transform_component::TransformComponent,
-    render::model::model::Model,
-};
+use crate::logic::ecs::component::transform::Transform;
 
 use super::{vec2::Vec2, vec3::Vec3};
-
-pub fn create_model_matrix(model: &Model) -> [[f32; 4]; 4] {
-    let position = model.get_position();
-    let rotation = model.get_rotation();
-    let scale = model.get_scale();
-
-    let translation_matrix = create_translation_matrix(position);
-    let rotation_matrix = create_rotation_matrix(rotation);
-    let scale_matrix = create_scale_matrix(scale);
-
-    let mut model_matrix = scale_matrix;
-    multiply_matrix(&mut model_matrix, &rotation_matrix);
-    multiply_matrix(&mut model_matrix, &translation_matrix);
-
-    model_matrix
-}
 
 pub fn create_translation_matrix(position: Vec3) -> [[f32; 4]; 4] {
     [
@@ -91,8 +72,8 @@ pub fn create_ortographic_projection_matrix(
 }
 
 pub fn create_transform_matrix(
-    model: &TransformComponent,
-    parent_component: Option<&TransformComponent>,
+    model: &Transform,
+    parent_component: Option<&Transform>,
 ) -> [[f32; 4]; 4] {
     let inherited = calc_intherited_transform(model, parent_component);
 
@@ -108,9 +89,9 @@ pub fn create_transform_matrix(
 }
 
 pub fn calc_intherited_transform(
-    model: &TransformComponent,
-    parent_component: Option<&TransformComponent>,
-) -> TransformComponent {
+    model: &Transform,
+    parent_component: Option<&Transform>,
+) -> Transform {
     let mut position = model.position;
     let mut rotation = model.rotation;
     let mut scale = model.scale;
@@ -130,7 +111,7 @@ pub fn calc_intherited_transform(
         scale.y *= m_scale.y;
     }
 
-    TransformComponent {
+    Transform {
         position,
         rotation,
         scale,

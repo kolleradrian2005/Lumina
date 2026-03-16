@@ -1,6 +1,6 @@
-use crate::logic::scene::ecs::component::material_component::MaterialComponent;
+use crate::logic::ecs::component::material::Material;
 
 #[derive(Clone, Debug)]
 pub struct PostprocessConfig {
-    pub material: MaterialComponent,
+    pub material: Material,
 }

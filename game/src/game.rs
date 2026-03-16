@@ -6,14 +6,14 @@ use std::{
 
 use crate::{
     components::{
-        conditional_parent_component::{AnimationCondition, ConditionalParentComponent},
-        follow_component::FollowComponent,
-        multi_conditional_parent_component::MultiConditionalParentComponent,
-        player_part_component::PlayerPartComponent,
-        player_state_component::PlayerStateComponent,
+        conditional_parent::{AnimationCondition, ConditionalParent},
+        follow::Follow,
+        multi_conditional_parent::MultiConditionalParent,
+        player_part::PlayerPart,
+        player_state::PlayerState,
     },
     foreground::Foreground,
-    player_state::PlayerState,
+    player_state_definition::PlayerStateDefinition,
     systems::{
         animation_system::AnimationSystem, camera_system::CameraSystem,
         current_system::CurrentSystem, follow_system::FollowSystem, input_system::InputSystem,
@@ -26,22 +26,22 @@ use crate::{
 };
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
-    logic::scene::{
+    logic::{
         ecs::{
             component::{
-                camera_component::CameraComponent,
-                collider_component::{ColliderComponent, ColliderShape},
-                emitter_component::EmitterComponent,
-                force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
-                material_component::MaterialComponent,
-                model_component::ModelComponent,
-                movement_component::MovementComponent,
-                parent_component::ParentComponent,
-                transform_component::TransformComponent,
+                camera::Camera,
+                collider::{Collider, ColliderShape},
+                emitter::Emitter,
+                force::{AppliedForce, Force, ForceEffect, ForceMode},
+                material::Material,
+                model::Model,
+                movement::Movement,
+                parent::Parent,
+                transform::Transform,
             },
             entity::{entity::Entity, particle_entity::ParticleEntityType},
         },
-        world::World,
+        scene::world::World,
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
@@ -157,7 +157,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         .expect("Failed to load postprocess shader");
 
     world.insert_resource(PostprocessConfig {
-        material: MaterialComponent::new(Texture::None, postprocess_shader),
+        material: Material::new(Texture::None, postprocess_shader),
     });
 
     let model_scale = 0.15;
@@ -166,18 +166,18 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     // Create dummy
     spawn_entity!(
         world,
-        TransformComponent {
+        Transform {
             position: (0.75, 0.0, 0.0).into(),
             rotation: 0.0,
             scale: Vec2::uniform(0.5),
             is_flipped: false,
         },
-        MaterialComponent::new(
+        Material::new(
             Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
             shader.clone(),
         ),
-        ModelComponent::from(resource_manager.get_mesh("square")),
-        ColliderComponent {
+        Model::from(resource_manager.get_mesh("square")),
+        Collider {
             shape: ColliderShape::Capsule2D {
                 width: 0.5,
                 height: 1.0,
@@ -185,7 +185,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             offset: (0.0, 0.25).into(),
         },
         {
-            let mut force_component = ForceComponent::new(1.0);
+            let mut force_component = Force::new(1.0);
             force_component.apply_force(AppliedForce {
                 id: "water_resistance".to_string(),
                 effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
@@ -193,12 +193,12 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             });
             force_component
         },
-        MovementComponent::default()
+        Movement::default()
     );
     let dummy = world.create_entity();
     world.add_component(
         dummy,
-        TransformComponent {
+        Transform {
             position: (0.75, 0.0, 0.0).into(),
             rotation: 0.0,
             scale: Vec2::uniform(0.5),
@@ -207,16 +207,15 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     );
     world.add_component(
         dummy,
-        MaterialComponent::new(
+        Material::new(
             Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
             shader.clone(),
         ),
     );
-    world
-        .add_component::<ModelComponent>(dummy, resource_manager.get_mesh("square").clone().into());
+    world.add_component::<Model>(dummy, resource_manager.get_mesh("square").clone().into());
     world.add_component(
         dummy,
-        ColliderComponent {
+        Collider {
             shape: ColliderShape::Capsule2D {
                 width: 0.5,
                 height: 1.0,
@@ -224,21 +223,21 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             offset: (0.0, 0.25).into(),
         },
     );
-    let mut force_component = ForceComponent::new(1.0);
+    let mut force_component = Force::new(1.0);
     force_component.apply_force(AppliedForce {
         id: "water_resistance".to_string(),
         effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
         mode: ForceMode::Continuous,
     });
     world.add_component(dummy, force_component);
-    world.add_component(dummy, MovementComponent::default());
+    world.add_component(dummy, Movement::default());
 
     // Create dummy 2
 
     let dummy = world.create_entity();
     world.add_component(
         dummy,
-        TransformComponent {
+        Transform {
             position: (-0.75, 0.0, 0.0).into(),
             rotation: 0.0,
             scale: Vec2::uniform(0.5),
@@ -247,16 +246,15 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     );
     world.add_component(
         dummy,
-        MaterialComponent::new(
+        Material::new(
             Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
             shader.clone(),
         ),
     );
-    world
-        .add_component::<ModelComponent>(dummy, resource_manager.get_mesh("square").clone().into());
+    world.add_component::<Model>(dummy, resource_manager.get_mesh("square").clone().into());
     world.add_component(
         dummy,
-        ColliderComponent {
+        Collider {
             shape: ColliderShape::Rect {
                 width: 0.5,
                 height: 0.5,
@@ -264,26 +262,26 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             offset: (0.0, 0.0).into(),
         },
     );
-    let mut force_component = ForceComponent::new(1.0);
+    let mut force_component = Force::new(1.0);
     force_component.apply_force(AppliedForce {
         id: "water_resistance".to_string(),
         effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
         mode: ForceMode::Continuous,
     });
     world.add_component(dummy, force_component);
-    world.add_component(dummy, MovementComponent::default());
+    world.add_component(dummy, Movement::default());
 
     // Create player
 
     let player = world.create_entity();
     let (camera, _) = world
-        .query::<(&CameraComponent,)>()
+        .query::<(&Camera,)>()
         .next()
         .expect("No camera found in the scene");
 
     world.add_component(
         camera,
-        FollowComponent {
+        Follow {
             max_distance: 0.25,
             target_entity: player,
         },
@@ -293,9 +291,9 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         player,
         Collider::rect(0.4, 1.4, (-0.05, -0.05).into()).into(),
     );*/
-    world.add_component::<ColliderComponent>(
+    world.add_component::<Collider>(
         player,
-        ColliderComponent {
+        Collider {
             shape: ColliderShape::Rect {
                 width: 0.4,
                 height: 1.4,
@@ -304,9 +302,9 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
             offset: (0.0, 0.0).into(),
         },
     );
-    world.add_component(player, PlayerStateComponent::Idle);
-    world.add_component(player, MovementComponent::default());
-    let mut force_component = ForceComponent::new(10.0);
+    world.add_component(player, PlayerState::Idle);
+    world.add_component(player, Movement::default());
+    let mut force_component = Force::new(10.0);
     force_component.apply_force(AppliedForce {
         id: "water_resistance".to_string(),
         effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
@@ -315,7 +313,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     world.add_component(player, force_component);
     world.add_component(
         player,
-        TransformComponent {
+        Transform {
             position: initial_position,
             scale: Vec2::new(model_scale, model_scale),
             rotation: 0.0,
@@ -362,42 +360,42 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let moving_legs_texture = resource_manager
         .load_animated_texture(
             moving_legs_textures,
-            PlayerState::Swimming.legs_animation_time(),
+            PlayerStateDefinition::Swimming.legs_animation_time(),
         )
         .unwrap();
     let moving_head_texture = head_texture.clone();
 
     world.add_component(
         left_hand_model,
-        MaterialComponent::new(left_hand_texture.into(), shader.clone()),
+        Material::new(left_hand_texture.into(), shader.clone()),
     );
     world.add_component(
         legs_model,
-        MaterialComponent::new(legs_texture.into(), shader.clone()),
+        Material::new(legs_texture.into(), shader.clone()),
     );
     world.add_component(
         torso_model,
-        MaterialComponent::new(torso_texture.into(), shader.clone()),
+        Material::new(torso_texture.into(), shader.clone()),
     );
     world.add_component(
         right_hand_model,
-        MaterialComponent::new(right_hand_texture.into(), shader.clone()),
+        Material::new(right_hand_texture.into(), shader.clone()),
     );
     world.add_component(
         tank_model,
-        MaterialComponent::new(tank_texture.into(), shader.clone()),
+        Material::new(tank_texture.into(), shader.clone()),
     );
     world.add_component(
         head_model,
-        MaterialComponent::new(head_texture.into(), shader.clone()),
+        Material::new(head_texture.into(), shader.clone()),
     );
     world.add_component(
         moving_legs_model,
-        MaterialComponent::new(moving_legs_texture.into(), shader.clone()),
+        Material::new(moving_legs_texture.into(), shader.clone()),
     );
     world.add_component(
         moving_head_model,
-        MaterialComponent::new(moving_head_texture.into(), shader.clone()),
+        Material::new(moving_head_texture.into(), shader.clone()),
     );
 
     let initial_scales = vec![
@@ -431,20 +429,20 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         moving_head_model,
     ];
 
-    world.add_component(left_hand_model, PlayerPartComponent::LeftHand);
+    world.add_component(left_hand_model, PlayerPart::LeftHand);
 
-    world.add_component(legs_model, PlayerPartComponent::Legs);
-    world.add_component(torso_model, PlayerPartComponent::Torso);
-    world.add_component(right_hand_model, PlayerPartComponent::RightHand);
-    world.add_component(tank_model, PlayerPartComponent::Tank);
-    world.add_component(head_model, PlayerPartComponent::Head);
-    world.add_component(moving_legs_model, PlayerPartComponent::Legs);
-    world.add_component(moving_head_model, PlayerPartComponent::Head);
+    world.add_component(legs_model, PlayerPart::Legs);
+    world.add_component(torso_model, PlayerPart::Torso);
+    world.add_component(right_hand_model, PlayerPart::RightHand);
+    world.add_component(tank_model, PlayerPart::Tank);
+    world.add_component(head_model, PlayerPart::Head);
+    world.add_component(moving_legs_model, PlayerPart::Legs);
+    world.add_component(moving_head_model, PlayerPart::Head);
 
     for (idx, child) in children.iter().enumerate() {
         world.add_component(
             *child,
-            TransformComponent {
+            Transform {
                 position: initial_positions[idx],
                 rotation: match idx {
                     7 => PI / 2.0,
@@ -454,7 +452,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 is_flipped: false,
             },
         );
-        world.add_component::<ModelComponent>(*child, pattern_mesh.clone().into());
+        world.add_component::<Model>(*child, pattern_mesh.clone().into());
         match idx {
             1 | 6 => {
                 let condition = if idx == 1 {
@@ -462,21 +460,21 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 } else {
                     AnimationCondition::PlayerSwimming
                 };
-                world.add_component::<MultiConditionalParentComponent>(
+                world.add_component::<MultiConditionalParent>(
                     *child,
                     vec![
-                        ConditionalParentComponent {
+                        ConditionalParent {
                             parent: player,
                             condition: condition,
                         },
-                        ConditionalParentComponent {
+                        ConditionalParent {
                             parent: Entity(0).into(),
                             condition: AnimationCondition::True,
                         },
                     ]
                     .into(),
                 );
-                world.add_component::<ParentComponent>(*child, Entity(0).into());
+                world.add_component::<Parent>(*child, Entity(0).into());
             }
             5 | 7 => {
                 let condition = if idx == 5 {
@@ -484,32 +482,32 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 } else {
                     AnimationCondition::PlayerSwimming
                 };
-                world.add_component::<MultiConditionalParentComponent>(
+                world.add_component::<MultiConditionalParent>(
                     *child,
                     vec![
-                        ConditionalParentComponent {
+                        ConditionalParent {
                             parent: player,
                             condition: condition,
                         },
-                        ConditionalParentComponent {
+                        ConditionalParent {
                             parent: Entity(0).into(),
                             condition: AnimationCondition::True,
                         },
                     ]
                     .into(),
                 );
-                world.add_component::<ParentComponent>(*child, Entity(0).into())
+                world.add_component::<Parent>(*child, Entity(0).into())
             }
-            _ => world.add_component::<ParentComponent>(*child, player.into()),
+            _ => world.add_component::<Parent>(*child, player.into()),
         }
     }
 
     let bubble_mesh = resource_manager.get_mesh("square");
     let bubble_emitter = world.create_entity();
-    world.add_component::<EmitterComponent>(bubble_emitter, ParticleEntityType::Bubble.into());
-    world.add_component::<TransformComponent>(
+    world.add_component::<Emitter>(bubble_emitter, ParticleEntityType::Bubble.into());
+    world.add_component::<Transform>(
         bubble_emitter,
-        TransformComponent {
+        Transform {
             position: (0.025, -0.025, 0.0001).into(),
             rotation: 0.0,
             scale: Vec2::uniform(0.01),
@@ -517,36 +515,36 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         },
     );
     // TODO: use prefab for bubble emitter
-    world.add_component::<ModelComponent>(bubble_emitter, bubble_mesh.into());
+    world.add_component::<Model>(bubble_emitter, bubble_mesh.into());
     if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
         world.add_component(
             bubble_emitter,
-            MaterialComponent::new(texture.into(), shader.clone()),
+            Material::new(texture.into(), shader.clone()),
         );
     }
 
-    world.add_component::<MultiConditionalParentComponent>(
+    world.add_component::<MultiConditionalParent>(
         bubble_emitter,
         vec![
-            ConditionalParentComponent {
+            ConditionalParent {
                 parent: moving_head_model,
                 condition: AnimationCondition::PlayerSwimming,
             },
-            ConditionalParentComponent {
+            ConditionalParent {
                 parent: head_model,
                 condition: AnimationCondition::PlayerIdle,
             },
         ]
         .into(),
     );
-    world.add_component::<ParentComponent>(bubble_emitter, head_model.into());
+    world.add_component::<Parent>(bubble_emitter, head_model.into());
 }
 
 fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
     let background = world.create_entity();
     world.add_component(
         background,
-        TransformComponent {
+        Transform {
             position: (0.0, 0.0, -7.5).into(),
             rotation: 0.0,
             scale: Vec2::uniform(2.0),
@@ -555,7 +553,7 @@ fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
     );
     world.add_component(
         background,
-        MaterialComponent::new(
+        Material::new(
             Texture::None,
             resource_manager.get_shader("background").clone(),
         )
@@ -563,5 +561,5 @@ fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {
         .with_param("uColor2", Vec3::new(0.0, 0.5, 0.5)),
     );
     let pattern_mesh = resource_manager.get_mesh("square");
-    world.add_component::<ModelComponent>(background, pattern_mesh.clone().into());
+    world.add_component::<Model>(background, pattern_mesh.clone().into());
 }

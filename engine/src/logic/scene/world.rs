@@ -5,8 +5,8 @@ use std::{
 };
 
 use crate::{
-    logic::scene::ecs::{
-        component::{component::Component, model_component::ModelComponent},
+    logic::ecs::{
+        component::{component::Component, model::Model},
         component_storage::{ComponentStorage, ComponentStorageTrait},
         entity::entity::Entity,
         query::{Query, QueryMut},
@@ -83,7 +83,7 @@ impl World {
 
     pub fn delete_entity(&mut self, entity: Entity) {
         if let Some(idx) = self.entities.iter().position(|e| e.0 == entity.0) {
-            if let Some(model_component) = self.remove_component::<ModelComponent>(entity) {
+            if let Some(model_component) = self.remove_component::<Model>(entity) {
                 self.mesh_removed(model_component.mesh);
             }
             self.entities.remove(idx);

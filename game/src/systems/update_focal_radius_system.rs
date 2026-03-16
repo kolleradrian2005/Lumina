@@ -1,10 +1,10 @@
-use lumina_engine::logic::scene::ecs::component::transform_component::TransformComponent;
-use lumina_engine::logic::scene::ecs::system::system::System;
+use lumina_engine::logic::ecs::component::transform::Transform;
+use lumina_engine::logic::ecs::system::system::System;
 use lumina_engine::logic::scene::world::World;
 use lumina_engine::math::vec3::Vec3;
 use lumina_engine::render::uniformbuffer::{PostProcessUniformBuffer, UniformBufferSource};
 
-use crate::components::player_state_component::PlayerStateComponent;
+use crate::components::player_state::PlayerState;
 use crate::foreground::Foreground;
 
 pub struct UpdateFocalRadiusSystem;
@@ -15,7 +15,7 @@ impl System for UpdateFocalRadiusSystem {
         let mut light_level: Option<f32> = None;
 
         for (_, (player_state_component, transform)) in
-            world.query_mut::<(&mut PlayerStateComponent, &mut TransformComponent)>()
+            world.query_mut::<(&mut PlayerState, &mut Transform)>()
         {
             player_position = transform.position.clone().into();
             light_level = player_state_component.light_level().into();

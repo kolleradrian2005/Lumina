@@ -1,11 +1,11 @@
 use lumina_engine::{
-    logic::scene::{ecs::system::system::System, world::World},
+    logic::{ecs::system::system::System, scene::world::World},
     math::vec3::Vec3,
     shared::input::input_state::InputState,
 };
 use winit::keyboard::{Key, NamedKey};
 
-use crate::components::player_state_component::PlayerStateComponent;
+use crate::components::player_state::PlayerState;
 
 pub struct InputSystem;
 
@@ -33,15 +33,15 @@ impl System for InputSystem {
             }
         }
         world
-            .query_mut::<(&mut PlayerStateComponent,)>()
+            .query_mut::<(&mut PlayerState,)>()
             .last()
             .map(|(_, (player_input,))| {
                 *player_input = match 0.0 < direction.length() {
                     true => match fast_pressed {
-                        true => PlayerStateComponent::FastSwimming { direction },
-                        false => PlayerStateComponent::Swimming { direction },
+                        true => PlayerState::FastSwimming { direction },
+                        false => PlayerState::Swimming { direction },
                     },
-                    false => PlayerStateComponent::Idle,
+                    false => PlayerState::Idle,
                 };
             });
     }

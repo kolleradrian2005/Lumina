@@ -4,7 +4,7 @@ use flume::Sender;
 use include_assets::NamedArchive;
 
 use crate::{
-    logic::scene::ecs::component::collider_component::ColliderShape,
+    logic::ecs::component::collider::ColliderShape,
     render::{
         mesh::Mesh,
         model::sprite,

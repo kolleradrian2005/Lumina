@@ -1,15 +1,15 @@
 use std::sync::{Arc, Mutex};
 
 use lumina_engine::{
-    logic::scene::{
-        ecs::{component::transform_component::TransformComponent, system::system::System},
-        world::World,
+    logic::{
+        ecs::{component::transform::Transform, system::system::System},
+        scene::world::World,
     },
     render::resource::resource_manager::ResourceManager,
 };
 
 use crate::{
-    components::player_state_component::PlayerStateComponent,
+    components::player_state::PlayerState,
     terrain::{terrain::Terrain, tile::Tile},
 };
 
@@ -19,9 +19,7 @@ impl System for TerrainSystem {
     fn run(&mut self, world: &mut World, _: f32) {
         let terrain = world.expect_resource::<Arc<Mutex<Terrain>>>().clone();
         let resource_manager = world.expect_resource_ptr::<ResourceManager>();
-        for (_, (_, transform)) in
-            world.query_mut::<(&mut PlayerStateComponent, &mut TransformComponent)>()
-        {
+        for (_, (_, transform)) in world.query_mut::<(&mut PlayerState, &mut Transform)>() {
             if let Ok(terrain) = &mut terrain.lock() {
                 let tile_index = (transform.position.x / terrain.get_tile_size()).round() as i32;
                 Self::update_tile_index(

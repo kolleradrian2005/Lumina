@@ -1,0 +1,55 @@
+use std::time::Duration;
+
+use crate::{
+    logic::ecs::{
+        component::component::Component,
+        entity::particle_entity::{ParticleEntity, ParticleEntityType},
+    },
+    math::vec3::Vec3,
+};
+
+pub struct TimeOut {
+    pub start: f32,
+    pub duration: f32,
+}
+
+#[derive(Component)]
+pub struct Emitter {
+    pub emitter_type: ParticleEntityType,
+    pub particles: Vec<ParticleEntity>,
+    pub spawn_position: Vec3,
+    pub interval: Duration,
+    pub lifespan: Option<Duration>,
+    pub particle_lifespan: Option<Duration>,
+    pub particle_velocity: f32,
+    pub alive: bool,
+    pub cycle_time: f32,
+    pub now: f32,
+    pub timeout: Option<TimeOut>,
+    pub cull_radius: Option<f32>, // None = never cull
+}
+
+impl Emitter {
+    pub fn create(particle_type: ParticleEntityType, spawn_position: Vec3) -> Self {
+        Self {
+            particles: Vec::new(),
+            spawn_position,
+            interval: Duration::from_secs_f32(0.25),
+            lifespan: None,
+            particle_lifespan: particle_type.default_lifespan(),
+            particle_velocity: 1.0,
+            alive: true,
+            cycle_time: 0.0,
+            now: 0.0,
+            timeout: None,
+            emitter_type: particle_type,
+            cull_radius: Some(4.0),
+        }
+    }
+}
+
+impl From<ParticleEntityType> for Emitter {
+    fn from(particle_type: ParticleEntityType) -> Self {
+        Self::create(particle_type, Vec3::zero())
+    }
+}

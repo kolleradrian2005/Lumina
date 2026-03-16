@@ -1,4 +1,4 @@
-use lumina_engine::logic::scene::{ecs::system::system::System, world::World};
+use lumina_engine::logic::{ecs::system::system::System, scene::world::World};
 
 pub struct TerrainCollisionSystem;
 

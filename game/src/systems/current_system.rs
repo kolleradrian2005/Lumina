@@ -1,20 +1,17 @@
 use crate::terrain::water::Water;
-use lumina_engine::logic::scene::{
+use lumina_engine::logic::{
     ecs::{
-        component::{
-            material_component::MaterialComponent, movement_component::MovementComponent,
-            transform_component::TransformComponent,
-        },
+        component::{material::Material, movement::Movement, transform::Transform},
         system::system::System,
     },
-    world::World,
+    scene::world::World,
 };
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {
     fn run(&mut self, world: &mut World, _: f32) {
         for (_, (material_component, transform_component)) in
-            world.query_mut::<(&mut MaterialComponent, &mut TransformComponent)>()
+            world.query_mut::<(&mut Material, &mut Transform)>()
         {
             if material_component.parameters.is_empty() {
                 continue;
@@ -25,7 +22,7 @@ impl System for CurrentSystem {
                     .expect_resource::<Water>()
                     .get_current(&object_position);
                 world
-                    .query_mut::<(&mut MovementComponent, &mut TransformComponent)>()
+                    .query_mut::<(&mut Movement, &mut Transform)>()
                     .last()
                     .map(|(_, (movement_component, transform))| {
                         let player_distance = (object_position - transform.position).length();

@@ -1,24 +1,21 @@
 use std::f32::consts::PI;
 
 use lumina_engine::{
-    logic::scene::{
+    logic::{
         ecs::{
-            component::{
-                material_component::MaterialComponent, parent_component::ParentComponent,
-                transform_component::TransformComponent,
-            },
+            component::{material::Material, parent::Parent, transform::Transform},
             system::system::System,
         },
-        world::World,
+        scene::world::World,
     },
     render::resource::texture::Texture,
 };
 
 use crate::components::{
-    conditional_parent_component::{AnimationCondition, ConditionalParentComponent},
-    multi_conditional_parent_component::MultiConditionalParentComponent,
-    player_part_component::PlayerPartComponent,
-    player_state_component::PlayerStateComponent,
+    conditional_parent::{AnimationCondition, ConditionalParent},
+    multi_conditional_parent::MultiConditionalParent,
+    player_part::PlayerPart,
+    player_state::PlayerState,
 };
 
 pub struct AnimationSystem;
@@ -26,7 +23,7 @@ pub struct AnimationSystem;
 impl System for AnimationSystem {
     fn run(&mut self, world: &mut World, delta_time: f32) {
         world
-            .query_mut::<(&mut PlayerStateComponent, &mut TransformComponent)>()
+            .query_mut::<(&mut PlayerState, &mut Transform)>()
             .last()
             .map(|(_, (player_state, transform))| {
                 Self::animate_player(world, player_state, transform, delta_time);
@@ -37,8 +34,8 @@ impl System for AnimationSystem {
 impl AnimationSystem {
     fn animate_player(
         world: &mut World,
-        player_state: &mut PlayerStateComponent,
-        transform: &mut TransformComponent,
+        player_state: &mut PlayerState,
+        transform: &mut Transform,
         delta_time: f32,
     ) {
         let direction_normal = player_state.direction().normalized();
@@ -66,7 +63,7 @@ impl AnimationSystem {
         transform.is_flipped = !(0.0 <= transform.rotation && transform.rotation <= PI);
 
         for (_, (parent, multi_conditional_parent)) in
-            world.query_mut::<(&mut ParentComponent, &mut MultiConditionalParentComponent)>()
+            world.query_mut::<(&mut Parent, &mut MultiConditionalParent)>()
         {
             for conditional_parent in multi_conditional_parent.components.iter_mut() {
                 if Self::bind_parent(parent, conditional_parent, &player_state) {
@@ -76,19 +73,19 @@ impl AnimationSystem {
         }
 
         for (_, (player_part, material_component)) in
-            world.query_mut::<(&mut PlayerPartComponent, &mut MaterialComponent)>()
+            world.query_mut::<(&mut PlayerPart, &mut Material)>()
         {
             if let Texture::AnimatedTexture(texture) = &mut material_component.texture {
-                if let PlayerPartComponent::Legs = player_part {
+                if let PlayerPart::Legs = player_part {
                     texture.animation_time = player_state.legs_animation_time();
                 }
             }
         }
     }
     fn bind_parent(
-        parent: &mut ParentComponent,
-        conditional_parent: &mut ConditionalParentComponent,
-        player_state: &PlayerStateComponent,
+        parent: &mut Parent,
+        conditional_parent: &mut ConditionalParent,
+        player_state: &PlayerState,
     ) -> bool {
         if let AnimationCondition::True = conditional_parent.condition {
             parent.parent = conditional_parent.parent;
@@ -96,14 +93,14 @@ impl AnimationSystem {
         }
         return match conditional_parent.condition {
             AnimationCondition::PlayerIdle => match player_state {
-                PlayerStateComponent::Idle => {
+                PlayerState::Idle => {
                     parent.parent = conditional_parent.parent;
                     true
                 }
                 _ => false,
             },
             AnimationCondition::PlayerSwimming => match player_state {
-                PlayerStateComponent::Idle => return false,
+                PlayerState::Idle => return false,
                 _ => {
                     parent.parent = conditional_parent.parent;
                     true

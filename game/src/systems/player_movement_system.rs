@@ -1,20 +1,18 @@
-use lumina_engine::logic::scene::{
+use lumina_engine::logic::{
     ecs::{
-        component::force_component::{AppliedForce, ForceComponent, ForceEffect, ForceMode},
+        component::force::{AppliedForce, Force, ForceEffect, ForceMode},
         system::system::System,
     },
-    world::World,
+    scene::world::World,
 };
 
-use crate::components::player_state_component::PlayerStateComponent;
+use crate::components::player_state::PlayerState;
 
 pub struct PlayerMovementSystem;
 
 impl System for PlayerMovementSystem {
     fn run(&mut self, world: &mut World, _: f32) {
-        for (_, (player_state, force)) in
-            world.query_mut::<(&mut PlayerStateComponent, &mut ForceComponent)>()
-        {
+        for (_, (player_state, force)) in world.query_mut::<(&mut PlayerState, &mut Force)>() {
             let direction = player_state.direction();
             let magnitude = player_state.acceleration() * force.mass;
             if magnitude > 0.0 {

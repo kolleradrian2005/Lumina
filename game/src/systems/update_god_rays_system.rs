@@ -1,7 +1,7 @@
 use lumina_engine::{
-    logic::scene::{
-        ecs::{component::camera_component::CameraComponent, system::system::System},
-        world::World,
+    logic::{
+        ecs::{component::camera::Camera, system::system::System},
+        scene::world::World,
     },
     math::vec3::Vec3,
     shared::postprocess_config::PostprocessConfig,
@@ -14,7 +14,7 @@ pub struct UpdateGodRaysSystem;
 impl System for UpdateGodRaysSystem {
     fn run(&mut self, world: &mut World, _: f32) {
         let camera_position: Option<Vec3> = world
-            .query_mut::<(&mut CameraComponent,)>()
+            .query_mut::<(&mut Camera,)>()
             .last()
             .map(|(_, (camera,))| camera.position.clone());
 

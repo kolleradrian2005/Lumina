@@ -1,15 +1,11 @@
-use crate::components::{
-    follow_component::FollowComponent, player_state_component::PlayerStateComponent,
-};
+use crate::components::{follow::Follow, player_state::PlayerState};
 use lumina_engine::{
-    logic::scene::{
+    logic::{
         ecs::{
-            component::{
-                camera_component::CameraComponent, transform_component::TransformComponent,
-            },
+            component::{camera::Camera, transform::Transform},
             system::system::System,
         },
-        world::World,
+        scene::world::World,
     },
     math::vec3::Vec3,
 };
@@ -19,13 +15,11 @@ pub struct FollowSystem;
 impl System for FollowSystem {
     fn run(&mut self, world: &mut World, delta_time: f32) {
         //let mut update_camera = None;
-        for (_, (camera, follow_component)) in
-            world.query_mut::<(&mut CameraComponent, &mut FollowComponent)>()
-        {
+        for (_, (camera, follow_component)) in world.query_mut::<(&mut Camera, &mut Follow)>() {
             let target_transform_component =
-                world.get_component_mut::<TransformComponent>(follow_component.target_entity);
+                world.get_component_mut::<Transform>(follow_component.target_entity);
             let player_state_component =
-                world.get_component::<PlayerStateComponent>(follow_component.target_entity);
+                world.get_component::<PlayerState>(follow_component.target_entity);
             if let Some(target_transform) = target_transform_component {
                 let player_position = &mut target_transform.position;
                 let z_dest = match player_state_component {

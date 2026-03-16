@@ -5,7 +5,7 @@ use std::ffi::CString;
 use gl::types::{GLint, GLuint};
 
 use crate::{
-    logic::scene::ecs::component::material_component::DrawMode,
+    logic::ecs::component::material::DrawMode,
     render::{
         resource::texture::Texture,
         shader::{material_parameter::MaterialParameter, shader_program::ShaderHandle},

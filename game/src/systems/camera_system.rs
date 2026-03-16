@@ -1,14 +1,11 @@
-use crate::components::follow_component::FollowComponent;
+use crate::components::follow::Follow;
 use lumina_engine::{
-    logic::scene::{
+    logic::{
         ecs::{
-            component::{
-                camera_component::CameraComponent, transform_component::TransformComponent,
-            },
+            component::{camera::Camera, transform::Transform},
             system::system::System,
         },
-        focus_point::FocusPoint,
-        world::World,
+        scene::{focus_point::FocusPoint, world::World},
     },
     render::{
         uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
@@ -21,11 +18,9 @@ pub struct CameraSystem;
 
 impl System for CameraSystem {
     fn run(&mut self, world: &mut World, _: f32) {
-        for (_, (camera, follow_component)) in
-            world.query_mut::<(&mut CameraComponent, &mut FollowComponent)>()
-        {
+        for (_, (camera, follow_component)) in world.query_mut::<(&mut Camera, &mut Follow)>() {
             let target_transform_component = world
-                .get_component_mut::<TransformComponent>(follow_component.target_entity)
+                .get_component_mut::<Transform>(follow_component.target_entity)
                 .expect("Failed to get target transform component for camera follow component!");
             let focal_offset = target_transform_component.position.xy() - camera.position.xy();
             let window_size = world.expect_resource::<WindowSize>();

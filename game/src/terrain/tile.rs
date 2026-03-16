@@ -1,14 +1,14 @@
 use lumina_engine::{
-    logic::scene::{
+    logic::{
         ecs::{
             component::{
-                material_component::{DrawMode, MaterialComponent},
-                model_component::ModelComponent,
-                transform_component::TransformComponent,
+                material::{DrawMode, Material},
+                model::Model,
+                transform::Transform,
             },
             entity::entity::Entity,
         },
-        world::World,
+        scene::world::World,
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
@@ -21,7 +21,7 @@ use lumina_engine::{
 };
 use noise::Perlin;
 
-use crate::components::current_component::CurrentComponent;
+use crate::components::current::Current;
 use crate::object_type::ObjectType;
 
 use super::terrain::Terrain;
@@ -108,18 +108,17 @@ impl Tile {
                     resource_manager.load_static_texture("seagrass0.png")
                 {
                     position.y += 0.08 * texture.get_normalized_dimensions().1 / 2.0;
-                    let mut material =
-                        MaterialComponent::new(Texture::StaticTexture(texture), shader)
-                            .with_param("uObjectType", ObjectType::SeaGrass as i32);
+                    let mut material = Material::new(Texture::StaticTexture(texture), shader)
+                        .with_param("uObjectType", ObjectType::SeaGrass as i32);
                     if use_tesselation {
                         material.set_param("uCurrent", 0f32);
                     }
                     world.add_component(seaweed, material);
                 }
-                world.add_component::<CurrentComponent>(seaweed, CurrentComponent::default());
-                world.add_component::<ModelComponent>(
+                world.add_component::<Current>(seaweed, Current::default());
+                world.add_component::<Model>(
                     seaweed,
-                    ModelComponent {
+                    Model {
                         mesh: seaweed_mesh,
                         //object_type: ObjectType::SeaGrass,
                     },
@@ -127,7 +126,7 @@ impl Tile {
 
                 world.add_component(
                     seaweed,
-                    TransformComponent {
+                    Transform {
                         position: position,
                         scale: Vec2::uniform(0.08),
                         rotation: 0.0,
@@ -145,15 +144,15 @@ impl Tile {
                 sprite::UVS.to_vec(),
             )
             .unwrap();
-        world.add_component::<ModelComponent>(
+        world.add_component::<Model>(
             tile,
-            ModelComponent {
+            Model {
                 mesh: mesh.into(),
                 //object_type: ObjectType::Terrain,
             },
         );
         let shader = resource_manager.get_shader("model");
-        let material = MaterialComponent::new(texture.clone(), shader.clone())
+        let material = Material::new(texture.clone(), shader.clone())
             .with_param("uObjectType", ObjectType::Terrain as i32)
             .with_param("uTerrainIsUphill", uphill)
             .with_param("uTerrainHeight", top - bot)
@@ -165,7 +164,7 @@ impl Tile {
         world.add_component(tile, material);
         world.add_component(
             tile,
-            TransformComponent {
+            Transform {
                 position: tile_position,
                 scale: Vec2::uniform(1.0),
                 rotation: 0.0,

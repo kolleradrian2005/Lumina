@@ -1,17 +1,21 @@
 use std::time::{Duration, Instant};
 
+use flume::{Receiver, Sender};
 use rand::{rngs::StdRng, SeedableRng};
 
 use crate::{
     logic::scene::scene::Scene,
-    shared::{extracted_frame::ExtractedFrame, input::input_event::InputEvent},
+    shared::{
+        extracted_frame::ExtractedFrame,
+        input::{input_event::InputEvent, input_handler::InputHandler},
+    },
 };
 
 const TARGET_INTERVAL: Duration = Duration::from_micros(16666);
 
 pub async fn run_logic_loop(
-    input_rx: flume::Receiver<InputEvent>,
-    render_tx: flume::Sender<ExtractedFrame>,
+    input_rx: Receiver<InputEvent>,
+    render_tx: Sender<ExtractedFrame>,
     mut scene: Scene,
 ) {
     let rng: StdRng = SeedableRng::from_entropy();
@@ -29,7 +33,8 @@ pub async fn run_logic_loop(
         last = Instant::now();
 
         while let Ok(event) = input_rx.try_recv() {
-            scene.handle_input_event(event);
+            let world = scene.get_world_mut();
+            InputHandler::handle_input_event(world, event);
         }
         scene.update(delta_time.as_secs_f32());
 
