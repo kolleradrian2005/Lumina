@@ -10,6 +10,9 @@ pub mod systems {
     pub mod update_focal_radius_system;
     pub mod update_god_rays_system;
 }
+pub mod extractors {
+    pub mod postprocess_buffer_extractor;
+}
 pub mod components {
     pub mod conditional_parent;
     pub mod current;
@@ -27,6 +30,7 @@ pub mod foreground;
 pub mod game;
 pub mod object_type;
 pub mod player_state_definition;
+pub mod postprocess_uniform_buffer;
 
 use winit::event_loop::EventLoopBuilder;
 

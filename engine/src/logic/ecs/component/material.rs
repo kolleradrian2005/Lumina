@@ -23,7 +23,6 @@ pub struct Material {
     pub shader: ShaderProgramHandle,
     pub parameters: HashMap<String, MaterialParameter>,
     pub draw_mode: DrawMode,
-    //pub uniform_buffers: HashMap<u32, Vec<u8>>,
 }
 
 impl Material {

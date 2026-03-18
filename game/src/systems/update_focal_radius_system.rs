@@ -2,10 +2,11 @@ use lumina_engine::logic::ecs::component::transform::Transform;
 use lumina_engine::logic::ecs::system::system::System;
 use lumina_engine::logic::scene::world::World;
 use lumina_engine::math::vec3::Vec3;
-use lumina_engine::render::uniformbuffer::{PostProcessUniformBuffer, UniformBufferSource};
+use lumina_engine::render::uniform_buffer_source::UniformBufferSource;
 
 use crate::components::player_state::PlayerState;
 use crate::foreground::Foreground;
+use crate::postprocess_uniform_buffer::PostProcessUniformBuffer;
 
 pub struct UpdateFocalRadiusSystem;
 

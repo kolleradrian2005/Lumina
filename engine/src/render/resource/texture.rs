@@ -1,2 +1,2 @@
 pub mod texture;
-pub mod texture_loader;
+pub(crate) mod texture_loader;

@@ -6,6 +6,5 @@ pub mod force;
 pub mod material;
 pub mod model;
 pub mod movement;
-pub mod movement_stats;
 pub mod parent;
 pub mod transform;

@@ -20,7 +20,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowBuilder};
 
-use crate::config;
+use crate::engine_config;
 use crate::logic::engine_logic::run_logic_loop;
 use crate::logic::scene::scene::Scene;
 use crate::math::vec2::Vec2;
@@ -48,10 +48,10 @@ pub fn gl_config_picker(configs: Box<dyn Iterator<Item = Config> + '_>) -> Confi
 fn build_window() -> WindowBuilder {
     WindowBuilder::new()
         .with_transparent(true)
-        .with_title(config::WINDOW_TITLE)
+        .with_title(engine_config::WINDOW_TITLE)
         .with_inner_size(PhysicalSize::new(
-            config::INITIAL_WINDOW_WIDTH,
-            config::INITIAL_WINDOW_HEIGHT,
+            engine_config::INITIAL_WINDOW_WIDTH,
+            engine_config::INITIAL_WINDOW_HEIGHT,
         ))
 }
 

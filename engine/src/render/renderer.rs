@@ -5,13 +5,11 @@ use gl::types::{GLsizeiptr, GLuint, GLvoid};
 use glutin::display::{Display, GlDisplay};
 
 use crate::render::resource::texture::texture::StaticTexture;
-use crate::render::window_size::WindowSize;
 use crate::render::{frame_buffer::Framebuffer, generic_renderer::GenericRenderer};
 use crate::shared::extracted_frame::ExtractedFrame;
 use crate::shared::postprocess_config::PostprocessConfig;
 use crate::shared::render_entity::RenderEntity;
-
-use super::uniformbuffer::{MatrixUniformBuffer, UniformBuffer};
+use crate::shared::window_size::WindowSize;
 
 pub struct Renderer {
     uniform_buffer_pool: HashMap<GLuint, GLuint>,
@@ -27,15 +25,9 @@ impl Renderer {
             gl_display.get_proc_address(symbol.as_c_str()).cast()
         });
 
-        let mut matrix_uniform_buffer;
         let msaa = match cfg!(not(target_os = "android")) {
             true => Some(16),
             false => None,
-        };
-
-        let matrix_uniform_buffer_content = MatrixUniformBuffer {
-            projection_matrix: [[0.0; 4]; 4],
-            view_matrix: [[0.0; 4]; 4],
         };
 
         unsafe {
@@ -51,9 +43,6 @@ impl Renderer {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             gl::PatchParameteri(gl::PATCH_VERTICES, 3);
-
-            matrix_uniform_buffer = UniformBuffer::create(0);
-            matrix_uniform_buffer.set_data(matrix_uniform_buffer_content);
         };
 
         Renderer {

@@ -5,13 +5,12 @@ use lumina_engine::{
             component::{camera::Camera, transform::Transform},
             system::system::System,
         },
-        scene::{focus_point::FocusPoint, world::World},
+        scene::{
+            focus_point::FocusPoint, matrix_uniform_buffer::MatrixUniformBuffer, world::World,
+        },
     },
-    render::{
-        uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
-        window_size::WindowSize,
-    },
-    shared::postprocess_config::PostprocessConfig,
+    render::uniform_buffer_source::UniformBufferSource,
+    shared::{postprocess_config::PostprocessConfig, window_size::WindowSize},
 };
 
 pub struct CameraSystem;

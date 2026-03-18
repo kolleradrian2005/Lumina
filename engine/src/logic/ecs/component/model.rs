@@ -7,7 +7,6 @@ use super::component::Component;
 #[derive(Component, Clone)]
 pub struct Model {
     pub mesh: Arc<Mesh>,
-    //pub object_type: ObjectType,
 }
 
 impl Model {

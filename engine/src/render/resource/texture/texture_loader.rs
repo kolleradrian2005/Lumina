@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    config,
+    engine_config,
     render::resource::texture::texture::{AnimatedTexture, StaticTexture, Texture},
 };
 
@@ -27,7 +27,7 @@ impl TextureLoader {
         archive: &NamedArchive,
         texture_name: &str,
     ) -> Option<Texture> {
-        let path = Path::new(config::TEXTURES_PATH).join(texture_name.replace("/", "\\"));
+        let path = Path::new(engine_config::TEXTURES_PATH).join(texture_name.replace("/", "\\"));
         let binding = path.to_string_lossy().replace("/", "\\");
         let path_str = binding.as_str();
 

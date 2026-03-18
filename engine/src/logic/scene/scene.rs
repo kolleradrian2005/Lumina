@@ -13,14 +13,15 @@ use crate::{
                 particle_system::ParticleSystem, system::System,
             },
         },
-        scene::{focus_point::FocusPoint, world::World},
+        scene::{
+            focus_point::FocusPoint, matrix_uniform_buffer::MatrixUniformBuffer, world::World,
+        },
     },
     math::vec3::Vec3,
-    render::{
-        uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
-        window_size::WindowSize,
+    render::uniform_buffer_source::UniformBufferSource,
+    shared::{
+        extracted_frame::ExtractedFrame, input::input_state::InputState, window_size::WindowSize,
     },
-    shared::{extracted_frame::ExtractedFrame, input::input_state::InputState},
 };
 
 pub struct Scene {
@@ -82,6 +83,10 @@ impl Scene {
 
     pub fn register_system(&mut self, system: Box<dyn System>) {
         self.systems.insert(self.systems.len() - 1, system);
+    }
+
+    pub fn register_extractor(&mut self, extractor: Box<dyn Extractor>) {
+        self.extractors.insert(self.extractors.len() - 1, extractor);
     }
 
     pub fn update(&mut self, delta_time: f32) {

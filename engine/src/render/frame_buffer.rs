@@ -13,13 +13,11 @@ pub struct Framebuffer {
     rbo: GLuint,
     width: i32,
     height: i32,
-    aspect_ratio: f32,
     msaa: Option<u8>,
 }
 
 impl Framebuffer {
     pub fn new(width: i32, height: i32, msaa: Option<u8>) -> Self {
-        //let msaa_samples: i32 = 16;
         let mut fbo: GLuint = 0;
         let mut rbo: GLuint = 0;
         let mut texture: GLuint = 0;
@@ -155,7 +153,6 @@ impl Framebuffer {
             rbo,
             width,
             height,
-            aspect_ratio: width as f32 / height as f32,
             msaa,
         }
     }
@@ -178,10 +175,6 @@ impl Framebuffer {
     pub fn resize(&mut self, width: i32, height: i32) {
         self.destroy();
         *self = Framebuffer::new(width, height, self.msaa);
-    }
-
-    pub fn get_aspect_ratio(&self) -> f32 {
-        self.aspect_ratio
     }
 
     pub unsafe fn bind(&self) {

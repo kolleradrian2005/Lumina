@@ -2,8 +2,10 @@ use winit::event::MouseButton;
 
 use crate::{
     logic::scene::world::World,
-    render::window_size::WindowSize,
-    shared::input::{input_event::InputEvent, input_state::InputState},
+    shared::{
+        input::{input_event::InputEvent, input_state::InputState},
+        window_size::WindowSize,
+    },
 };
 
 pub struct InputHandler;

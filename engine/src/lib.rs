@@ -6,7 +6,7 @@ extern crate glutin_winit;
 pub mod macros;
 
 pub mod app;
-pub mod config;
+pub(crate) mod engine_config;
 pub mod logic;
 pub mod math;
 pub mod render;

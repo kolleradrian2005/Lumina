@@ -8,14 +8,13 @@ use crate::{
             entity::entity::Entity,
             extract::extractor::Extractor,
         },
-        scene::world::World,
+        scene::{matrix_uniform_buffer::MatrixUniformBuffer, world::World},
     },
     math::transformation,
-    render::{
-        uniformbuffer::{MatrixUniformBuffer, UniformBufferSource},
-        window_size::WindowSize,
+    render::uniform_buffer_source::UniformBufferSource,
+    shared::{
+        extracted_frame::ExtractedFrame, render_entity::RenderEntity, window_size::WindowSize,
     },
-    shared::{extracted_frame::ExtractedFrame, render_entity::RenderEntity},
 };
 pub struct ModelExtractor;
 

@@ -12,6 +12,7 @@ use crate::{
         player_part::PlayerPart,
         player_state::PlayerState,
     },
+    extractors::postprocess_buffer_extractor::PostprocessBufferExtractor,
     foreground::Foreground,
     player_state_definition::PlayerStateDefinition,
     systems::{
@@ -54,7 +55,7 @@ use lumina_engine::{
             resource_provider::ResourceProvider,
             texture::texture::{StaticColor, Texture},
         },
-        uniformbuffer::UniformBufferSource,
+        uniform_buffer_source::UniformBufferSource,
     },
     shared::postprocess_config::PostprocessConfig,
     spawn_entity,
@@ -75,6 +76,7 @@ pub fn initialize(event_loop: EventLoop<()>) {
         scene.register_system(Box::new(TerrainCollisionSystem));
         scene.register_system(Box::new(UpdateFocalRadiusSystem));
         scene.register_system(Box::new(UpdateGodRaysSystem));
+        scene.register_extractor(Box::new(PostprocessBufferExtractor));
     });
 }
 

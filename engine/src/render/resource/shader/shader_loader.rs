@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    config,
+    engine_config,
     render::resource::shader::{
         shader_configuration::ShaderConfiguration,
         shader_handle::ShaderHandle,
@@ -35,7 +35,7 @@ impl ShaderLoader {
         shader_type: GLenum,
     ) -> Option<ShaderHandle> {
         unsafe {
-            let path = Path::new(config::SHADERS_PATH).join(shader_name.replace("/", "\\"));
+            let path = Path::new(engine_config::SHADERS_PATH).join(shader_name.replace("/", "\\"));
             let binding = path.to_string_lossy().replace("/", "\\");
             let path_str = binding.as_str();
 
@@ -49,7 +49,7 @@ impl ShaderLoader {
                 panic!("{} {}", err.to_string(), path_str);
             }
 
-            let mut source_raw = String::from(config::SHADER_VERSION_HEADER);
+            let mut source_raw = String::from(engine_config::SHADER_VERSION_HEADER);
 
             if cfg!(target_os = "android") {
                 source_raw.push_str("#define ES\r\n"); // TODO: handle in source

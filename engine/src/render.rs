@@ -1,8 +1,7 @@
-pub mod frame_buffer;
-pub mod generic_renderer;
+pub(crate) mod frame_buffer;
+pub(crate) mod generic_renderer;
 pub mod mesh;
 pub mod model;
-pub mod renderer;
+pub(crate) mod renderer;
 pub mod resource;
-pub mod uniformbuffer;
-pub mod window_size;
+pub mod uniform_buffer_source;
