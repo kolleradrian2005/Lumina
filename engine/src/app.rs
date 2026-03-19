@@ -55,17 +55,10 @@ fn build_window() -> WindowBuilder {
         ))
 }
 
-#[tokio::main]
-pub async fn start(
+pub fn start(
     event_loop: EventLoop<()>,
     mut on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static,
 ) {
-    let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(1)
-        .enable_all()
-        .build()
-        .unwrap();
-
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let window_builder = cfg!(not(target_os = "android")).then(build_window);
@@ -124,7 +117,7 @@ pub async fn start(
         resource_manager.load_default_shaders();
         on_init(&mut scene, &mut resource_manager);
         scene.get_world_mut().insert_resource(resource_manager);
-        runtime.block_on(run_logic_loop(input_rx, render_tx, scene));
+        run_logic_loop(input_rx, render_tx, scene);
     });
 
     let mut renderer: Option<Renderer> = None;

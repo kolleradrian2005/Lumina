@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use crate::{
-    logic::ecs::{
-        component::component::Component,
-        entity::particle_entity::{ParticleEntity, ParticleEntityType},
+    logic::{
+        ecs::{component::component::Component, entity::particle_entity::ParticleEntity},
+        scene::particle_config::ParticleConfig,
     },
     math::vec3::Vec3,
 };
@@ -15,41 +15,37 @@ pub struct TimeOut {
 
 #[derive(Component)]
 pub struct Emitter {
-    pub emitter_type: ParticleEntityType,
+    pub particle_config: ParticleConfig,
     pub particles: Vec<ParticleEntity>,
     pub spawn_position: Vec3,
     pub interval: Duration,
     pub lifespan: Option<Duration>,
-    pub particle_lifespan: Option<Duration>,
-    pub particle_velocity: f32,
     pub alive: bool,
     pub cycle_time: f32,
     pub now: f32,
     pub timeout: Option<TimeOut>,
-    pub cull_radius: Option<f32>, // None = never cull
+    pub cull_radius: Option<f32>,
 }
 
 impl Emitter {
-    pub fn create(particle_type: ParticleEntityType, spawn_position: Vec3) -> Self {
+    pub fn create(particle_config: ParticleConfig, spawn_position: Vec3) -> Self {
         Self {
             particles: Vec::new(),
             spawn_position,
             interval: Duration::from_secs_f32(0.25),
             lifespan: None,
-            particle_lifespan: particle_type.default_lifespan(),
-            particle_velocity: 1.0,
             alive: true,
             cycle_time: 0.0,
             now: 0.0,
             timeout: None,
-            emitter_type: particle_type,
+            particle_config,
             cull_radius: Some(4.0),
         }
     }
 }
 
-impl From<ParticleEntityType> for Emitter {
-    fn from(particle_type: ParticleEntityType) -> Self {
-        Self::create(particle_type, Vec3::zero())
+impl From<ParticleConfig> for Emitter {
+    fn from(particle_config: ParticleConfig) -> Self {
+        Self::create(particle_config, Vec3::zero())
     }
 }

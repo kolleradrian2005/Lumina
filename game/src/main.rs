@@ -29,6 +29,7 @@ pub mod terrain {
 pub mod foreground;
 pub mod game;
 pub mod object_type;
+pub mod particle;
 pub mod player_state_definition;
 pub mod postprocess_uniform_buffer;
 

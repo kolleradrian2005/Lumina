@@ -13,7 +13,7 @@ use crate::{
 
 const TARGET_INTERVAL: Duration = Duration::from_micros(16666);
 
-pub async fn run_logic_loop(
+pub fn run_logic_loop(
     input_rx: Receiver<InputEvent>,
     render_tx: Sender<ExtractedFrame>,
     mut scene: Scene,

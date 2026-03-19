@@ -14,6 +14,7 @@ use crate::{
     },
     extractors::postprocess_buffer_extractor::PostprocessBufferExtractor,
     foreground::Foreground,
+    particle::Particle,
     player_state_definition::PlayerStateDefinition,
     systems::{
         animation_system::AnimationSystem, camera_system::CameraSystem,
@@ -40,19 +41,19 @@ use lumina_engine::{
                 parent::Parent,
                 transform::Transform,
             },
-            entity::{entity::Entity, particle_entity::ParticleEntityType},
+            entity::entity::Entity,
         },
         scene::world::World,
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
-        resource::shader::{
-            parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
-            shader_parameter_type::ShaderParameterType,
-        },
         resource::{
             resource_manager::ResourceManager,
             resource_provider::ResourceProvider,
+            shader::{
+                parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
+                shader_parameter_type::ShaderParameterType,
+            },
             texture::texture::{StaticColor, Texture},
         },
         uniform_buffer_source::UniformBufferSource,
@@ -506,7 +507,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
 
     let bubble_mesh = resource_manager.get_mesh("square");
     let bubble_emitter = world.create_entity();
-    world.add_component::<Emitter>(bubble_emitter, ParticleEntityType::Bubble.into());
+    world.add_component::<Emitter>(bubble_emitter, Particle::bubble().into());
     world.add_component::<Transform>(
         bubble_emitter,
         Transform {

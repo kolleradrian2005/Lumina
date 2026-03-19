@@ -40,14 +40,12 @@ impl System for EmitterSystem {
                 let count = emitter.cycle_time / emitter.interval.as_secs_f32();
                 for i in 0..count as usize {
                     let mut particle = ParticleEntity::spawn(
-                        emitter.emitter_type.clone(),
+                        emitter.particle_config.clone(),
                         emitter.spawn_position,
                         model.clone(),
                         unsafe { &mut *rng },
                     );
-                    particle.lifespan = emitter.particle_lifespan;
 
-                    particle.set_speed(emitter.particle_velocity);
                     particle.update(i as f32 * emitter.interval.as_secs_f32());
                     emitter.particles.push(particle);
                 }
