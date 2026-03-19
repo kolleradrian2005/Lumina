@@ -1,3 +1,4 @@
+pub mod engine_error;
 pub mod extracted_frame;
 pub mod input;
 pub mod postprocess_config;

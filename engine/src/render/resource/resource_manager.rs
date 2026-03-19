@@ -176,7 +176,16 @@ impl ResourceProvider for ResourceManager {
         });
 
         match rx.recv() {
-            Ok(texture) => texture,
+            Ok(texture) => match texture {
+                Ok(tex) => Some(tex),
+                Err(err) => {
+                    println!(
+                        "Failed to load static texture: {:?}, error: {}",
+                        texture_name, err
+                    );
+                    None
+                }
+            },
             Err(_) => {
                 println!("Failed to load static texture: {:?}", texture_name);
                 None
@@ -197,7 +206,16 @@ impl ResourceProvider for ResourceManager {
         });
 
         match rx.recv() {
-            Ok(texture) => texture,
+            Ok(texture) => match texture {
+                Ok(tex) => Some(tex),
+                Err(err) => {
+                    println!(
+                        "Failed to load animated texture: {:?}, error: {}",
+                        texture_names, err
+                    );
+                    None
+                }
+            },
             Err(_) => {
                 println!("Failed to load animated texture: {:?}", texture_names);
                 None
@@ -229,7 +247,13 @@ impl ResourceProvider for ResourceManager {
             response_tx: tx,
         });
         let shader_program = match rx.recv() {
-            Ok(shader) => shader,
+            Ok(shader) => match shader {
+                Ok(shad) => Some(shad),
+                Err(err) => {
+                    println!("Failed to load shader: {:?}, error: {}", shader_name, err);
+                    None
+                }
+            },
             Err(_) => {
                 println!("Failed to load shader: {:?}", shader_name);
                 None
@@ -261,7 +285,13 @@ impl ResourceManager {
         });
 
         match rx.recv() {
-            Ok(mesh) => mesh,
+            Ok(mesh) => match mesh {
+                Ok(m) => Some(m),
+                Err(err) => {
+                    println!("Failed to load mesh, error: {}", err);
+                    None
+                }
+            },
             Err(_) => {
                 println!("Failed to load mesh");
                 None

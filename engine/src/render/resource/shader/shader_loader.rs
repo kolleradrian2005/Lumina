@@ -15,6 +15,7 @@ use crate::{
         shader_handler,
         shader_program::{ShaderProgram, ShaderProgramHandle},
     },
+    shared::engine_error::EngineError,
 };
 
 pub struct ShaderLoader {
@@ -33,20 +34,26 @@ impl ShaderLoader {
         archive: &NamedArchive,
         shader_name: &str,
         shader_type: GLenum,
-    ) -> Option<ShaderHandle> {
+    ) -> Result<ShaderHandle, EngineError> {
         unsafe {
             let path = Path::new(engine_config::SHADERS_PATH).join(shader_name.replace("/", "\\"));
             let binding = path.to_string_lossy().replace("/", "\\");
             let path_str = binding.as_str();
 
-            let mut asset = archive.get(path_str)?;
+            let asset = archive.get(path_str);
+            if asset.is_none() {
+                return Err(EngineError::FileNotFound(path_str.to_string()));
+            }
             if let Some(texture) = self.id_map.get(&path) {
-                return Some(texture.clone());
+                return Ok(texture.clone());
             }
             let mut contents = String::new();
 
-            if let Err(err) = &asset.read_to_string(&mut contents) {
-                panic!("{} {}", err.to_string(), path_str);
+            if let Err(err) = &asset.unwrap().read_to_string(&mut contents) {
+                return Err(EngineError::Generic(format!(
+                    "Failed to read shader file '{}': {}",
+                    path_str, err
+                )));
             }
 
             let mut source_raw = String::from(engine_config::SHADER_VERSION_HEADER);
@@ -59,7 +66,11 @@ impl ShaderLoader {
 
             let source = CString::new(source_raw);
             if source.is_err() {
-                panic!("Unable to create CString from file");
+                return Err(EngineError::Generic(format!(
+                    "Failed to create CString from shader file '{}': {}",
+                    path_str,
+                    source.err().unwrap()
+                )));
             }
             let shader = ShaderHandle {
                 id: gl::CreateShader(shader_type),
@@ -86,10 +97,10 @@ impl ShaderLoader {
                 );
                 error_log.set_len(error_log_size as usize);
                 let log = String::from_utf8(error_log).unwrap();
-                println!("Error compiling {}: {:?}", path_str, log);
+                return Err(EngineError::ShaderCompilation(path_str.to_string(), log));
             }
             self.id_map.insert(path, shader.clone());
-            Some(shader)
+            Ok(shader)
         }
     }
 
@@ -97,7 +108,7 @@ impl ShaderLoader {
         &mut self,
         archive: &NamedArchive,
         shader_configuration: ShaderConfiguration,
-    ) -> Option<ShaderProgram> {
+    ) -> Result<ShaderProgram, EngineError> {
         unsafe {
             // TODO: Handle shader loading failure inbetween shaders, currently if one shader fails to load, the rest will still be loaded and compiled, which is a waste of resources
             let fragment_shader = self.load_shader(
@@ -145,7 +156,7 @@ impl ShaderLoader {
 
             shader_handler::bind_attributes_to_program(&shader_program, 0, "position");
             shader_handler::bind_attributes_to_program(&shader_program, 1, "uv");
-            Some(shader_program)
+            Ok(shader_program)
         }
     }
 }

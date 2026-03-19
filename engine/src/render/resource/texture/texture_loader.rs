@@ -9,6 +9,7 @@ use std::{
 use crate::{
     engine_config,
     render::resource::texture::texture::{AnimatedTexture, StaticTexture, Texture},
+    shared::engine_error::EngineError,
 };
 
 pub struct TextureLoader {
@@ -26,24 +27,23 @@ impl TextureLoader {
         &mut self,
         archive: &NamedArchive,
         texture_name: &str,
-    ) -> Option<Texture> {
+    ) -> Result<Texture, EngineError> {
         let path = Path::new(engine_config::TEXTURES_PATH).join(texture_name.replace("/", "\\"));
         let binding = path.to_string_lossy().replace("/", "\\");
         let path_str = binding.as_str();
 
-        let asset = archive.get(path_str)?;
-        if let Some(texture) = self.id_map.get(&path) {
-            return Some(texture.clone());
+        let asset = archive.get(path_str);
+        if asset.is_none() {
+            return Err(EngineError::FileNotFound(path_str.to_string()));
         }
-        let mut img = match image::load_from_memory(asset) {
+        let mut img = match image::load_from_memory(asset.unwrap()) {
             Ok(img) => img,
             Err(err) => {
-                println!(
-                    "Could not load image {}: {}",
+                return Err(EngineError::Generic(format!(
+                    "Could not load image '{}': {}",
                     path.to_string_lossy().to_string().as_str(),
                     err
-                );
-                return None;
+                )));
             }
         };
         imageops::flip_vertical_in_place(&mut img);
@@ -83,7 +83,7 @@ impl TextureLoader {
         };
         let texture: Texture = StaticTexture::new(id, width, height).into();
         self.id_map.insert(path, texture.clone());
-        return Some(texture);
+        return Ok(texture);
     }
 
     pub fn load_animated_texture(
@@ -91,17 +91,20 @@ impl TextureLoader {
         archive: &NamedArchive,
         texture_names: &[String],
         animation_time: u128,
-    ) -> Option<Texture> {
+    ) -> Result<Texture, EngineError> {
         let mut static_textures: Vec<StaticTexture> = Vec::new();
         for texture_name in texture_names {
-            if let Some(Texture::StaticTexture(static_texture)) =
+            if let Ok(Texture::StaticTexture(static_texture)) =
                 self.load_static_texture(archive, texture_name)
             {
                 static_textures.push(static_texture);
             } else {
-                return None;
+                return Err(EngineError::Generic(format!(
+                    "Failed to load static texture: {}",
+                    texture_name
+                )));
             }
         }
-        return Some(AnimatedTexture::new(static_textures, animation_time).into());
+        return Ok(AnimatedTexture::new(static_textures, animation_time).into());
     }
 }
