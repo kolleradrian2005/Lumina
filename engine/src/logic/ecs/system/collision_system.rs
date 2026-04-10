@@ -19,6 +19,14 @@ pub struct CollisionSystem;
 
 impl System for CollisionSystem {
     fn run(&mut self, world: &mut World, _: f32) {
+        for (_, (transform, collider)) in world.query_mut::<(&mut Transform, &mut Collider)>() {
+            collider.boundary_points = collider.compute_boundary_points(
+                transform.position.xy() + collider.offset,
+                transform.scale,
+                transform.rotation,
+            );
+        }
+
         let snapshot: Vec<(Entity, Transform, Collider)> = world
             .query::<(&Transform, &Collider)>()
             .map(|(entity, (transform, collider))| (entity, transform.clone(), collider.clone()))

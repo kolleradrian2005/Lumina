@@ -4,7 +4,7 @@ use lumina_engine::{
     shared::extracted_frame::ExtractedFrame,
 };
 
-use crate::postprocess_uniform_buffer::PostProcessUniformBuffer;
+use crate::postprocess::postprocess_uniform_buffer::PostProcessUniformBuffer;
 
 pub struct PostprocessBufferExtractor;
 

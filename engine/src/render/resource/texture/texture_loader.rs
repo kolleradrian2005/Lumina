@@ -32,6 +32,10 @@ impl TextureLoader {
         let binding = path.to_string_lossy().replace("/", "\\");
         let path_str = binding.as_str();
 
+        if let Some(texture) = self.id_map.get(&path) {
+            return Ok(texture.clone());
+        }
+
         let asset = archive.get(path_str);
         if asset.is_none() {
             return Err(EngineError::FileNotFound(path_str.to_string()));

@@ -23,7 +23,8 @@ pub trait QueryMut<'a> {
 macro_rules! impl_query {
     ($IterName:ident, $(($Comp:ident => $var:ident)),+) => {
         pub struct $IterName<'a, $($Comp: Component),+> {
-            entities: Vec<Entity>,
+            entities_ptr: *const Entity,
+            entities_len: usize,
             $( $var: Option<*const ComponentStorage<$Comp>>, ) +
             index: usize,
             #[allow(unused_parens)]
@@ -36,7 +37,8 @@ macro_rules! impl_query {
 
             fn create_query(world: &World) -> Self::Iterator {
                 $IterName {
-                    entities: world.entities.clone(),
+                    entities_ptr: world.entities.as_ptr(),
+                    entities_len: world.entities.len(),
                     $( $var: world.get_storage_ptr::<$Comp>(), )+
                     index: 0,
                     _marker: PhantomData,
@@ -50,8 +52,8 @@ macro_rules! impl_query {
             fn next(&mut self) -> Option<Self::Item> {
                 #[allow(unused_parens)]
                 if let ( $( Some($var) ),+ ) = ( $( self.$var ),+ ) {
-                    while self.index < self.entities.len() {
-                        let entity = self.entities[self.index];
+                    while self.index < self.entities_len {
+                        let entity = unsafe { *self.entities_ptr.add(self.index) };
                         self.index += 1;
 
                         unsafe {
@@ -74,7 +76,8 @@ macro_rules! impl_query {
 macro_rules! impl_query_mut {
     ($IterName:ident, $(($Comp:ident => $var:ident)),+) => {
         pub struct $IterName<'a, $($Comp: Component),+> {
-            entities: Vec<Entity>,
+            entities_ptr: *const Entity,
+            entities_len: usize,
             $( $var: Option<*mut ComponentStorage<$Comp>>, ) +
             index: usize,
             #[allow(unused_parens)]
@@ -87,7 +90,8 @@ macro_rules! impl_query_mut {
 
             fn create_query(world: &mut World) -> Self::Iterator {
                 $IterName {
-                    entities: world.entities.clone(),
+                    entities_ptr: world.entities.as_ptr(),
+                    entities_len: world.entities.len(),
                     $( $var: world.get_storage_ptr_mut::<$Comp>(), )+
                     index: 0,
                     _marker: PhantomData,
@@ -101,8 +105,8 @@ macro_rules! impl_query_mut {
             fn next(&mut self) -> Option<Self::Item> {
                 #[allow(unused_parens)]
                 if let ( $( Some($var) ),+ ) = ( $( self.$var ),+ ) {
-                    while self.index < self.entities.len() {
-                        let entity = self.entities[self.index];
+                    while self.index < self.entities_len {
+                        let entity = unsafe { *self.entities_ptr.add(self.index) };
                         self.index += 1;
 
                         unsafe {
@@ -129,3 +133,6 @@ impl_query!(TripleComponentIter, (A => a), (B => b), (C => c));
 impl_query_mut!(SingleComponentIterMut, (A => a));
 impl_query_mut!(DoubleComponentIterMut, (A => a), (B => b));
 impl_query_mut!(TripleComponentIterMut, (A => a), (B => b), (C => c));
+impl_query_mut!(FourComponentIterMut, (A => a), (B => b), (C => c), (D => d));
+impl_query_mut!(FiveComponentIterMut, (A => a), (B => b), (C => c), (D => d), (E => e));
+impl_query_mut!(SixComponentIterMut, (A => a), (B => b), (C => c), (D => d), (E => e), (F => f));

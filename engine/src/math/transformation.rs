@@ -115,6 +115,6 @@ pub fn calc_intherited_transform(
         position,
         rotation,
         scale,
-        is_flipped: false,
+        is_flipped: model.is_flipped ^ parent_component.map(|p| p.is_flipped).unwrap_or(false),
     }
 }

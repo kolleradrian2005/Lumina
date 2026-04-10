@@ -62,18 +62,29 @@ impl GenericRenderer {
     }
 
     pub unsafe fn render(&self, entities: Vec<RenderEntity>) {
+        let mut last_shader: GLuint = 0;
+        let mut last_vao: GLuint = 0;
         for renderable in entities {
-            self.render_entity(&renderable);
+            self.render_entity(&renderable, &mut last_shader, &mut last_vao);
         }
 
+        gl::DisableVertexAttribArray(0);
+        gl::DisableVertexAttribArray(1);
         gl::BindVertexArray(0);
         gl::UseProgram(0);
     }
 
-    pub unsafe fn render_entity(&self, renderable: &RenderEntity) {
-        // TODO: optimize by sorting by shader and texture
+    pub unsafe fn render_entity(
+        &self,
+        renderable: &RenderEntity,
+        last_shader: &mut GLuint,
+        last_vao: &mut GLuint,
+    ) {
         let shader_handle = renderable.material.shader;
-        gl::UseProgram(shader_handle.id);
+        if shader_handle.id != *last_shader {
+            gl::UseProgram(shader_handle.id);
+            *last_shader = shader_handle.id;
+        }
         for (name, value) in renderable.material.parameters.iter() {
             let location = self.expect_uniform_location(shader_handle, name);
             match value {
@@ -92,10 +103,14 @@ impl GenericRenderer {
                 }
             }
         }
-        gl::BindVertexArray(renderable.mesh.get_vao());
-        gl::EnableVertexAttribArray(0);
-        if renderable.mesh.get_uvs_vbo().is_some() {
-            gl::EnableVertexAttribArray(1);
+        let vao = renderable.mesh.get_vao();
+        if vao != *last_vao {
+            gl::BindVertexArray(vao);
+            gl::EnableVertexAttribArray(0);
+            if renderable.mesh.get_uvs_vbo().is_some() {
+                gl::EnableVertexAttribArray(1);
+            }
+            *last_vao = vao;
         }
         // TODO: handle texture types better e.g. passing array of textures and shader params alongside
 
@@ -142,9 +157,5 @@ impl GenericRenderer {
             gl::UNSIGNED_INT,
             0 as *const _,
         );
-        gl::DisableVertexAttribArray(0);
-        if renderable.mesh.get_uvs_vbo().is_some() {
-            gl::DisableVertexAttribArray(1);
-        }
     }
 }

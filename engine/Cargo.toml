@@ -10,7 +10,7 @@ edition = "2021"
 gl = "0.14.0"
 image = "0.25.0"
 noise = "0.9.0"
-rand = "0.8.5"
+rand = { workspace = true }
 rusttype = "0.9.3"
 flume = "0.12.0"
 spin_sleep = "1.3.3"

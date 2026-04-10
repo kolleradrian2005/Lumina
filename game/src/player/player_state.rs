@@ -25,8 +25,8 @@ impl PlayerState {
     pub const fn acceleration(&self) -> f32 {
         match self {
             PlayerState::Idle => 0.0,
-            PlayerState::Swimming { direction: _ } => 1.0,
-            PlayerState::FastSwimming { direction: _ } => 1.25,
+            PlayerState::Swimming { direction: _ } => 0.75,
+            PlayerState::FastSwimming { direction: _ } => 1.0,
         }
     }
     pub const fn is_swimming(&self) -> bool {

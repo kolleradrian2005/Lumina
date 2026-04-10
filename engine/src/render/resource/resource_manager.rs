@@ -43,6 +43,7 @@ pub struct ResourceManager {
     shader_programs: HashMap<String, Arc<ShaderProgram>>,
     loader_tx: Sender<ResourceCommand>,
     collider_meshes: HashMap<ColliderShapeKey, Arc<Mesh>>,
+    texture_cache: HashMap<String, Texture>,
 }
 
 impl ResourceManager {
@@ -67,6 +68,7 @@ impl ResourceManager {
             loader_tx,
             shader_programs: HashMap::new(),
             collider_meshes: HashMap::new(),
+            texture_cache: HashMap::new(),
         }
     }
 
@@ -169,6 +171,10 @@ impl ResourceProvider for ResourceManager {
     }
 
     fn load_static_texture(&mut self, texture_name: &str) -> Option<Texture> {
+        if let Some(cached) = self.texture_cache.get(texture_name) {
+            return Some(cached.clone());
+        }
+
         let (tx, rx) = flume::bounded(1);
         self.send_resource_command(ResourceCommand::LoadStaticTexture {
             texture_name: texture_name.to_string(),
@@ -177,7 +183,10 @@ impl ResourceProvider for ResourceManager {
 
         match rx.recv() {
             Ok(texture) => match texture {
-                Ok(tex) => Some(tex),
+                Ok(tex) => {
+                    self.texture_cache.insert(texture_name.to_string(), tex.clone());
+                    Some(tex)
+                }
                 Err(err) => {
                     println!(
                         "Failed to load static texture: {:?}, error: {}",

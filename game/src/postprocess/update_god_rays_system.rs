@@ -7,7 +7,7 @@ use lumina_engine::{
     shared::postprocess_config::PostprocessConfig,
 };
 
-use crate::foreground::Foreground;
+use crate::postprocess::foreground::Foreground;
 
 pub struct UpdateGodRaysSystem;
 

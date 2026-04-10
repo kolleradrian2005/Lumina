@@ -6,7 +6,7 @@ use lumina_engine::logic::{
     scene::world::World,
 };
 
-use crate::components::player_state::PlayerState;
+use crate::player::player_state::PlayerState;
 
 pub struct PlayerMovementSystem;
 

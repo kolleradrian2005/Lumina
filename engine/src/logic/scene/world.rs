@@ -86,7 +86,7 @@ impl World {
             if let Some(model_component) = self.remove_component::<Model>(entity) {
                 self.mesh_removed(model_component.mesh);
             }
-            self.entities.remove(idx);
+            self.entities.swap_remove(idx);
             self.available_ids.push(entity.0);
             for storage in self.components.values_mut() {
                 storage.remove_entity(entity);

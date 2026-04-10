@@ -1,4 +1,3 @@
-use crate::components::follow::Follow;
 use lumina_engine::{
     logic::{
         ecs::{
@@ -12,6 +11,8 @@ use lumina_engine::{
     render::uniform_buffer_source::UniformBufferSource,
     shared::{postprocess_config::PostprocessConfig, window_size::WindowSize},
 };
+
+use crate::camera::follow::Follow;
 
 pub struct CameraSystem;
 

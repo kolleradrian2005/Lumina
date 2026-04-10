@@ -1186,6 +1186,7 @@ dependencies = [
  "log",
  "lumina_engine",
  "noise",
+ "rand 0.8.5",
  "winit",
 ]
 

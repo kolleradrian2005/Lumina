@@ -29,7 +29,7 @@ impl Extractor for DebugExtractor {
                 if let Some(mesh) = resource_manager.get_collider_mesh(key) {
                     let debug_shader = resource_manager.get_shader("debug_shader");
                     let mut material = Material::new(
-                        Texture::StaticColor(StaticColor::new((1.0, 0.0, 0.0).into())),
+                        Texture::StaticColor(StaticColor::new((0.0, 0.0, 0.0).into())),
                         debug_shader,
                     )
                     .with_draw_mode(DrawMode::Lines);

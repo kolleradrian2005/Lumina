@@ -11,7 +11,7 @@ use lumina_engine::{
     render::resource::texture::texture::Texture,
 };
 
-use crate::components::{
+use crate::player::{
     conditional_parent::{AnimationCondition, ConditionalParent},
     multi_conditional_parent::MultiConditionalParent,
     player_part::PlayerPart,

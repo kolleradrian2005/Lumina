@@ -1,105 +1,179 @@
 # Lumina
 
-A modular, thesis-focused game engine and aquatic exploration game built in Rust. The project demonstrates a separation between a reusable rendering/ECS engine and game-specific logic.
+A thesis-focused 2D game engine and aquatic exploration game built in Rust. The project demonstrates a clean separation between a reusable rendering/ECS engine (`lumina_engine`) and game-specific logic (`lumina_game`).
 
 ## Project Structure
 
 ```
 Lumina/
-├── engine/          # Game engine (core, game-agnostic)
-└── game/            # Game implementation (Lumina game)
+├── engine/       # lumina_engine — game-agnostic core
+├── game/         # lumina_game — the aquatic exploration game
+└── macro_lib/    # lumina_macro — proc-macro crate (#[derive(Component)])
 ```
 
-## Engine
+## Engine (`lumina_engine`)
 
-A minimal 2D rendering engine with:
+A minimal 2D engine built on top of OpenGL (GLSL 450 core), `glutin`/`winit` for windowing, and `flume` for cross-thread communication.
 
-### Core Systems
+### Core Modules
 
-- **ECS (Entity Component System)** — Flexible entity/component/system architecture with priority-based execution
-- **Rendering** — OpenGL-based renderer with post-processing, and scene management
-- **Math** — Vector types (Vec2, Vec3), transformations, collision geometry
-- **Input Handling** — Keyboard, mouse, and touch input abstraction
-- **Resource Management** — Texture, model, and shader asset loading
+- **ECS** — `World` stores entities, typed component storages (`HashMap<TypeId, …>`), and arbitrary resources (`HashMap<TypeId, Box<dyn Any>>`). Queries are typed and support both shared and mutable access.
+- **Rendering** — `GenericRenderer` issues OpenGL draw calls per `RenderEntity`. Supports triangles, lines, and tessellation patches. A `Framebuffer` with optional MSAA (16×) enables a full-screen post-processing pass.
+- **Scene** — `Scene` owns the `World`, a list of `Box<dyn System>`, and a list of `Box<dyn Extractor>`. Each frame: systems update the world, extractors collect a `ExtractedFrame`, which is sent to the render thread via a bounded channel.
+- **Math** — `Vec2`, `Vec3`, affine `Transform`, rect/capsule collision geometry.
+- **Input** — `InputState` resource updated from `winit` events forwarded through a channel from the main thread.
+- **Resource Management** — `ResourceManager` loads textures, meshes, and GLSL shaders from compile-time embedded asset archives (`include_assets`). Communicates with the render thread for GPU-side uploads.
 
-### Architecture Highlights
+### Threading Model
 
-- **System Registry** — Extensible system ordering with priorities (INPUT=0, RENDER=999)
-- **Physics Environment Trait** — Game-agnostic physics abstraction (engine doesn't depend on game concepts)
-- **World Layers** — Clean separation for static/dynamic world components (background, terrain, water, foreground)
-- **Component-Based Design** — Minimal coupling, extensible behavior
+```
+Main thread (winit event loop)
+  │  input events ──► input_tx
+  │  resource commands ──► resource_tx
+  │  ExtractedFrame ◄── render_rx
+  └► OpenGL draw calls
 
-### Exported API
+Logic thread (spawned once)
+  ├─ receives input events from input_rx
+  ├─ runs Scene::update (all Systems, 60 Hz target)
+  ├─ runs Scene::extract (all Extractors)
+  └─ sends ExtractedFrame via render_tx
+```
 
-- `Scene` — Main world container (entities, systems, layers, resources)
-- `World` — ECS core (entity creation, component management, queries)
-- `System` trait — For custom behavior
-- `ResourceProvider` trait — For custom asset loading
-- `PhysicsEnvironment` trait — For custom physics (resistance, currents, etc.)
+### Built-in Components
 
-## Game
+| Component   | Purpose                                              |
+| ----------- | ---------------------------------------------------- |
+| `Transform` | Position (Vec3), scale (Vec2), rotation (f32)        |
+| `Movement`  | Velocity, acceleration                               |
+| `Force`     | Mass + applied linear/drag forces (Newton 2nd law)   |
+| `Material`  | Shader handle, texture, typed uniform parameters     |
+| `Model`     | Mesh reference + object-type metadata                |
+| `Collider`  | Rect or Capsule2D shape with SAT intersection        |
+| `Camera`    | Orthographic projection, position, near/far          |
+| `Emitter`   | Particle emitter with configurable interval/lifespan |
+| `Parent`    | Entity hierarchy link                                |
 
-An aquatic exploration game demonstrating engine usage:
+### Built-in Systems & Extractors
 
-### Features
+**Systems** (run each frame in order):
+`MovementSystem` → `ParticleSystem` → `EmitterSystem` → `CollisionSystem` → `DebugSystem`
 
-- **Player Character** — Animated multi-part character (head, torso, arms, tank, legs)
-- **Procedural Terrain** — Infinite tile-based seagrass terrain generation
-- **Water Physics** — Resistance and water currents affecting movement
-- **Particle System** — Bubble particles emitted from player
-- **Camera System** — Follow-cam with focal-area post-processing
-- **God Rays** — Dynamic light rays based on water surface
+**Extractors** (collect render data each frame):
+`ModelExtractor`, `ParticleExtractor`, `DebugExtractor`, `PostprocessExtractor`
 
-### Game-Specific Systems
+### Post-Processing
 
-- `PlayerMovementSystem` — Player input and movement
-- `AnimationSystem` — Texture-based animation states
-- `TerrainSystem` — Dynamic terrain tile loading/unloading
-- `CurrentSystem` — Water current visual effects
-- `UpdateFocalRadiusSystem` — Post-processing focal area
-- `UpdateGodRaysSystem` — God ray computation
+The engine supports one full-screen post-process pass per frame. A `PostprocessConfig` resource carries a `Material` whose shader receives:
+
+- A `MatrixUniformBuffer` (projection + view matrices, std140)
+- A `PostProcessUniformBuffer` (saturation, tint, vignette, focal radius, smooth factor)
+- Per-frame dynamic uniforms (focal offset, aspect ratio, light positions for god rays)
+
+### Shaders
+
+All GLSL shaders are embedded at compile time. The engine ships:
+
+- `model.vert/frag` — standard sprite/model rendering
+- `model.tesc/tese` — tessellation shaders (e.g. seagrass wave deformation driven by a `uCurrent` uniform)
+- `postprocess.vert/frag` — full-screen post-processing (focal blur, vignette, tint, god rays)
+- `debug.vert/frag` — debug geometry overlay
+
+### Exported API Surface
+
+```rust
+// Start the engine (called from game crate)
+lumina_engine::app::start(event_loop, |scene, resource_manager| {
+    // load resources, spawn entities, register systems
+});
+
+// World — entity/component/resource management
+let entity = world.create_entity();
+world.add_component(entity, Transform { … });
+world.insert_resource(MyResource { … });
+for (_, (transform, movement)) in world.query_mut::<(&mut Transform, &mut Movement)>() { … }
+
+// Scene — system/extractor registration
+scene.register_system(Box::new(MySystem));
+scene.register_extractor(Box::new(MyExtractor));
+
+// Custom system
+impl System for MySystem {
+    fn run(&mut self, world: &mut World, delta_time: f32) { … }
+}
+
+// Custom component (proc-macro)
+#[derive(Component)]
+pub struct MyComponent { … }
+```
+
+## Game (`lumina_game`)
+
+An aquatic exploration game that demonstrates the engine's extensibility.
+
+### Player
+
+The player is a **multi-part entity hierarchy** (body parts linked via `Parent` components). Movement is driven by a `PlayerState` enum:
+
+| State          | Acceleration | Drag (via Water)      |
+| -------------- | ------------ | --------------------- |
+| `Idle`         | 0.0          | full water resistance |
+| `Swimming`     | 1.0 × mass   | 0.9 drag factor       |
+| `FastSwimming` | 1.25 × mass  | 0.9 drag factor       |
+
+`InputSystem` → `PlayerMovementSystem` → `Force` component → engine `MovementSystem` applies Newton's 2nd law every frame.
+
+`AnimationSystem` smoothly rotates the player body toward the movement direction and swaps sprite textures based on state and elapsed time.
+
+### Water Physics
+
+The `Water` resource holds:
+
+- A **drag coefficient** (0.9) applied as a continuous `ForceEffect::Drag` on the player's `Force` component.
+- A **Perlin-noise water current** sampled at the player's world position + time, yielding a horizontal force applied via `CurrentSystem`.
+
+### Terrain
+
+`Terrain` generates an infinite horizontal seagrass floor using **Perlin noise**. A `VecDeque<Tile>` acts as a sliding window: as the camera moves, tiles at one end are despawned and new tiles are generated at the other. Tile collision is handled by `TerrainCollisionSystem` using the engine's `Collider` + `CollisionSystem`.
+
+### Camera & Post-Processing
+
+`FollowSystem` moves the `Camera` entity toward the player. `CameraSystem` computes the orthographic projection + view matrices and uploads them to the `MatrixUniformBuffer`.
+
+Post-processing uniforms are updated each frame:
+
+- `UpdateFocalRadiusSystem` — adjusts the focal blur radius based on player state.
+- `UpdateGodRaysSystem` — maintains a sliding window of Perlin-noise god-ray light positions relative to the camera, passed as `uLightPositions[MAX_LIGHTS]` to the post-process shader.
+
+### Game-Specific Systems (registration order)
+
+```
+InputSystem → PlayerMovementSystem → CurrentSystem → TerrainSystem
+→ FollowSystem → CameraSystem → AnimationSystem → TerrainCollisionSystem
+→ UpdateFocalRadiusSystem → UpdateGodRaysSystem
+```
 
 ### Assets
 
-- Embedded asset archives (textures, shaders) per crate
-- Modular resource loading (engine defaults + game-specific assets)
-
-## Architecture
-
-### Engine-Game Separation
-
-```
-Engine (Agnostic)              Game (Domain-Specific)
-├─ MovementSystem              ├─ Water resource
-├─ PhysicsEnvironment trait    ├─ GamePhysicsEnvironment impl
-├─ Rendering pipeline          ├─ Player character
-├─ ECS core                    ├─ Terrain generation
-└─ UI framework                └─ Game systems
-```
-
-**Key Principle:** Engine provides abstractions (traits); game provides implementations (concrete types).
-
-- Engine systems don't know about Water, Terrain, or Player
-- Game implements `PhysicsEnvironment` trait to integrate with engine physics
-- Game registers custom systems and entities via engine Scene API
+Assets are embedded at compile time (`include_dir!`) into each crate's binary. The game attaches its own `NamedArchive` on top of the engine's default archive, so both sets of textures and shaders are available through `ResourceManager`.
 
 ## Building & Running
 
 ### Prerequisites
 
 - Rust 1.75+
-- OpenGL 4.5+ support (or OpenGL ES 3.0+ on mobile)
+- GPU with OpenGL 4.5 support
 
 ### Build
 
 ```bash
-cargo build --release
+cargo build
 ```
 
 ### Run
 
 ```bash
-cargo run --bin lumina_game --release
+cargo run
 ```
 
 ### Run Tests
@@ -108,100 +182,27 @@ cargo run --bin lumina_game --release
 cargo test --package lumina_engine
 ```
 
-## Technical Details
-
-### Threading Model
-
-- **Main thread** — Window events, rendering, GL commands
-- **Worker thread(s)** — ECS system execution, game logic
-- **Render Queue** — Thread-safe data preparation for rendering
-
-### Rendering Pipeline
-
-1. **Update Phase** — All systems run (prepare render data)
-2. **Drain Phase** — Collect render entities from layers and entities
-3. **Render Phase** — Execute GPU commands (main thread only)
-4. **Post-Processing** — Apply effects (focal blur, god rays, vignette)
-
-### ECS Queries
-
-```rust
-// Immutable query
-for (entity, (transform, model)) in world.query::<(&TransformComponent, &ModelComponent)>() {
-    // ...
-}
-
-// Mutable query
-for (entity, (mut movement, mut transform)) in world.query_mut::<(&mut MovementComponent, &mut TransformComponent)>() {
-    // ...
-}
-```
-
-### System Priority Order
+## Architecture Summary
 
 ```
-INPUT (0)
-  ↓
-PLAYER_LOGIC (10)
-  ↓
-MOVEMENT (20)
-  ↓
-TERRAIN (30)
-  ↓
-CAMERA (40)
-  ↓
-ANIMATION (50)
-  ↓
-PARTICLE (60)
-  ↓
-COLLISION (70)
-  ↓
-RENDER_PREP (90)
-  ↓
-RENDER (999)
+Engine (game-agnostic)           Game (domain-specific)
+─────────────────────────────    ──────────────────────────────
+World / ECS core                 PlayerState, PlayerPart
+Force / MovementSystem           PlayerMovementSystem, InputSystem
+Collider / CollisionSystem       Terrain, TerrainCollisionSystem
+Emitter / ParticleSystem         Particle (bubbles)
+Camera / MatrixUniformBuffer     CameraSystem, FollowSystem
+PostprocessConfig                Water, AnimationSystem
+GenericRenderer / Framebuffer    UpdateGodRaysSystem
+ResourceManager                  UpdateFocalRadiusSystem
 ```
 
-## Extending the Engine
-
-### Adding a Custom System
-
-```rust
-use lumina_engine::scene::world::system::System;
-
-pub struct CustomSystem;
-
-impl System for CustomSystem {
-    fn run(&mut self, world: &mut World, delta_time: f32) {
-        // Your game logic here
-    }
-
-    fn priority(&self) -> i32 {
-        25 // Between MOVEMENT and TERRAIN
-    }
-
-    fn name(&self) -> &str { "CustomSystem" }
-
-    fn as_any(&self) -> &dyn Any { self }
-}
-
-// Register in game initialization
-scene.add_system(Box::new(CustomSystem));
-```
-
-### Adding a Custom Resource
-
-```rust
-#[derive(Clone)]
-pub struct CustomResource {
-    data: Vec<f32>,
-}
-
-// In game initialization
-world.insert_resource(CustomResource { data: vec![1.0, 2.0, 3.0] });
+**Key principle:** The engine exposes traits (`System`, `Extractor`, `ResourceProvider`) and data types; the game provides all concrete implementations. The engine has zero knowledge of water, terrain, or player concepts.
 
 // In systems
 let resource = world.get_resource::<CustomResource>();
-```
+
+````
 
 ### Implementing Custom Physics
 
@@ -221,7 +222,7 @@ impl PhysicsEnvironment for CustomPhysicsEnv {
 
 // Register in game initialization
 world.insert_resource(Arc::new(custom_env) as Arc<dyn PhysicsEnvironment>);
-```
+````
 
 ## Performance Considerations
 

@@ -1,31 +1,5 @@
-use std::{
-    f32::consts::PI,
-    sync::{Arc, Mutex},
-    vec,
-};
+use std::{f32::consts::PI, vec};
 
-use crate::{
-    components::{
-        conditional_parent::{AnimationCondition, ConditionalParent},
-        follow::Follow,
-        multi_conditional_parent::MultiConditionalParent,
-        player_part::PlayerPart,
-        player_state::PlayerState,
-    },
-    extractors::postprocess_buffer_extractor::PostprocessBufferExtractor,
-    foreground::Foreground,
-    particle::Particle,
-    player_state_definition::PlayerStateDefinition,
-    systems::{
-        animation_system::AnimationSystem, camera_system::CameraSystem,
-        current_system::CurrentSystem, follow_system::FollowSystem, input_system::InputSystem,
-        player_movement_system::PlayerMovementSystem,
-        terrain_collision_system::TerrainCollisionSystem, terrain_system::TerrainSystem,
-        update_focal_radius_system::UpdateFocalRadiusSystem,
-        update_god_rays_system::UpdateGodRaysSystem,
-    },
-    terrain::{terrain::Terrain, water::Water},
-};
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
     logic::{
@@ -63,12 +37,39 @@ use lumina_engine::{
 };
 use winit::event_loop::EventLoop;
 
+use crate::{
+    camera::{camera_system::CameraSystem, follow::Follow, follow_system::FollowSystem},
+    fish::fish_movement_system::FishMovementSystem,
+    player::{
+        animation_system::AnimationSystem,
+        conditional_parent::{AnimationCondition, ConditionalParent},
+        input_system::InputSystem,
+        multi_conditional_parent::MultiConditionalParent,
+        player_movement_system::PlayerMovementSystem,
+        player_part::PlayerPart,
+        player_state::PlayerState,
+        player_state_definition::PlayerStateDefinition,
+    },
+    postprocess::{
+        foreground::Foreground, postprocess_buffer_extractor::PostprocessBufferExtractor,
+        update_focal_radius_system::UpdateFocalRadiusSystem,
+        update_god_rays_system::UpdateGodRaysSystem,
+    },
+    scene::{
+        batch_spawn_system::BatchSpawnSystem, current_system::CurrentSystem, particle::Particle,
+        terrain::Terrain, terrain_collision_system::TerrainCollisionSystem,
+        terrain_system::TerrainSystem, water::Water,
+    },
+};
+
 pub fn initialize(event_loop: EventLoop<()>) {
     lumina_engine::app::start(event_loop, |scene, resource_manager| {
         load_resources(resource_manager);
         init_world(scene.get_world_mut(), resource_manager);
         scene.register_system(Box::new(InputSystem));
         scene.register_system(Box::new(PlayerMovementSystem));
+        scene.register_system(Box::new(BatchSpawnSystem::new()));
+        scene.register_system(Box::new(FishMovementSystem));
         scene.register_system(Box::new(CurrentSystem));
         scene.register_system(Box::new(TerrainSystem));
         scene.register_system(Box::new(FollowSystem));
@@ -105,12 +106,16 @@ fn load_resources(resource_manager: &mut ResourceManager) {
         .expect("Failed to load background shader");
     /*let mut square_mesh = resource_manager.get_mesh("square");
     let mut bubble_mesh = square_mesh.clone();
-    /*bubble.set_scale(Vec2::uniform(0.01));
+    bubble.set_scale(Vec2::uniform(0.01));
     if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
         bubble.set_texture(texture);
     }*/
-    let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
-    resource_manager.save_mesh("seagrass", seagrass);*/
+    if let Some(Texture::StaticTexture(texture)) =
+        resource_manager.load_static_texture("seagrass0.png")
+    {
+        let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
+        resource_manager.save_mesh("seagrass", seagrass_mesh);
+    }
 
     /*let mut fish = square.clone();
     if let Some(texture) = resource_manager.load_static_texture("fish.png") {
@@ -126,7 +131,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     init_background(world, resource_manager); // TODO: fix this hack where background is initialized after other entities, causing it to render "on top of them"
     const WORLD_SEED: u32 = 696969;
     let terrain = Terrain::generate(world, 6969, resource_manager);
-    world.insert_resource(Arc::new(Mutex::new(terrain)));
+    world.insert_resource(terrain);
     let water = Water::create((WORLD_SEED ^ 0x5EAF00D).wrapping_mul(69696969));
     world.insert_resource(water);
     let shader = resource_manager.get_shader("model").clone();
@@ -186,6 +191,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 height: 1.0,
             },
             offset: (0.0, 0.25).into(),
+            boundary_points: Vec::new(),
         },
         {
             let mut force_component = Force::new(1.0);
@@ -224,6 +230,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 height: 1.0,
             },
             offset: (0.0, 0.25).into(),
+            boundary_points: Vec::new(),
         },
     );
     let mut force_component = Force::new(1.0);
@@ -263,6 +270,7 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
                 height: 0.5,
             },
             offset: (0.0, 0.0).into(),
+            boundary_points: Vec::new(),
         },
     );
     let mut force_component = Force::new(1.0);
@@ -297,12 +305,13 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     world.add_component::<Collider>(
         player,
         Collider {
-            shape: ColliderShape::Rect {
+            shape: ColliderShape::Capsule2D {
                 width: 0.4,
                 height: 1.4,
             },
             //offset: (-0.05, -0.05).into(),
             offset: (0.0, 0.0).into(),
+            boundary_points: Vec::new(),
         },
     );
     world.add_component(player, PlayerState::Idle);

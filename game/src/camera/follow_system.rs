@@ -1,4 +1,3 @@
-use crate::components::{follow::Follow, player_state::PlayerState};
 use lumina_engine::{
     logic::{
         ecs::{
@@ -9,6 +8,8 @@ use lumina_engine::{
     },
     math::vec3::Vec3,
 };
+
+use crate::{camera::follow::Follow, player::player_state::PlayerState};
 
 pub struct FollowSystem;
 

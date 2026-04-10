@@ -1,4 +1,3 @@
-use crate::terrain::water::Water;
 use lumina_engine::logic::{
     ecs::{
         component::{material::Material, movement::Movement, transform::Transform},
@@ -6,6 +5,8 @@ use lumina_engine::logic::{
     },
     scene::world::World,
 };
+
+use crate::scene::water::Water;
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {

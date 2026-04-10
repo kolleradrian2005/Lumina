@@ -21,8 +21,7 @@ use lumina_engine::{
 };
 use noise::Perlin;
 
-use crate::components::current::Current;
-use crate::object_type::ObjectType;
+use crate::scene::{current::Current, object_type::ObjectType};
 
 use super::terrain::Terrain;
 
@@ -44,7 +43,7 @@ impl Tile {
     ) -> Tile {
         // Generate raw model
 
-        let z_index = 0.0;
+        let tile_z = -0.001;
         let previous_y: f32 = Terrain::get_height_noise(x - 1, noise);
         let current_y: f32 = Terrain::get_height_noise(x, noise);
         let next_y: f32 = Terrain::get_height_noise(x + 1, noise);
@@ -77,7 +76,7 @@ impl Tile {
             top,
             sprite::Z_DEFAULT,
         ];
-        let tile_position = Vec3::new(x as f32 * size, current_y, z_index);
+        let tile_position = Vec3::new(x as f32 * size, current_y, tile_z);
 
         // Generate objects
         let mut objects = Vec::new();
@@ -96,9 +95,9 @@ impl Tile {
                         + bot
                         + height
                             * Terrain::interpolate(f32::from(!uphill), f32::from(uphill), ratio),
-                    z_index,
+                    tile_z,
                 );
-                position.z = z_index;
+                position.z = tile_z;
                 // TODO: use prefab
                 let seaweed = world.create_entity();
                 let seaweed_mesh = resource_manager.get_mesh("seagrass");
@@ -109,20 +108,18 @@ impl Tile {
                 {
                     position.y += 0.08 * texture.get_normalized_dimensions().1 / 2.0;
                     let mut material = Material::new(Texture::StaticTexture(texture), shader)
-                        .with_param("uObjectType", ObjectType::SeaGrass as i32);
+                        .with_param("uObjectType", ObjectType::SeaGrass as i32)
+                        .with_draw_mode(match use_tesselation {
+                            true => DrawMode::Patches,
+                            false => DrawMode::Triangles,
+                        });
                     if use_tesselation {
                         material.set_param("uCurrent", 0f32);
                     }
                     world.add_component(seaweed, material);
                 }
                 world.add_component::<Current>(seaweed, Current::default());
-                world.add_component::<Model>(
-                    seaweed,
-                    Model {
-                        mesh: seaweed_mesh,
-                        //object_type: ObjectType::SeaGrass,
-                    },
-                );
+                world.add_component::<Model>(seaweed, Model { mesh: seaweed_mesh });
 
                 world.add_component(
                     seaweed,
@@ -144,13 +141,7 @@ impl Tile {
                 sprite::UVS.to_vec(),
             )
             .unwrap();
-        world.add_component::<Model>(
-            tile,
-            Model {
-                mesh: mesh.into(),
-                //object_type: ObjectType::Terrain,
-            },
-        );
+        world.add_component::<Model>(tile, Model { mesh: mesh.into() });
         let shader = resource_manager.get_shader("model");
         let material = Material::new(texture.clone(), shader.clone())
             .with_param("uObjectType", ObjectType::Terrain as i32)

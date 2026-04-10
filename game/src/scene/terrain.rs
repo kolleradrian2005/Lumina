@@ -10,7 +10,7 @@ use lumina_engine::{
 };
 use noise::{NoiseFn, Perlin};
 
-use crate::terrain::tile::Tile;
+use crate::scene::tile::Tile;
 
 pub struct Terrain {
     pub noise: Perlin,

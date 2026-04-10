@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use lumina_engine::math::vec2::Vec2;
 use noise::{NoiseFn, Perlin};
 
-use crate::postprocess_uniform_buffer::PostProcessUniformBuffer;
+use crate::postprocess::postprocess_uniform_buffer::PostProcessUniformBuffer;
 
 pub struct Foreground {
     pub noise: Perlin,

@@ -5,7 +5,7 @@ use lumina_engine::{
 };
 use winit::keyboard::{Key, NamedKey};
 
-use crate::components::player_state::PlayerState;
+use crate::player::player_state::PlayerState;
 
 pub struct InputSystem;
 

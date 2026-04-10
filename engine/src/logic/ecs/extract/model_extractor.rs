@@ -50,12 +50,13 @@ impl ModelExtractor {
         transform: Transform,
         model: &Model,
     ) {
-        if let Some(parent) = parent.clone() {
+        if let Some(ref parent) = parent {
             if parent.parent.0 == 0 {
                 return;
             }
         }
         let parent_transform = parent
+            .as_ref()
             .map(|parent| world.get_component::<Transform>(parent.parent))
             .unwrap_or(None);
         let transform_matrix =
