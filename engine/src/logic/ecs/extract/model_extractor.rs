@@ -50,7 +50,7 @@ impl ModelExtractor {
         transform: Transform,
         model: &Model,
     ) {
-        if let Some(ref parent) = parent {
+        if let Some(parent) = &parent {
             if parent.parent.0 == 0 {
                 return;
             }

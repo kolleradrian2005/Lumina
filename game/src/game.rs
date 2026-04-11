@@ -28,12 +28,11 @@ use lumina_engine::{
                 parameter_schema::ParameterSchema, shader_configuration::ShaderConfiguration,
                 shader_parameter_type::ShaderParameterType,
             },
-            texture::texture::{StaticColor, Texture},
+            texture::texture::Texture,
         },
         uniform_buffer_source::UniformBufferSource,
     },
     shared::postprocess_config::PostprocessConfig,
-    spawn_entity,
 };
 use winit::event_loop::EventLoop;
 
@@ -171,117 +170,6 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     let model_scale = 0.15;
     let initial_position = Vec3::new(0.0, 0.25, 0.0);
 
-    // Create dummy
-    spawn_entity!(
-        world,
-        Transform {
-            position: (0.75, 0.0, 0.0).into(),
-            rotation: 0.0,
-            scale: Vec2::uniform(0.5),
-            is_flipped: false,
-        },
-        Material::new(
-            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
-            shader.clone(),
-        ),
-        Model::from(resource_manager.get_mesh("square")),
-        Collider {
-            shape: ColliderShape::Capsule2D {
-                width: 0.5,
-                height: 1.0,
-            },
-            offset: (0.0, 0.25).into(),
-            boundary_points: Vec::new(),
-        },
-        {
-            let mut force_component = Force::new(1.0);
-            force_component.apply_force(AppliedForce {
-                id: "water_resistance".to_string(),
-                effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
-                mode: ForceMode::Continuous,
-            });
-            force_component
-        },
-        Movement::default()
-    );
-    let dummy = world.create_entity();
-    world.add_component(
-        dummy,
-        Transform {
-            position: (0.75, 0.0, 0.0).into(),
-            rotation: 0.0,
-            scale: Vec2::uniform(0.5),
-            is_flipped: false,
-        },
-    );
-    world.add_component(
-        dummy,
-        Material::new(
-            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
-            shader.clone(),
-        ),
-    );
-    world.add_component::<Model>(dummy, resource_manager.get_mesh("square").clone().into());
-    world.add_component(
-        dummy,
-        Collider {
-            shape: ColliderShape::Capsule2D {
-                width: 0.5,
-                height: 1.0,
-            },
-            offset: (0.0, 0.25).into(),
-            boundary_points: Vec::new(),
-        },
-    );
-    let mut force_component = Force::new(1.0);
-    force_component.apply_force(AppliedForce {
-        id: "water_resistance".to_string(),
-        effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
-        mode: ForceMode::Continuous,
-    });
-    world.add_component(dummy, force_component);
-    world.add_component(dummy, Movement::default());
-
-    // Create dummy 2
-
-    let dummy = world.create_entity();
-    world.add_component(
-        dummy,
-        Transform {
-            position: (-0.75, 0.0, 0.0).into(),
-            rotation: 0.0,
-            scale: Vec2::uniform(0.5),
-            is_flipped: false,
-        },
-    );
-    world.add_component(
-        dummy,
-        Material::new(
-            Texture::StaticColor(StaticColor::new((0.5, 0.5, 0.5).into())),
-            shader.clone(),
-        ),
-    );
-    world.add_component::<Model>(dummy, resource_manager.get_mesh("square").clone().into());
-    world.add_component(
-        dummy,
-        Collider {
-            shape: ColliderShape::Rect {
-                width: 0.5,
-                height: 0.5,
-            },
-            offset: (0.0, 0.0).into(),
-            boundary_points: Vec::new(),
-        },
-    );
-    let mut force_component = Force::new(1.0);
-    force_component.apply_force(AppliedForce {
-        id: "water_resistance".to_string(),
-        effect: ForceEffect::Drag(world.expect_resource::<Water>().get_resistance()),
-        mode: ForceMode::Continuous,
-    });
-    world.add_component(dummy, force_component);
-    world.add_component(dummy, Movement::default());
-
     // Create player
 
     let player = world.create_entity();
@@ -304,15 +192,10 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
     );*/
     world.add_component::<Collider>(
         player,
-        Collider {
-            shape: ColliderShape::Capsule2D {
+        Collider::new(ColliderShape::Capsule2D {
                 width: 0.4,
                 height: 1.4,
-            },
-            //offset: (-0.05, -0.05).into(),
-            offset: (0.0, 0.0).into(),
-            boundary_points: Vec::new(),
-        },
+            }),
     );
     world.add_component(player, PlayerState::Idle);
     world.add_component(player, Movement::default());

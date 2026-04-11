@@ -10,8 +10,7 @@ pub enum ColliderShape {
 pub struct Collider {
     pub shape: ColliderShape,
     pub offset: Vec2,
-    pub boundary_points: Vec<Vec2>,
-    //pub is_static: bool,
+    boundary_points: Vec<Vec2>,
 }
 
 const TRESHOLD: f32 = 1e-6;
@@ -295,10 +294,14 @@ impl Collider {
         Some((radius_sum - dist, normal))
     }
 
-    pub fn compute_boundary_points(&mut self, pos: Vec2, scale: Vec2, rotation: f32) -> Vec<Vec2> {
+    pub fn boundary_points(&self) -> &[Vec2] {
+        &self.boundary_points
+    }
+
+    pub fn compute_boundary_points(&mut self, pos: Vec2, scale: Vec2, rotation: f32) {
         // TODO: improve resolution
         let (width, height) = self.scaled_dims(scale);
-        match self.shape {
+        self.boundary_points = match self.shape {
             ColliderShape::Rect { .. } => Self::rect_corners(pos, rotation, width, height).to_vec(),
             ColliderShape::Capsule2D { .. } => {
                 let radius = width / 2.0;
@@ -312,16 +315,27 @@ impl Collider {
                     spine_bottom + Vec2::new(-radius, 0.0).rotated(rotation),
                 ]
             }
-        }
+        };
     }
 }
 
-impl From<ColliderShape> for Collider {
-    fn from(shape: ColliderShape) -> Self {
+impl Collider {
+    pub fn new(shape: ColliderShape) -> Self {
         Self {
             shape,
             offset: Vec2::zero(),
             boundary_points: Vec::new(),
         }
+    }
+
+    pub fn with_offset(mut self, offset: Vec2) -> Self {
+        self.offset = offset;
+        self
+    }
+}
+
+impl From<ColliderShape> for Collider {
+    fn from(shape: ColliderShape) -> Self {
+        Self::new(shape)
     }
 }

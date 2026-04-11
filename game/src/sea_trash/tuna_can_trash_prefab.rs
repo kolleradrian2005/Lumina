@@ -24,14 +24,14 @@ use lumina_engine::{
 
 use crate::{scene::water::Water, sea_trash::sea_trash::SeaTrash};
 
-pub struct SeaTrashPrefab;
+pub struct TunaCanTrashPrefab;
 
-impl SeaTrashPrefab {
+impl TunaCanTrashPrefab {
     pub fn spawn(world: &mut World) -> Entity {
         let resource_manager: &mut ResourceManager = world.expect_resource_mut::<ResourceManager>();
         let shader = resource_manager.get_shader("model").clone();
         let model = Model::from(resource_manager.get_mesh("square"));
-        let texture = resource_manager.load_static_texture("fish.png");
+        let texture = resource_manager.load_static_texture("tuna_can_trash.png");
         let mut force_component = Force::new(0.1);
         force_component.apply_force(AppliedForce {
             id: "water_resistance".to_string(),
@@ -48,17 +48,13 @@ impl SeaTrashPrefab {
             Transform {
                 position: Vec3::new(0.0, 0.0, 0.0),
                 rotation: 0.0,
-                scale: Vec2::new(0.06, 0.06),
+                scale: Vec2::new(0.03, 0.03),
                 is_flipped: false,
             },
-            Collider {
-                shape: ColliderShape::Rect {
-                    width: 0.5,
-                    height: 0.5
-                },
-                offset: Vec2::zero(),
-                boundary_points: Vec::new()
-            },
+                Collider::new(ColliderShape::Rect {
+                    width: 0.9,
+                    height: 0.9
+                }),
             force_component,
             Movement::default(),
             model,

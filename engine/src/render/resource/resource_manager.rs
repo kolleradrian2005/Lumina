@@ -18,7 +18,7 @@ use crate::{
 
 use super::{resource_provider::ResourceProvider, texture::texture::Texture};
 
-#[derive(Hash, PartialEq, Eq, Clone)]
+#[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub enum ColliderShapeKey {
     Capsule2D(u32, u32),
     Rect(u32, u32),

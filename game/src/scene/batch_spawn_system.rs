@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, f32::consts::PI};
 
 use lumina_engine::{
     logic::{
@@ -14,7 +14,10 @@ use winit::keyboard::Key;
 use crate::{
     fish::{fish::Fish, fish_prefab::FishPrefab},
     player::player_state::PlayerState,
-    sea_trash::sea_trash_prefab::SeaTrashPrefab,
+    sea_trash::{
+        bottle_trash_prefab::BottleTrashPrefab, flipflop_trash_prefab::FlipflopTrashPrefab,
+        tuna_can_trash_prefab::TunaCanTrashPrefab,
+    },
 };
 
 pub struct BatchSpawnSystem {
@@ -85,17 +88,23 @@ impl BatchSpawnSystem {
     fn spawn_sea_trash(&mut self, world: &mut World, transform: &mut Transform, rng: *mut StdRng) {
         for _ in 0..SEA_TRASH_BATCH_SIZE {
             let random_offset = Vec3::new(
-                (unsafe { (*rng).gen::<f32>() } - 0.5) * 2.0,
-                (unsafe { (*rng).gen::<f32>() } - 0.5) * 2.0,
+                (unsafe { (*rng).gen::<f32>() } - 0.5) * 1.0,
+                (unsafe { (*rng).gen::<f32>() } - 0.5) * 1.0,
                 0.0,
             );
+            let random_rotation = (unsafe { (*rng).gen::<f32>() } - 0.5) * PI;
             let is_flipped = unsafe { (*rng).gen::<bool>() };
             let spawn_position = transform.position + random_offset;
-            let sea_trash_entity = SeaTrashPrefab::spawn(world);
+            let sea_trash_entity = match unsafe { (*rng).gen_range(0..3) } {
+                0 => FlipflopTrashPrefab::spawn(world),
+                1 => TunaCanTrashPrefab::spawn(world),
+                _ => BottleTrashPrefab::spawn(world),
+            };
             world
                 .get_component_mut::<Transform>(sea_trash_entity)
                 .map(|sea_trash_transform| {
                     sea_trash_transform.position = spawn_position;
+                    sea_trash_transform.rotation = random_rotation;
                     sea_trash_transform.is_flipped = is_flipped;
                 });
             self.spawned_sea_trash.push_back(sea_trash_entity);
