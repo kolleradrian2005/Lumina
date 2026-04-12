@@ -10,7 +10,7 @@ use crate::{
         },
         scene::{matrix_uniform_buffer::MatrixUniformBuffer, world::World},
     },
-    math::transformation,
+    math::transformation::{self, get_world_transform},
     render::uniform_buffer_source::UniformBufferSource,
     shared::{
         extracted_frame::ExtractedFrame, render_entity::RenderEntity, window_size::WindowSize,
@@ -55,27 +55,35 @@ impl ModelExtractor {
                 return;
             }
         }
-        let parent_transform = parent
-            .as_ref()
-            .map(|parent| world.get_component::<Transform>(parent.parent))
-            .unwrap_or(None);
+        let parent_world_transform = parent.as_ref().and_then(|parent| {
+            get_world_transform(
+                parent.parent,
+                &|e| world.get_component::<Transform>(e).cloned(),
+                &|e| world.get_component::<Parent>(e).cloned(),
+            )
+        });
         let transform_matrix =
-            transformation::create_transform_matrix(&transform, parent_transform);
+            transformation::create_transform_matrix(&transform, parent_world_transform.as_ref());
         let material = world.get_component::<Material>(entity).cloned();
         if material.is_none() {
             return;
         }
         let mut material = material.unwrap();
-        // TODO: default material
-        //.unwrap_or(MaterialComponent::default());
-        let is_flipped =
-            transform.is_flipped ^ parent_transform.map(|e| e.is_flipped).unwrap_or(false);
+        let is_flipped = transform.is_flipped
+            ^ parent_world_transform
+                .as_ref()
+                .map(|e| e.is_flipped)
+                .unwrap_or(false);
         material.set_param("uModelMatrix", transform_matrix);
         material.set_param("uFlipped", is_flipped as i32);
         frame.entities.push(RenderEntity {
             mesh: model.mesh.clone(),
             material: material,
-            z_index: transform.position.z + parent_transform.map(|e| e.position.z).unwrap_or(0.0),
+            z_index: transform.position.z
+                + parent_world_transform
+                    .as_ref()
+                    .map(|e| e.position.z)
+                    .unwrap_or(0.0),
         });
     }
 }

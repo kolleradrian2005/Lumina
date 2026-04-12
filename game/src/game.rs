@@ -103,27 +103,12 @@ fn load_resources(resource_manager: &mut ResourceManager) {
             },
         )
         .expect("Failed to load background shader");
-    /*let mut square_mesh = resource_manager.get_mesh("square");
-    let mut bubble_mesh = square_mesh.clone();
-    bubble.set_scale(Vec2::uniform(0.01));
-    if let Some(texture) = resource_manager.load_static_texture("bubble.png") {
-        bubble.set_texture(texture);
-    }*/
     if let Some(Texture::StaticTexture(texture)) =
         resource_manager.load_static_texture("seagrass0.png")
     {
         let seagrass_mesh = resource_manager.load_mesh_from_texture(&texture).unwrap();
         resource_manager.save_mesh("seagrass", seagrass_mesh);
     }
-
-    /*let mut fish = square.clone();
-    if let Some(texture) = resource_manager.load_static_texture("fish.png") {
-        fish.set_texture(texture);
-    }
-    fish.set_scale(Vec2::uniform(0.04));
-    */
-    //resource_manager.save_mesh("bubble", bubble_mesh);
-    //resource_manager.save_mesh("fish", fish);
 }
 
 fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
@@ -186,16 +171,12 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         },
     );
 
-    /*world.add_component::<ColliderComponent>(
-        player,
-        Collider::rect(0.4, 1.4, (-0.05, -0.05).into()).into(),
-    );*/
     world.add_component::<Collider>(
         player,
         Collider::new(ColliderShape::Capsule2D {
-                width: 0.4,
-                height: 1.4,
-            }),
+            width: 0.4,
+            height: 1.4,
+        }),
     );
     world.add_component(player, PlayerState::Idle);
     world.add_component(player, Movement::default());

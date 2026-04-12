@@ -1,4 +1,7 @@
-use crate::logic::ecs::component::transform::Transform;
+use crate::logic::ecs::{
+    component::{parent::Parent, transform::Transform},
+    entity::entity::Entity,
+};
 
 use super::{vec2::Vec2, vec3::Vec3};
 
@@ -116,5 +119,20 @@ pub fn calc_intherited_transform(
         rotation,
         scale,
         is_flipped: model.is_flipped ^ parent_component.map(|p| p.is_flipped).unwrap_or(false),
+    }
+}
+
+pub fn get_world_transform(
+    entity: Entity,
+    get_transform: &dyn Fn(Entity) -> Option<Transform>,
+    get_parent: &dyn Fn(Entity) -> Option<Parent>,
+) -> Option<Transform> {
+    let transform = get_transform(entity)?;
+    match get_parent(entity) {
+        Some(parent) if parent.parent != Entity(0) => {
+            let parent_world = get_world_transform(parent.parent, get_transform, get_parent)?;
+            Some(calc_intherited_transform(&transform, Some(&parent_world)))
+        }
+        _ => Some(transform),
     }
 }

@@ -21,7 +21,7 @@ impl Extractor for ParticleExtractor {
                     entity,
                     None,
                     Transform {
-                        position: transform.position + particle.position,
+                        position: particle.position,
                         rotation: transform.rotation,
                         scale: transform.scale,
                         is_flipped: transform.is_flipped,
