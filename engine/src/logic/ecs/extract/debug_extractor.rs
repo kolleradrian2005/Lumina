@@ -8,7 +8,7 @@ use crate::{
             },
             extract::extractor::Extractor,
         },
-        scene::world::World,
+        scene::{debug_config::DebugConfig, world::World},
     },
     math::{transformation, vec3::Vec3},
     render::resource::{
@@ -23,6 +23,13 @@ pub struct DebugExtractor;
 
 impl Extractor for DebugExtractor {
     fn extract(&mut self, world: &World, frame: &mut ExtractedFrame) {
+        let enabled = world
+            .get_resource::<DebugConfig>()
+            .map_or(false, |c| c.enabled);
+        if !enabled {
+            return;
+        }
+
         for (_, (collider, transform)) in world.query::<(&Collider, &Transform)>() {
             if let Some(resource_manager) = world.get_resource::<ResourceManager>() {
                 let key = ColliderShapeKey::from_shape(&collider.shape);

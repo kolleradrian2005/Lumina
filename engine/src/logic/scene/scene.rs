@@ -14,7 +14,8 @@ use crate::{
             },
         },
         scene::{
-            focus_point::FocusPoint, matrix_uniform_buffer::MatrixUniformBuffer, world::World,
+            debug_config::DebugConfig, focus_point::FocusPoint,
+            matrix_uniform_buffer::MatrixUniformBuffer, world::World,
         },
     },
     math::vec3::Vec3,
@@ -34,6 +35,7 @@ impl Scene {
     pub fn new() -> Self {
         let mut world = World::load();
         world.insert_resource(InputState::init());
+        world.insert_resource(DebugConfig { enabled: false });
         world.insert_resource(FocusPoint(Vec3::new(0.0, 0.0, 0.0)));
         world.insert_resource(WindowSize {
             width: 0,
@@ -64,7 +66,7 @@ impl Scene {
             Box::new(ParticleSystem),
             Box::new(EmitterSystem),
             Box::new(CollisionSystem),
-            Box::new(DebugSystem),
+            Box::new(DebugSystem::new()),
         ];
 
         let extractors: Vec<Box<dyn Extractor>> = vec![

@@ -56,6 +56,9 @@ fn build_window() -> WindowBuilder {
 }
 
 pub fn start(on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static) {
+    #[cfg(not(target_os = "android"))]
+    env_logger::init();
+
     let event_loop = EventLoopBuilder::new()
         .build()
         .expect("Failed to create event loop!");
