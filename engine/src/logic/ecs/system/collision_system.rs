@@ -15,6 +15,8 @@ use crate::{
     math::vec3::Vec3,
 };
 
+const COLLISION_IMPULSE_STRENGTH: f32 = 40.0;
+
 pub struct CollisionSystem;
 
 impl System for CollisionSystem {
@@ -57,7 +59,9 @@ impl System for CollisionSystem {
         }
         // TODO: isstatic?
         for collision in collisions {
-            let push = collision.collision_normal * collision.penetration_depth * 40.0;
+            let push = collision.collision_normal
+                * collision.penetration_depth
+                * COLLISION_IMPULSE_STRENGTH;
             if let Some(force) = world.get_component_mut::<Force>(collision.entity_a) {
                 force.apply_force(AppliedForce {
                     id: format!("collision_{:?}", collision.entity_b),

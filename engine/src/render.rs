@@ -1,5 +1,6 @@
 pub(crate) mod frame_buffer;
 pub(crate) mod generic_renderer;
+pub(crate) mod gl_error;
 pub mod mesh;
 pub mod model;
 pub(crate) mod renderer;

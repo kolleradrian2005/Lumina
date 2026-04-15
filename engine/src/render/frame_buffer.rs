@@ -136,12 +136,13 @@ impl Framebuffer {
             );
             let status = gl::CheckFramebufferStatus(gl::FRAMEBUFFER);
             if status != gl::FRAMEBUFFER_COMPLETE {
-                println!(
+                log::error!(
                     "An error occured while creating post-processing framebuffer. Statuscode: {}",
                     status
                 );
             }
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+            gl_check_error!();
         }
         let (vertices, indices, uvs) = sprite::square(2.0);
         Framebuffer {
@@ -196,6 +197,7 @@ impl Framebuffer {
             gl::COLOR_BUFFER_BIT,
             gl::NEAREST,
         );
+        gl_check_error!();
     }
 
     pub unsafe fn unbind(&self) {

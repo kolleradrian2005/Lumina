@@ -43,6 +43,8 @@ impl Renderer {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             gl::PatchParameteri(gl::PATCH_VERTICES, 3);
+
+            gl_check_error!();
         };
 
         Renderer {
@@ -92,6 +94,7 @@ impl Renderer {
             }
             gl::Disable(gl::DEPTH_TEST);
             self.unbind_uniform_buffers();
+            gl_check_error!();
         };
     }
 
@@ -154,6 +157,7 @@ impl Renderer {
                             gl::DYNAMIC_DRAW,
                         );
                         gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+                        gl_check_error!();
                     };
                     self.uniform_buffer_pool
                         .insert(uniform_buffer_data.binding_index, ubo);

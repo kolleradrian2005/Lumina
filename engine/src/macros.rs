@@ -8,3 +8,9 @@ macro_rules! spawn_entity {
         entity
     }};
 }
+
+macro_rules! gl_check_error {
+    () => {
+        crate::render::gl_error::check_gl_error(file!(), line!())
+    };
+}

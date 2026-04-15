@@ -157,5 +157,6 @@ impl GenericRenderer {
             gl::UNSIGNED_INT,
             0 as *const _,
         );
+        gl_check_error!();
     }
 }
