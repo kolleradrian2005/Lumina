@@ -17,7 +17,7 @@ use lumina_engine::{
             },
             entity::entity::Entity,
         },
-        scene::world::World,
+        scene::{scene::Scene, world::World},
     },
     math::{vec2::Vec2, vec3::Vec3},
     render::{
@@ -34,7 +34,6 @@ use lumina_engine::{
     },
     shared::postprocess_config::PostprocessConfig,
 };
-use winit::event_loop::EventLoop;
 
 use crate::{
     camera::{camera_system::CameraSystem, follow::Follow, follow_system::FollowSystem},
@@ -61,24 +60,31 @@ use crate::{
     },
 };
 
-pub fn initialize(event_loop: EventLoop<()>) {
-    lumina_engine::app::start(event_loop, |scene, resource_manager| {
-        load_resources(resource_manager);
-        init_world(scene.get_world_mut(), resource_manager);
-        scene.register_system(Box::new(InputSystem));
-        scene.register_system(Box::new(PlayerMovementSystem));
-        scene.register_system(Box::new(BatchSpawnSystem::new()));
-        scene.register_system(Box::new(FishMovementSystem));
-        scene.register_system(Box::new(CurrentSystem));
-        scene.register_system(Box::new(TerrainSystem));
-        scene.register_system(Box::new(FollowSystem));
-        scene.register_system(Box::new(CameraSystem));
-        scene.register_system(Box::new(AnimationSystem));
-        scene.register_system(Box::new(TerrainCollisionSystem));
-        scene.register_system(Box::new(UpdateFocalRadiusSystem));
-        scene.register_system(Box::new(UpdateGodRaysSystem));
-        scene.register_extractor(Box::new(PostprocessBufferExtractor));
-    });
+pub fn initialize() {
+    lumina_engine::start(initialize_scene);
+}
+
+#[cfg(target_os = "android")]
+pub fn initialize_android(app: winit::platform::android::activity::AndroidApp) {
+    lumina_engine::start_with_android_app(app, initialize_scene);
+}
+
+fn initialize_scene(scene: &mut Scene, resource_manager: &mut ResourceManager) {
+    load_resources(resource_manager);
+    init_world(scene.get_world_mut(), resource_manager);
+    scene.register_system(Box::new(InputSystem));
+    scene.register_system(Box::new(PlayerMovementSystem));
+    scene.register_system(Box::new(BatchSpawnSystem::new()));
+    scene.register_system(Box::new(FishMovementSystem));
+    scene.register_system(Box::new(CurrentSystem));
+    scene.register_system(Box::new(TerrainSystem));
+    scene.register_system(Box::new(FollowSystem));
+    scene.register_system(Box::new(CameraSystem));
+    scene.register_system(Box::new(AnimationSystem));
+    scene.register_system(Box::new(TerrainCollisionSystem));
+    scene.register_system(Box::new(UpdateFocalRadiusSystem));
+    scene.register_system(Box::new(UpdateGodRaysSystem));
+    scene.register_extractor(Box::new(PostprocessBufferExtractor));
 }
 
 fn load_resources(resource_manager: &mut ResourceManager) {

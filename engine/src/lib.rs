@@ -11,3 +11,8 @@ pub mod logic;
 pub mod math;
 pub mod render;
 pub mod shared;
+
+pub use app::start;
+
+#[cfg(target_os = "android")]
+pub use app::start_with_android_app;

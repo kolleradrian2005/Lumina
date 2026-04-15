@@ -42,7 +42,7 @@ impl InputHandler {
                         world
                             .get_resource_mut::<InputState>()
                             .unwrap()
-                            .set_l_mouse(pressed);
+                            .set_r_mouse(pressed);
                     }
                     _ => {}
                 };

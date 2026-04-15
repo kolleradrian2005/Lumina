@@ -16,7 +16,7 @@ use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
     DeviceEvent, ElementState, Event, KeyEvent, MouseButton, TouchPhase, WindowEvent,
 };
-use winit::event_loop::{ControlFlow, EventLoop};
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopBuilder};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowBuilder};
 
@@ -55,7 +55,28 @@ fn build_window() -> WindowBuilder {
         ))
 }
 
-pub fn start(
+pub fn start(on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static) {
+    let event_loop = EventLoopBuilder::new()
+        .build()
+        .expect("Failed to create event loop!");
+    start_with_event_loop(event_loop, on_init);
+}
+
+#[cfg(target_os = "android")]
+pub fn start_with_android_app(
+    app: winit::platform::android::activity::AndroidApp,
+    on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static,
+) {
+    use winit::platform::android::EventLoopBuilderExtAndroid;
+
+    let event_loop = EventLoopBuilder::new()
+        .with_android_app(app)
+        .build()
+        .expect("Failed to create Android event loop!");
+    start_with_event_loop(event_loop, on_init);
+}
+
+fn start_with_event_loop(
     event_loop: EventLoop<()>,
     mut on_init: impl FnMut(&mut Scene, &mut ResourceManager) + Send + 'static,
 ) {
