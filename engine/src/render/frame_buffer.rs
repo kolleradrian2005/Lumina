@@ -55,10 +55,12 @@ impl Framebuffer {
                     ptr::null(),
                 );
             }
-            gl::TexParameteri(textarget, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
-            gl::TexParameteri(textarget, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-            gl::TexParameteri(textarget, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(textarget, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            if msaa.is_none() {
+                gl::TexParameteri(textarget, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(textarget, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+                gl::TexParameteri(textarget, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+                gl::TexParameteri(textarget, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+            }
             gl::BindTexture(textarget, 0);
 
             // Create a renderbuffer object

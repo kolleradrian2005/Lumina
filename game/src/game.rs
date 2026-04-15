@@ -103,7 +103,7 @@ fn load_resources(resource_manager: &mut ResourceManager) {
                         ("uFlipped".to_string(), ShaderParameterType::Bool),
                         ("uColor1".to_string(), ShaderParameterType::Vec3),
                         ("uColor2".to_string(), ShaderParameterType::Vec3),
-                        ("uLayerIndex".to_string(), ShaderParameterType::Float),
+                        ("uLayerIndex".to_string(), ShaderParameterType::Int),
                     ],
                 },
             },

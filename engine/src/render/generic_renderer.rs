@@ -109,9 +109,12 @@ impl GenericRenderer {
             gl::EnableVertexAttribArray(0);
             if renderable.mesh.get_uvs_vbo().is_some() {
                 gl::EnableVertexAttribArray(1);
+            } else {
+                gl::DisableVertexAttribArray(1);
             }
             *last_vao = vao;
         }
+
         // TODO: handle texture types better e.g. passing array of textures and shader params alongside
 
         match &renderable.material.texture {
