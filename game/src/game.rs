@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, vec};
+use std::{f32::consts::PI, time::Duration, vec};
 
 use include_assets::{include_dir, NamedArchive};
 use lumina_engine::{
@@ -420,6 +420,27 @@ fn init_world(world: &mut World, resource_manager: &mut ResourceManager) {
         .into(),
     );
     world.add_component::<Parent>(bubble_emitter, head_model.into());
+
+    // Deep-water mote haze
+    let mote_mesh = resource_manager.get_mesh("square");
+    let mote_entity = world.create_entity();
+    let mut mote_emitter: Emitter = Particle::mote().into();
+    mote_emitter.interval = Duration::from_millis(200);
+    world.add_component::<Emitter>(mote_entity, mote_emitter);
+    world.add_component::<Transform>(
+        mote_entity,
+        Transform {
+            position: Vec3::new(0.0, 0.0, -2.5),
+            rotation: 0.0,
+            scale: Vec2::uniform(0.01),
+            is_flipped: false,
+        },
+    );
+    world.add_component::<Model>(mote_entity, mote_mesh.into());
+    if let Some(mote_texture) = resource_manager.load_static_texture("mote.png") {
+        world.add_component(mote_entity, Material::new(mote_texture, shader.clone()));
+    }
+    world.add_component::<Parent>(mote_entity, player.into());
 }
 
 fn init_background(world: &mut World, resource_manager: &mut ResourceManager) {

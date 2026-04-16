@@ -6,7 +6,7 @@ use lumina_engine::logic::{
     scene::world::World,
 };
 
-use crate::scene::water::Water;
+use crate::{player::player_state::PlayerState, scene::water::Water};
 pub struct CurrentSystem;
 
 impl System for CurrentSystem {
@@ -23,9 +23,9 @@ impl System for CurrentSystem {
                     .expect_resource::<Water>()
                     .get_current(&object_position);
                 world
-                    .query_mut::<(&mut Movement, &mut Transform)>()
+                    .query_mut::<(&mut Movement, &mut Transform, &mut PlayerState)>()
                     .last()
-                    .map(|(_, (movement_component, transform))| {
+                    .map(|(_, (movement_component, transform, _))| {
                         let player_distance = (object_position - transform.position).length();
                         if player_distance != 0.0 {
                             let mut influence = 1.0 / (player_distance.powf(1.5) * 10.0);
