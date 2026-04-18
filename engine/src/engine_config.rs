@@ -13,4 +13,4 @@ pub const SHADERS_PATH: &str = "shaders";
 #[cfg(target_os = "android")]
 pub const SHADER_VERSION_HEADER: &str = "#version 300 es\r\n";
 #[cfg(not(target_os = "android"))]
-pub const SHADER_VERSION_HEADER: &str = "#version 450 core\r\n";
+pub const SHADER_VERSION_HEADER: &str = "#version 460 core\r\n";
