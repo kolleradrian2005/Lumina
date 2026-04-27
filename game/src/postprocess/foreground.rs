@@ -65,7 +65,6 @@ impl Foreground {
             if self.god_rays_noise[i - 1].abs() < self.god_rays_noise[i].abs()
                 && self.god_rays_noise[i].abs() > self.god_rays_noise[i + 1].abs()
             {
-                //if 0.6 < self.god_rays_noise[i].abs() {
                 let tile_index = self.loaded_noise_index - self.god_rays_max_count / 2 + i as i32;
                 light_positions.push(Vec2::new(
                     tile_index as f32 * self.god_rays_min_distance,

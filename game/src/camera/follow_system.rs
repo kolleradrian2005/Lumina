@@ -15,7 +15,6 @@ pub struct FollowSystem;
 
 impl System for FollowSystem {
     fn run(&mut self, world: &mut World, delta_time: f32) {
-        //let mut update_camera = None;
         for (_, (camera, follow_component)) in world.query_mut::<(&mut Camera, &mut Follow)>() {
             let target_transform_component =
                 world.get_component_mut::<Transform>(follow_component.target_entity);
@@ -41,9 +40,6 @@ impl System for FollowSystem {
                 }
                 let direction = difference.normalized();
                 let length = difference.length();
-                /*if 0.0 < length {
-                    update_camera = camera.clone().into();
-                }*/
 
                 camera.position +=
                     direction * camera.move_speed * f32::sqrt(length) * delta_time as f32;
@@ -69,8 +65,5 @@ impl System for FollowSystem {
                 }
             }
         }
-        /*if update_camera.is_some() {
-            world.render_packet.camera_component = update_camera;
-        }*/
     }
 }

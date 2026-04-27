@@ -162,16 +162,6 @@ impl Tile {
                 is_flipped: false,
             },
         );
-        /*world.add_component(
-            tile,
-            ShaderParamsComponent {
-                params: vec![
-                    ShaderParam::IsUphill(uphill),
-                    ShaderParam::Height(top - bot),
-                ]
-                .into(),
-            },
-        );*/
         Tile {
             entity: tile,
             uphill,

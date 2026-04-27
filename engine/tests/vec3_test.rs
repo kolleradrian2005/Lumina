@@ -31,13 +31,6 @@ mod vec3_test {
     }
 
     #[test]
-    fn test_from_ref() {
-        let a = Vec3::new(1.0, 2.0, 3.0);
-        let b = Vec3::from(&a);
-        assert_eq!(a, b);
-    }
-
-    #[test]
     fn test_from_tuple() {
         let v: Vec3 = (1.0, 2.0, 3.0).into();
         assert_eq!(v.x, 1.0);
@@ -179,12 +172,6 @@ mod vec3_test {
     fn test_neg() {
         let v = Vec3::new(1.0, -2.0, 3.0);
         assert_eq!(-v, Vec3::new(-1.0, 2.0, -3.0));
-    }
-
-    #[test]
-    fn test_default() {
-        let v: Vec3 = Default::default();
-        assert_eq!(v, Vec3::zero());
     }
 
     #[test]

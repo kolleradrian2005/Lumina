@@ -59,12 +59,12 @@ impl Renderer {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
 
-    pub fn render(&mut self, render_packet: ExtractedFrame) {
+    pub fn render(&mut self, extracted_frame: ExtractedFrame) {
         unsafe {
             let postprocess_config: Option<PostprocessConfig> =
-                render_packet.postprocess_pass.clone();
-            self.refresh_buffers(&render_packet);
-            self.initialize_uniformbuffers(&render_packet);
+                extracted_frame.postprocess_pass.clone();
+            self.refresh_buffers(&extracted_frame);
+            self.initialize_uniformbuffers(&extracted_frame);
             self.clean_up(); // Clean up without framebuffer
             if postprocess_config.is_some() {
                 self.frame_buffer.bind();
@@ -72,11 +72,12 @@ impl Renderer {
             }
             gl::Enable(gl::DEPTH_TEST);
             self.bind_uniform_buffers();
-            self.generic_renderer.render(render_packet.entities);
+            self.generic_renderer.render(extracted_frame.entities);
             if postprocess_config.is_some() {
                 self.frame_buffer.blit();
                 self.frame_buffer.unbind();
             }
+            gl::Disable(gl::DEPTH_TEST);
             // Post-processing
             if let Some(postprocess_config) = postprocess_config {
                 let mut material = postprocess_config.material.clone();
@@ -92,19 +93,18 @@ impl Renderer {
                     z_index: 0.0,
                 }]);
             }
-            gl::Disable(gl::DEPTH_TEST);
             self.unbind_uniform_buffers();
             gl_check_error!();
         };
     }
 
-    fn refresh_buffers(&mut self, render_packet: &ExtractedFrame) {
+    fn refresh_buffers(&mut self, extracted_frame: &ExtractedFrame) {
         // If window resize => it has to be camera update too
-        if let Some(new_window_size) = render_packet.window_size.clone() {
+        if let Some(new_window_size) = extracted_frame.window_size.clone() {
             if self.window_size_cache.is_none()
-                || render_packet.window_size != self.window_size_cache
+                || extracted_frame.window_size != self.window_size_cache
             {
-                self.window_size_cache = render_packet.window_size.clone();
+                self.window_size_cache = extracted_frame.window_size.clone();
                 self.frame_buffer
                     .resize(new_window_size.width, new_window_size.height);
                 unsafe {
@@ -126,8 +126,8 @@ impl Renderer {
         // TODO: Sort by shader, texture, material, etc. to minimize state changes and create a PreparedFrame
     }
 
-    fn initialize_uniformbuffers(&mut self, render_packet: &ExtractedFrame) {
-        render_packet
+    fn initialize_uniformbuffers(&mut self, extracted_frame: &ExtractedFrame) {
+        extracted_frame
             .uniform_buffers
             .iter()
             .for_each(|uniform_buffer_data| {

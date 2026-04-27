@@ -12,6 +12,7 @@ impl<T: Component> ComponentStorage<T> {
             storage: HashMap::new(),
         })
     }
+
     pub fn as_any(component: &Box<dyn Component>) -> &dyn Any {
         component
     }
@@ -47,9 +48,11 @@ impl<T: Component> ComponentStorageTrait for ComponentStorage<T> {
     fn remove_entity(&mut self, entity: Entity) {
         self.storage.remove(&entity);
     }
+
     fn as_any(&self) -> &dyn Any {
         self
     }
+
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }

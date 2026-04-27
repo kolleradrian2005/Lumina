@@ -130,6 +130,9 @@ macro_rules! impl_query_mut {
 impl_query!(SingleComponentIter, (A => a));
 impl_query!(DoubleComponentIter, (A => a), (B => b));
 impl_query!(TripleComponentIter, (A => a), (B => b), (C => c));
+impl_query!(FourComponentIter, (A => a), (B => b), (C => c), (D => d));
+impl_query!(FiveComponentIter, (A => a), (B => b), (C => c), (D => d), (E => e));
+impl_query!(SixComponentIter, (A => a), (B => b), (C => c), (D => d), (E => e), (F => f));
 impl_query_mut!(SingleComponentIterMut, (A => a));
 impl_query_mut!(DoubleComponentIterMut, (A => a), (B => b));
 impl_query_mut!(TripleComponentIterMut, (A => a), (B => b), (C => c));

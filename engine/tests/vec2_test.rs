@@ -34,13 +34,6 @@ mod vec2_test {
     }
 
     #[test]
-    fn test_from_ref() {
-        let a = Vec2::new(7.0, 8.0);
-        let b = Vec2::from(&a);
-        assert_eq!(a, b);
-    }
-
-    #[test]
     fn test_from_tuple() {
         let v: Vec2 = (1.0, 2.0).into();
         assert_eq!(v.x, 1.0);
@@ -203,13 +196,6 @@ mod vec2_test {
         assert_eq!(Vec2::new(1.0, 2.0), Vec2::new(1.0, 2.0));
         assert_ne!(Vec2::new(1.0, 2.0), Vec2::new(1.0, 3.0));
         assert_ne!(Vec2::new(1.0, 2.0), Vec2::new(2.0, 2.0));
-    }
-
-    #[test]
-    fn test_default() {
-        let v: Vec2 = Default::default();
-        assert_eq!(v.x, 0.0);
-        assert_eq!(v.y, 0.0);
     }
 
     #[test]

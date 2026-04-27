@@ -51,10 +51,10 @@ impl BottleTrashPrefab {
                 scale: Vec2::new(0.06, 0.06),
                 is_flipped: false,
             },
-                Collider::new(ColliderShape::Capsule2D {
-                    width: 0.3,
-                    height: 0.9
-                }),
+            Collider::new(ColliderShape::Capsule2D {
+                width: 0.3,
+                height: 0.9
+            }),
             force_component,
             Movement::default(),
             model,

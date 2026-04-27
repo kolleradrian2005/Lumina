@@ -19,6 +19,7 @@ impl Vec3 {
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Vec3 { x, y, z }
     }
+
     pub const fn zero() -> Self {
         Vec3 {
             x: 0.0,
@@ -26,6 +27,7 @@ impl Vec3 {
             z: 0.0,
         }
     }
+
     pub const fn from_vec2(vec: Vec2, z: f32) -> Self {
         Vec3 {
             x: vec.x,
@@ -33,6 +35,7 @@ impl Vec3 {
             z,
         }
     }
+
     pub const fn from(vec: &Vec3) -> Self {
         Vec3 {
             x: vec.x,
@@ -40,12 +43,15 @@ impl Vec3 {
             z: vec.z,
         }
     }
+
     pub fn length(&self) -> f32 {
         f32::sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
     }
+
     pub fn xy(&self) -> Vec2 {
         Vec2::new(self.x, self.y)
     }
+
     pub fn normalized(&self) -> Vec3 {
         let length = self.length();
         if length == 0.0 {
@@ -53,6 +59,7 @@ impl Vec3 {
         }
         Vec3::new(self.x / length, self.y / length, self.z / length)
     }
+
     pub fn distance(&self, other: Vec3) -> f32 {
         (*self - other).length()
     }

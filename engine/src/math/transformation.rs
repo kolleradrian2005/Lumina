@@ -78,7 +78,7 @@ pub fn create_transform_matrix(
     model: &Transform,
     parent_component: Option<&Transform>,
 ) -> [[f32; 4]; 4] {
-    let inherited = calc_intherited_transform(model, parent_component);
+    let inherited = calc_inherited_transform(model, parent_component);
 
     let translation_matrix = create_translation_matrix(inherited.position);
     let rotation_matrix = create_rotation_matrix(inherited.rotation);
@@ -91,7 +91,7 @@ pub fn create_transform_matrix(
     model_matrix
 }
 
-pub fn calc_intherited_transform(
+pub fn calc_inherited_transform(
     model: &Transform,
     parent_component: Option<&Transform>,
 ) -> Transform {
@@ -131,7 +131,7 @@ pub fn get_world_transform(
     match get_parent(entity) {
         Some(parent) if parent.parent != Entity(0) => {
             let parent_world = get_world_transform(parent.parent, get_transform, get_parent)?;
-            Some(calc_intherited_transform(&transform, Some(&parent_world)))
+            Some(calc_inherited_transform(&transform, Some(&parent_world)))
         }
         _ => Some(transform),
     }

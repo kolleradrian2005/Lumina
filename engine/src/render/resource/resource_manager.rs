@@ -91,8 +91,6 @@ impl ResourceProvider for ResourceManager {
         let square_mesh = self
             .load_mesh(vertices, indices, uvs)
             .expect("Could not load default model");
-        //let mut square = Model::new(square_mesh);
-        //square.set_texture(StaticColor::new(Vec3::new(0.5, 0.5, 0.5)).into());
         self.save_mesh("square", square_mesh);
     }
 
@@ -114,7 +112,6 @@ impl ResourceProvider for ResourceManager {
             tess_evaluation_shader_name: None,
             tess_control_shader_name: None,
             parameter_schema: model_shader_parameter_schema.clone(),
-            //uniform_buffers: vec![],
         };
         // Tesselation shaders are not supported on gles 3, which is used on android, so only include them for other platforms
         let shader_with_tesselation_configuration = cfg!(not(target_os = "android")).then(|| {
@@ -127,7 +124,6 @@ impl ResourceProvider for ResourceManager {
                 tess_evaluation_shader_name: Some("model.tese".into()),
                 tess_control_shader_name: Some("model.tesc".into()),
                 parameter_schema: model_shader_parameter_schema,
-                //uniform_buffers: vec![],
             }
         });
 
@@ -184,7 +180,8 @@ impl ResourceProvider for ResourceManager {
         match rx.recv() {
             Ok(texture) => match texture {
                 Ok(tex) => {
-                    self.texture_cache.insert(texture_name.to_string(), tex.clone());
+                    self.texture_cache
+                        .insert(texture_name.to_string(), tex.clone());
                     Some(tex)
                 }
                 Err(err) => {

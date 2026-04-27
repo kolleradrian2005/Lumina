@@ -84,11 +84,11 @@ impl Scene {
     }
 
     pub fn register_system(&mut self, system: Box<dyn System>) {
-        self.systems.insert(self.systems.len() - 1, system);
+        self.systems.insert(self.systems.len(), system);
     }
 
     pub fn register_extractor(&mut self, extractor: Box<dyn Extractor>) {
-        self.extractors.insert(self.extractors.len() - 1, extractor);
+        self.extractors.insert(self.extractors.len(), extractor);
     }
 
     pub fn update(&mut self, delta_time: f32) {

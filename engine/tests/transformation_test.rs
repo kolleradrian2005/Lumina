@@ -181,7 +181,7 @@ mod transformation_test {
             scale: Vec2::new(2.0, 3.0),
             is_flipped: false,
         };
-        let result = calc_intherited_transform(&model, None);
+        let result = calc_inherited_transform(&model, None);
         assert_eq!(result.position, model.position);
         assert_eq!(result.rotation, model.rotation);
         assert_eq!(result.scale, model.scale);
@@ -202,7 +202,7 @@ mod transformation_test {
             scale: Vec2::unit(),
             is_flipped: false,
         };
-        let result = calc_intherited_transform(&model, Some(&parent));
+        let result = calc_inherited_transform(&model, Some(&parent));
         assert!((result.position.x - 10.0).abs() < EPSILON);
         assert!((result.position.y - 20.0).abs() < EPSILON);
     }
@@ -221,7 +221,7 @@ mod transformation_test {
             scale: Vec2::new(4.0, 5.0),
             is_flipped: false,
         };
-        let result = calc_intherited_transform(&model, Some(&parent));
+        let result = calc_inherited_transform(&model, Some(&parent));
         assert_eq!(result.scale, Vec2::new(8.0, 15.0));
     }
 
@@ -239,7 +239,7 @@ mod transformation_test {
             scale: Vec2::unit(),
             is_flipped: true,
         };
-        let result = calc_intherited_transform(&model, Some(&parent));
+        let result = calc_inherited_transform(&model, Some(&parent));
         assert_eq!(result.is_flipped, false);
     }
 
@@ -257,7 +257,7 @@ mod transformation_test {
             scale: Vec2::unit(),
             is_flipped: true,
         };
-        let result = calc_intherited_transform(&model, Some(&parent));
+        let result = calc_inherited_transform(&model, Some(&parent));
         assert_eq!(result.is_flipped, true);
     }
 }

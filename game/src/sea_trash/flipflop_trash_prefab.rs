@@ -51,10 +51,10 @@ impl FlipflopTrashPrefab {
                 scale: Vec2::new(0.06, 0.06),
                 is_flipped: false,
             },
-                Collider::new(ColliderShape::Capsule2D {
-                    width: 0.3,
-                    height: 1.0
-                }),
+            Collider::new(ColliderShape::Capsule2D {
+                width: 0.3,
+                height: 1.0
+            }),
             force_component,
             Movement::default(),
             model,

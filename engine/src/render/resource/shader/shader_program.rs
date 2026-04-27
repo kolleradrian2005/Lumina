@@ -10,7 +10,6 @@ pub struct ShaderProgramHandle {
 
 pub struct ShaderProgram {
     handle: ShaderProgramHandle,
-    //uniform_locations: HashMap<String, GLint>,
     parameter_schema: ParameterSchema,
 }
 

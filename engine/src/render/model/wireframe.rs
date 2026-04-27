@@ -12,6 +12,7 @@ fn connecting_indices(num: u32) -> Vec<u32> {
     indices.push(0);
     indices
 }
+
 pub fn rectangle(width: f32, height: f32) -> (Vec<f32>, Vec<u32>, Vec<f32>) {
     (
         sprite::rectangle_vertices(width / 2.0, height / 2.0).to_vec(),

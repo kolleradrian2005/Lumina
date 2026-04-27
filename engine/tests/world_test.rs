@@ -149,16 +149,16 @@ mod world_test {
     }
 
     #[test]
-    fn test_delete_entity_reuses_id_lifo() {
+    fn test_delete_entity_reuses_id_fifo() {
         let mut world = create_world();
         let e1 = world.create_entity();
         let e2 = world.create_entity();
         world.delete_entity(e1);
         world.delete_entity(e2);
         let e3 = world.create_entity();
-        assert_eq!(e3, Entity(2));
+        assert_eq!(e3, Entity(1));
         let e4 = world.create_entity();
-        assert_eq!(e4, Entity(1));
+        assert_eq!(e4, Entity(2));
     }
 
     #[test]
@@ -222,7 +222,6 @@ mod world_test {
     fn test_get_component_mut_modifies() {
         let mut world = create_world();
         world.insert_resource(42u32);
-        // Verify we can get and modify a resource via mutable access
         {
             let r = world.get_resource_mut::<u32>().unwrap();
             *r = 100;

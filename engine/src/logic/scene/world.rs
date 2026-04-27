@@ -1,6 +1,6 @@
 use std::{
     any::{type_name, Any, TypeId},
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     sync::Arc,
 };
 
@@ -17,7 +17,7 @@ use crate::{
 extern crate noise;
 pub struct World {
     pub entities: Vec<Entity>,
-    available_ids: Vec<u32>,
+    available_ids: VecDeque<u32>,
     pub components: HashMap<TypeId, Box<dyn ComponentStorageTrait + Send + Sync>>,
     resources: HashMap<TypeId, Box<dyn Any + Send + Sync>>,
 }
@@ -26,7 +26,7 @@ impl World {
     pub fn load() -> Self {
         World {
             entities: vec![Entity(0)], // Have 0 as a null entity
-            available_ids: Vec::new(),
+            available_ids: VecDeque::new(),
             components: HashMap::new(),
             resources: HashMap::new(),
         }
@@ -74,7 +74,7 @@ impl World {
     pub fn create_entity(&mut self) -> Entity {
         let entity_id = self
             .available_ids
-            .pop()
+            .pop_front()
             .unwrap_or(self.entities.len() as u32);
         let entity = Entity(entity_id);
         self.entities.push(entity);
@@ -87,7 +87,7 @@ impl World {
                 self.mesh_removed(model_component.mesh);
             }
             self.entities.swap_remove(idx);
-            self.available_ids.push(entity.0);
+            self.available_ids.push_back(entity.0);
             for storage in self.components.values_mut() {
                 storage.remove_entity(entity);
             }

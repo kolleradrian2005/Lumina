@@ -117,20 +117,5 @@ impl ParticleEntity {
         self.position = self.spawn_position
             + self.config.base_velocity * t
             + Vec3::new(dir.x * displacement, dir.y * delta_time, 0.0);
-        /*match self.particle_type {
-            ParticleEntityType::Bubble => {
-                self.position += self.velocity * delta_time;
-                self.position.x = self.spawn_position.x
-                    + ((duration.as_secs_f32() * self.frequency + self.offset).sin()
-                        - self.offset.sin())
-                        * self.amplitude;
-            }
-            ParticleEntityType::Fish => {
-                self.position += self.velocity * delta_time;
-                self.position.y = self.spawn_position.y
-                    + ((duration.as_secs_f32() * self.frequency + self.offset).sin())
-                        * self.amplitude;
-            }
-        }*/
     }
 }
